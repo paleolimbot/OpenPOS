@@ -17,3 +17,18 @@ parse.isbn(nums)
 
 parse.isbn(picnums)
 plotbars(threshold.amp(picnums, threshold = 0.4, plot=T))
+
+
+for(i in 1:nrow(digisbn)) {
+  cat(paste0('digisbn.put(new BarcodePattern(new int[] {', 
+             paste0(lengthsisbn[i,], collapse=", "),
+             "}, ",
+             ifelse(digisbn$scheme[i]=="RIGHT", "true", "false"),
+             '), new BarcodeDigit("',
+             digisbn$dig[i],
+             '", "',
+             digisbn$scheme[i],
+             '")',
+             ")"), 
+      ";\n")
+}
