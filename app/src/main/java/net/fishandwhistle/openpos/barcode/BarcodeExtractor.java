@@ -35,7 +35,7 @@ public class BarcodeExtractor {
         //do floating range contrast enhancer
         int windowsize = data.length / nwindows;
         for(int i=0; i<data.length; i+=windowsize) {
-            int windowlength = Math.min(windowsize, data.length-1-i+windowsize);
+            int windowlength = Math.min(windowsize, data.length-i);
             double[] localrange = range(rescaled, i, windowlength);
             if((localrange[1] - localrange[0]) < minrange) {
                 localrange[0] = 0;
@@ -55,23 +55,29 @@ public class BarcodeExtractor {
     }
 
 
-    private int[] getBars() {
+    public int[] getBars() {
         if(this.thresholded == null)
             throw new IllegalStateException("Cannot extract bars without thresholding");
         ArrayList<Integer> barsout = new ArrayList<>();
         int first = 0;
         // skip all false values at start so we start on first true value
-        while(!thresholded[first]) {
+        while(!thresholded[first] && (first < this.thresholded.length)) {
             first += 1;
         }
-        int run = 0;
+        if(first == thresholded.length) {
+            // there are no true values in the array
+            return new int[] {0};
+        }
+
+        int run = 1;
         boolean val = true;
-        for(int i=first; i<this.thresholded.length; i=run) {
+        for(int i=first+1; i<this.thresholded.length; i++) {
             if(val==this.thresholded[i]) {
                 run += 1;
             } else {
-                val = !val;
+                val = this.thresholded[i];
                 barsout.add(run);
+                run = 1;
             }
         }
         barsout.add(run);

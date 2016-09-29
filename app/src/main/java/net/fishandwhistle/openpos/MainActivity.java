@@ -28,6 +28,9 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
+import net.fishandwhistle.openpos.barcode.BarcodeSpec;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -260,19 +263,37 @@ public class MainActivity extends AppCompatActivity
             BitmapFactory.Options o = new BitmapFactory.Options();
 
             Bitmap b = BitmapFactory.decodeByteArray(data, 0, data.length);
-            for(int i=0; i<(b.getHeight()-1); i++) {
+            double[] vals = new double[b.getHeight()];
+            for(int i=0; i<b.getHeight(); i++) {
                 int col = b.getPixel(width / 4, i);
-                bos.write(String.valueOf((Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0)) ;
-                if(i < (b.getHeight()-2)) {
+                vals[b.getHeight()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
+                bos.write(String.valueOf(vals[i])) ;
+                if(i < 0) {
                     bos.write(",");
                 }
             }
             bos.write("\n");
             bos.flush();
             b.recycle();
+
+            //try java decoding
+            BarcodeExtractor e = new BarcodeExtractor(vals);
+            e.transform(10, 0.5);
+            e.threshold(0.5);
+            int[] bars = e.getBars();
+            try {
+                BarcodeSpec.Barcode barcode = BarcodeSpec.ISBN.parse(bars);
+                Toast.makeText(this, "ISBN Read: " + barcode.toString(),
+                        Toast.LENGTH_LONG).show();
+            } catch(BarcodeSpec.BarcodeException exception) {
+                Toast.makeText(this, "Error getting barcode: " + exception.getMessage() + ". Partial: " + exception.partial.toString(),
+                        Toast.LENGTH_LONG).show();
+            }
+
         } catch(IOException e) {
             Log.e(TAG, "IOException on image decode", e);
         }
         mCamera.startPreview();
     }
+
 }

@@ -9,10 +9,12 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.all;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.any;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.concatenate;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.div;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.eq;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.gt;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.mean;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.round;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.sum;
 
 /**
  * Created by dewey on 2016-09-29.
@@ -52,12 +54,15 @@ public class BarcodeSpec {
     }
 
     public BarcodeDigit getDigit(int[] bars, double barsize, boolean start) {
-        BarcodePattern pattern = new BarcodePattern(round(div(bars, barsize)), start);
-        if(digits.containsKey(pattern)) {
-            return digits.get(pattern);
-        } else {
-            return null;
+        BarcodePattern pattern = new BarcodePattern(round(div(bars, sum(bars)/7.0)), start);
+
+        for(Map.Entry<BarcodePattern, BarcodeDigit> entry : digits.entrySet()) {
+            BarcodePattern p = entry.getKey();
+            if(entry.getKey().equals(pattern)) {
+                return entry.getValue();
+            }
         }
+        return null;
     }
 
     public boolean checksum(Barcode b) {
@@ -133,6 +138,18 @@ public class BarcodeSpec {
             this.type = type;
             digits = new ArrayList<>();
         }
+
+        public String toString() {
+            String out = "";
+            for(BarcodeDigit d: digits) {
+                if(d == null) {
+                    out += "^";
+                } else {
+                    out += String.valueOf(d.digit);
+                }
+            }
+            return out;
+        }
     }
 
     public static class BarcodePattern {
@@ -142,6 +159,15 @@ public class BarcodeSpec {
         public BarcodePattern(int[] widths, boolean startsWith) {
             this.widths = widths;
             this.startsWith = startsWith;
+        }
+
+        public boolean equals(Object o) {
+            if(o instanceof BarcodePattern) {
+                BarcodePattern b = (BarcodePattern) o;
+                return (b.startsWith == this.startsWith) && all(eq(this.widths, b.widths));
+            } else {
+                return false;
+            }
         }
     }
 
@@ -208,5 +234,6 @@ public class BarcodeSpec {
 
     }
 
-    public static final BarcodeSpec ISBN = new BarcodeSpec(TYPE_ISBN, digisbn, 95, 4, GUARD_101, GUARD_101, GUARD_01010);
+    public static final BarcodeSpec ISBN = new BarcodeSpec(TYPE_ISBN, digisbn, NBARS_ISBN,
+            NBARS_DIGIT_ISBN, GUARD_101, GUARD_101, GUARD_01010);
 }

@@ -40,26 +40,10 @@ public class ArrayMath {
         return out;
     }
 
-    public static int[] moddiv(int[] in, int by) {
-        int[] out = new int[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i] / by;
-        }
-        return out;
-    }
-
     public static double[] div(int[] in, double by) {
         double[] out = new double[in.length];
         for (int i = 0; i < in.length; i++) {
             out[i] = in[i] / by;
-        }
-        return out;
-    }
-
-    public static int[] mod(int[] in, int by) {
-        int[] out = new int[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i] % by;
         }
         return out;
     }
@@ -76,10 +60,11 @@ public class ArrayMath {
         return (in - frommin) / fromrange ;
     }
 
-    public static boolean[] eq(int[] in, int num) {
-        boolean[] out = new boolean[in.length];
-        for (int i = 0; i < in.length; i++) {
-            out[i] = in[i] == num;
+    public static boolean[] eq(int[] in1, int[] in2) {
+        if(in1.length != in2.length) throw new IllegalArgumentException("Arrays of differnent lengths");
+        boolean[] out = new boolean[in1.length];
+        for(int i=0; i<in1.length; i++) {
+            out[i] = in1[i] == in2[i];
         }
         return out;
     }
@@ -143,22 +128,6 @@ public class ArrayMath {
 
     public static double mean(int[] in) {
         return sum(in) / (double)in.length;
-    }
-
-    public static int max(int[] in) {
-        int max = in[0];
-        for (int i = 1; i < in.length; i++) {
-            if(in[i] > max) max = in[i];
-        }
-        return max;
-    }
-
-    public static int min(int[] in) {
-        int min = in[0];
-        for (int i = 1; i < in.length; i++) {
-            if(in[i] < min) min = in[i];
-        }
-        return min;
     }
 
     public static int[] range(int[] in) {
