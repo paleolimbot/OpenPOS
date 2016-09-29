@@ -10,10 +10,10 @@ results <- foreach(col=names(testdata), .combine=rbind) %do% {
 pct <- sum(!is.na(results$isbn)) / nrow(results) * 100
 
 nums <- rev(testdata$X1)
-n2 <- scales::rescale(nums)
-plotlines(n2)
-thr <- threshold.amp(n2, plot=T)
+plotlines(scales::rescale(nums))
+thr <- threshold.amp(nums, plot=T, nwindows=50)
 plotbars(thr)
+parse.isbn(nums)
 
 parse.isbn(picnums)
-plotbars(threshold.amp(picnums, plot=T))
+plotbars(threshold.amp(picnums, threshold = 0.4, plot=T))

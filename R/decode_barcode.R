@@ -21,6 +21,13 @@ checksum.upc <- function(upc) {
 # setup ISBN numbering
 digisbn <- read.csv('R/digisbn.csv', colClasses = c("integer", "character", "character"))
 dig1isbn <- read.csv('R/dig1isbn.csv', colClasses = c("character", "integer", "character"))
+# also have df of bar lengths
+isbnvec <- t(sapply(digisbn$code, function(code) {
+  sapply(1:7, function(i) as.integer(substr(code, i, i)))
+}))
+lengthsisbn <- data.frame(t(sapply(1:nrow(isbnvec), function(i) {
+  rle(isbnvec[i,])$lengths
+})))
 
 checksum.isbn <- function(isbn) {
   isbn <- as.character(isbn)
@@ -29,19 +36,15 @@ checksum.isbn <- function(isbn) {
   10*(floor(s1 / 10.0) + 1) - s1
 }
 
-threshold.amp <- function(nums, threshold=0.5, plot=FALSE) {
+threshold.amp <- function(nums, threshold=0.5, minrange=0.5, nwindows=12, plot=FALSE) {
   # rescale
   nums <- scales::rescale(nums)
-  #plotlines(nums)
-  # trim by thresholding
-  thr <- ifelse(nums > 0.4, 0, 1) # always 0.4 for the first 'trimming' pass
-  limits <- c(min(which(thr == 1)), max(which(thr == 1)))
-  nums <- nums[limits[1]:limits[2]]
-  #plotlines(nums)
-  # calc moving range and rescale locally
-  window <- round(length(nums) / 10)
+  # apply windowed scaling
+  window <- round(length(nums) / nwindows)
   minmax <- t(sapply(1:length(nums), function(i) {
-    range(nums[max(c(1, i-window/2)):min(c(length(nums), i+window/2))])
+    r <- range(nums[max(c(1, i-window/2)):min(c(length(nums), i+window/2))])
+    r[1] <- ifelse((r[2]-r[1]) > minrange, r[1], 0)
+    r
   }))
   nums <- sapply(1:length(nums), function(i) scales::rescale(nums[i], from=minmax[i,]))
   if(plot) {
@@ -56,7 +59,7 @@ threshold.amp <- function(nums, threshold=0.5, plot=FALSE) {
 }
 
 digit.isbn <- function(lengths, values, barsizeest) {
-  for(barsize in c(barsizeest, seq(0.8, 1.2, 0.1)*barsizeest)) {
+  for(barsize in c(barsizeest, seq(0.7, 1.3, 0.2)*barsizeest)) {
     nbars <- pmax(1, round(lengths/barsize))
     if(sum(nbars) != 7) {
       next
@@ -66,10 +69,20 @@ digit.isbn <- function(lengths, values, barsizeest) {
     }), collapse="")
     row <- digisbn[binary==digisbn$code,]
     if(nrow(row) == 1) {
+      cat(barsize, "/")
       return(row)
     }
   }
   return(data.frame(dig=NA, scheme=NA, code=NA))
+}
+
+digit.isbn2 <- function(lengths, values, barsize) {
+  # this just based on distances
+  nbars <- pmax(1, round(lengths/barsize))
+  distest <- sapply(1:nrow(lengthsisbn), function(i) {
+    sum((lengthsisbn[i,] - nbars)^2)
+  })
+  return(digisbn[which.min(distest),])
 }
 
 parse.isbn <- function(nums, thresholds=c(0.5, 0.4, 0.6, 0.3, 0.7)) {
@@ -93,7 +106,7 @@ parse.isbn <- function(nums, thresholds=c(0.5, 0.4, 0.6, 0.3, 0.7)) {
       next
     }
     # try all possible starts
-    for(i in seq(0, nrow(bars)-59, 2)) {
+    for(i in seq(0, min(c(5, nrow(bars)-59)), 2)) {
       message("Trying threshold=", threshold, "/i=", i)
       result <- tryCatch(parse.isbn.real(bars), error=function(err) {
         message("Failed with error ", err)
@@ -156,7 +169,7 @@ parse.isbn.real <- function(bars) {
     do(digit.isbn(.$lengths, .$values, barsize))
   
   # check that all digits were decoded
-  if(!all(2:13 %in% code$digit[!is.na(code$dig)])) stop("Not all digits could be decoded")
+  if(!all(2:13 %in% code$digit[!is.na(code$dig)])) stop("Not all digits could be decoded: ", paste0(code$dig, collapse="/"))
   
   digit1 <- paste0(code$scheme[1:6], collapse="")
   digit1 <- dig1isbn[dig1isbn$code==digit1,]
