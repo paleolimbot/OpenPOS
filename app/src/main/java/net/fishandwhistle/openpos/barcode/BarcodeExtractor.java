@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.lt;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.range;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.rescale;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
 
 /**
  * Created by dewey on 2016-09-29.
@@ -61,7 +62,7 @@ public class BarcodeExtractor {
         ArrayList<Integer> barsout = new ArrayList<>();
         int first = 0;
         // skip all false values at start so we start on first true value
-        while(!thresholded[first] && (first < this.thresholded.length)) {
+        while((first < this.thresholded.length-1) && !thresholded[first]) {
             first += 1;
         }
         if(first == thresholded.length) {
@@ -88,4 +89,32 @@ public class BarcodeExtractor {
         }
         return out;
     }
+
+
+    public BarcodeSpec.Barcode multiExtract(BarcodeSpec spec) {
+        BarcodeSpec.Barcode best = null;
+        double[] thresholds = new double[] {0.4, 0.5, 0.6};
+        this.transform(10, 0.5);
+        for(double d: thresholds) {
+                this.threshold(d);
+                int[] bars = this.getBars();
+                for(int i=0; i<Math.min(5, bars.length); i+= 2) {
+                    try {
+                        return spec.parse(subset(bars, i, bars.length-i));
+                    } catch(BarcodeSpec.BarcodeException e) {
+                        if(best != null) {
+                            if(e.partial.validDigits > best.validDigits) {
+                                best = e.partial;
+                                best.tag = e.getMessage();
+                            }
+                        } else {
+                            best = e.partial;
+                            best.tag = e.getMessage();
+                        }
+                    }
+                }
+        }
+        return best;
+    }
+
 }

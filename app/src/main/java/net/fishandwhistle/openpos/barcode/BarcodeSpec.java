@@ -71,15 +71,16 @@ public class BarcodeSpec {
             numbers[i] = Integer.valueOf(b.digits.get(i).digit);
         }
         int oddsum = 0;
-        for(int i=0; i<numbers.length; i+=2) {
+        for(int i=0; i<numbers.length-1; i+=2) {
             oddsum += numbers[i];
         }
         int evensum = 0;
-        for(int i=1; i<numbers.length-1; i+=2) {
+        for(int i=1; i<numbers.length; i+=2) {
             evensum += numbers[i];
         }
         int s1 = evensum * 3 + oddsum;
-        int checksum = (int)Math.round(Math.pow(10, s1/10+1) - s1);
+        int checksum = 10*(s1/10+1) - s1;
+        if(checksum == 10) checksum = 0;
         return checksum == numbers[numbers.length-1];
     }
 
@@ -90,6 +91,7 @@ public class BarcodeSpec {
             vals[i] = (i%2) == 0 ;
         }
         Barcode b = new Barcode(type);
+        b.timeread = System.currentTimeMillis();
         //test number of bars
         if(bars.length < nbars) throw new BarcodeException("Not enough bars to create code", b);
         // test start code
@@ -116,16 +118,34 @@ public class BarcodeSpec {
             b.digits.add(this.getDigit(subset(decodable, i, nbarsDigit), barsize, vdecodable[i]));
         }
 
-        boolean[] validDigits = new boolean[b.digits.size()];
-        for(int i=0; i<validDigits.length; i++) {
-            validDigits[i] = b.digits.get(i) != null;
+        //decode first digit
+        String firstSchemes = "";
+        for(int i=0; i<6; i++) {
+            BarcodeDigit d = b.digits.get(i);
+            if(d==null) {
+                break;
+            } else {
+                firstSchemes += d.tag;
+            }
         }
-        if(!all(validDigits)) throw new BarcodeException("Not all digits could be decoded", b);
+        if(dig1isbn.containsKey(firstSchemes)) {
+            b.digits.add(0, dig1isbn.get(firstSchemes));
+        } else {
+            b.digits.add(0, null);
+        }
 
-        //should scheme check the ISBN code here (not yet)
-        b.digits.add(0, new BarcodeDigit("9", "MANUAL"));
+        int validDigits = 0;
+        for(int i=0; i<b.digits.size(); i++) {
+            if(b.digits.get(i) != null)
+                validDigits++;
+        }
+        b.validDigits = validDigits;
 
-        //implement checksum here
+        if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
+
+        //try checksum
+        if(!this.checksum(b)) throw new BarcodeException("Checksum failed for barcode", b);
+        b.isValid = true;
 
         return b;
     }
@@ -133,10 +153,18 @@ public class BarcodeSpec {
     public static class Barcode {
         public String type;
         public List<BarcodeDigit> digits;
+        public int validDigits;
+        public String tag;
+        public boolean isValid;
+        public long timeread ;
 
         public Barcode(String type) {
             this.type = type;
             digits = new ArrayList<>();
+            validDigits = 0;
+            tag = null;
+            isValid = false;
+            timeread = 0;
         }
 
         public String toString() {
@@ -149,6 +177,19 @@ public class BarcodeSpec {
                 }
             }
             return out;
+        }
+
+        public boolean equals(Object o) {
+            if(o instanceof Barcode) {
+                Barcode b = (Barcode)o;
+                return b.toString().equals(this.toString()) && this.type.equals(b.toString()) ;
+            } else {
+                return false;
+            }
+        }
+
+        public boolean isComplete() {
+            return (validDigits == digits.size()) && validDigits != 0;
         }
     }
 
@@ -199,7 +240,7 @@ public class BarcodeSpec {
     }
 
     private static Map<BarcodePattern, BarcodeDigit> digisbn = new HashMap<>();
-
+    private static Map<String, BarcodeDigit> dig1isbn = new HashMap<>();
     static {
         digisbn.put(new BarcodePattern(new int[] {3, 2, 1, 1}, false), new BarcodeDigit("0", "A")) ;
         digisbn.put(new BarcodePattern(new int[] {2, 2, 2, 1}, false), new BarcodeDigit("1", "A")) ;
@@ -232,6 +273,16 @@ public class BarcodeSpec {
         digisbn.put(new BarcodePattern(new int[] {1, 2, 1, 3}, true), new BarcodeDigit("8", "RIGHT")) ;
         digisbn.put(new BarcodePattern(new int[] {3, 1, 1, 2}, true), new BarcodeDigit("9", "RIGHT")) ;
 
+        dig1isbn.put("AAAAAA", new BarcodeDigit("0", "FIRSTDIGIT")) ;
+        dig1isbn.put("AABABB", new BarcodeDigit("1", "FIRSTDIGIT")) ;
+        dig1isbn.put("AABBAB", new BarcodeDigit("2", "FIRSTDIGIT")) ;
+        dig1isbn.put("AABBBA", new BarcodeDigit("3", "FIRSTDIGIT")) ;
+        dig1isbn.put("ABAABB", new BarcodeDigit("4", "FIRSTDIGIT")) ;
+        dig1isbn.put("ABBAAB", new BarcodeDigit("5", "FIRSTDIGIT")) ;
+        dig1isbn.put("ABBBAA", new BarcodeDigit("6", "FIRSTDIGIT")) ;
+        dig1isbn.put("ABABAB", new BarcodeDigit("7", "FIRSTDIGIT")) ;
+        dig1isbn.put("ABABBA", new BarcodeDigit("8", "FIRSTDIGIT")) ;
+        dig1isbn.put("ABBABA", new BarcodeDigit("9", "FIRSTDIGIT")) ;
     }
 
     public static final BarcodeSpec ISBN = new BarcodeSpec(TYPE_ISBN, digisbn, NBARS_ISBN,

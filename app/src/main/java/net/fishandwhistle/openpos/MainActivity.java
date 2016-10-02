@@ -13,6 +13,7 @@ import android.hardware.Camera;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity
     private Camera mCamera;
     private CameraPreview mPreview;
     private FileWriter bos ;
+    private List<String> barcodes ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +70,7 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mPreview = new CameraPreview(this);
-        //mPreview.setPreviewImageCallback(this);
+        mPreview.setPreviewImageCallback(this);
         FrameLayout mPreviewF = (FrameLayout) findViewById(R.id.main_imageframe);
         mPreviewF.addView(mPreview, 0);
 
@@ -79,12 +81,13 @@ public class MainActivity extends AppCompatActivity
             this.finish();
         }
 
+        barcodes = new ArrayList<>();
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mCamera.takePicture(null, null, MainActivity.this);
-                Toast.makeText(MainActivity.this, "Taken!", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -225,28 +228,52 @@ public class MainActivity extends AppCompatActivity
         return c; // returns null if camera is unavailable
     }
 
-    private static boolean checkCameraHardware(Context context) {
-        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
+    private void onBarcodeRead(BarcodeSpec.Barcode b) {
+        String bc = b.toString();
+        if(!barcodes.contains(bc)) {
+            barcodes.add(bc);
+            Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+            v.vibrate(200);
+            Toast.makeText(this, "ISBN Read: " + b.toString(), Toast.LENGTH_LONG).show();
+        }
     }
 
     public void onPreviewImage(byte[] data, int format, int width, int height) {
         try {
+            long start = System.currentTimeMillis();
+
             YuvImage y = new YuvImage(data, format, width, height, null);
-            File f = File.createTempFile("temppic", ".jpg");
+            File f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
             FileOutputStream fos = new FileOutputStream(f);
-            y.compressToJpeg(new Rect(width / 4, 0, width / 4 + 50, height-1), 95, fos);
+            y.compressToJpeg(new Rect(width / 4, 0, width / 4 + 25, height-1), 95, fos);
             fos.close();
             Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath());
-            f.delete();
-            char[] vals = new char[b.getHeight()];
-            for(int i=0; i<vals.length; i++) {
+            double[] vals = new double[b.getHeight()];
+            for(int i=0; i<b.getHeight(); i++) {
                 int col = b.getPixel(0, i);
-                double l = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0 ;
-                vals[i] = CHARS.charAt((int)Math.round(l*15.0));
+                vals[b.getHeight()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
+                bos.write(String.valueOf(vals[b.getHeight()-1-i])) ;
+                if(i < 0) {
+                    bos.write(",");
+                }
             }
-            bos.write(new String(vals) + "\n");
             bos.flush();
             b.recycle();
+
+            long decoded = System.currentTimeMillis();
+            Log.i(TAG, "Image read time: " + (decoded - start) + "ms");
+            start = System.currentTimeMillis();
+
+            //try java decoding
+            BarcodeExtractor e = new BarcodeExtractor(vals);
+            BarcodeSpec.Barcode barcode = e.multiExtract(BarcodeSpec.ISBN);
+            if(barcode.isValid) {
+                Log.i(TAG, "ISBN Read: " + barcode.toString());
+                this.onBarcodeRead(barcode);
+            } else {
+                Log.i(TAG, "Error getting barcode: " + barcode.tag + ". Partial: " + barcode.toString());
+            }
+            Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
         } catch(IOException e) {
             Log.e(TAG, "IO exception on write image", e);
         }
@@ -259,6 +286,7 @@ public class MainActivity extends AppCompatActivity
         int width = size.width;
         int height = size.height;
         try {
+            long start = System.currentTimeMillis();
             BitmapRegionDecoder d = BitmapRegionDecoder.newInstance(data, 0, data.length, false);
             BitmapFactory.Options o = new BitmapFactory.Options();
 
@@ -267,7 +295,7 @@ public class MainActivity extends AppCompatActivity
             for(int i=0; i<b.getHeight(); i++) {
                 int col = b.getPixel(width / 4, i);
                 vals[b.getHeight()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
-                bos.write(String.valueOf(vals[i])) ;
+                bos.write(String.valueOf(vals[b.getHeight()-1-i])) ;
                 if(i < 0) {
                     bos.write(",");
                 }
@@ -275,20 +303,21 @@ public class MainActivity extends AppCompatActivity
             bos.write("\n");
             bos.flush();
             b.recycle();
+            long decoded = System.currentTimeMillis();
+            Log.i(TAG, "Image read time: " + (decoded - start) + "ms");
+            start = System.currentTimeMillis();
 
             //try java decoding
             BarcodeExtractor e = new BarcodeExtractor(vals);
-            e.transform(10, 0.5);
-            e.threshold(0.5);
-            int[] bars = e.getBars();
-            try {
-                BarcodeSpec.Barcode barcode = BarcodeSpec.ISBN.parse(bars);
+            BarcodeSpec.Barcode barcode = e.multiExtract(BarcodeSpec.ISBN);
+            if(barcode.isValid) {
                 Toast.makeText(this, "ISBN Read: " + barcode.toString(),
                         Toast.LENGTH_LONG).show();
-            } catch(BarcodeSpec.BarcodeException exception) {
-                Toast.makeText(this, "Error getting barcode: " + exception.getMessage() + ". Partial: " + exception.partial.toString(),
+            } else {
+                Toast.makeText(this, "Error getting barcode: " + barcode.tag + ". Partial: " + barcode.toString(),
                         Toast.LENGTH_LONG).show();
             }
+            Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
 
         } catch(IOException e) {
             Log.e(TAG, "IOException on image decode", e);

@@ -27,7 +27,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         pHeight = 0;
         pWidth = 0;
         callback = null;
+        this.setMeasuredDimension(0, 0);
     }
+
 
     public void setPreviewImageCallback(PreviewImageCallback callback) {
         this.callback = callback;

@@ -32,3 +32,17 @@ for(i in 1:nrow(digisbn)) {
              ")"), 
       ";\n")
 }
+
+for(i in 1:nrow(digisbn)) {
+  cat(paste0('dig1isbn.put("', 
+             paste0(lengthsisbn[i,], collapse=", "),
+             '}, ',
+             ifelse(digisbn$scheme[i]=="RIGHT", "true", "false"),
+             '), new BarcodeDigit("',
+             digisbn$dig[i],
+             '", "',
+             digisbn$scheme[i],
+             '")',
+             ")"), 
+      ";\n")
+}
