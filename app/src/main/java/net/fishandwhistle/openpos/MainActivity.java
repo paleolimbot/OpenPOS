@@ -1,5 +1,6 @@
 package net.fishandwhistle.openpos;
 
+import android.app.DownloadManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -11,6 +12,7 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.media.Image;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
@@ -31,6 +33,10 @@ import android.widget.Toast;
 
 import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
+import net.fishandwhistle.openpos.isbn.ISBNCache;
+import net.fishandwhistle.openpos.isbn.ISBNDbQuery;
+
+import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -51,7 +57,8 @@ public class MainActivity extends AppCompatActivity
     private Camera mCamera;
     private CameraPreview mPreview;
     private FileWriter bos ;
-    private List<String> barcodes ;
+    private ISBNCache isbnCache ;
+    private BarcodeSpec.Barcode lastBarcode ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +88,8 @@ public class MainActivity extends AppCompatActivity
             this.finish();
         }
 
-        barcodes = new ArrayList<>();
+        isbnCache = new ISBNCache(this);
+        lastBarcode = null;
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -229,15 +237,43 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void onBarcodeRead(BarcodeSpec.Barcode b) {
-        String bc = b.toString();
-        if(!barcodes.contains(bc)) {
-            barcodes.add(bc);
-            Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
-            v.vibrate(200);
-            Toast.makeText(this, "ISBN Read: " + b.toString(), Toast.LENGTH_LONG).show();
+        if(lastBarcode == null) {
+            onNewBarcode(b);
+        } else if(!b.equals(lastBarcode)) {
+            onNewBarcode(b);
+        } else if(b.equals(lastBarcode) && ((b.timeread - lastBarcode.timeread) > 1000)) {
+            onNewBarcode(b);
+        }
+        lastBarcode = b;
+    }
+
+    private void onNewBarcode(BarcodeSpec.Barcode b) {
+        Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
+        v.vibrate(150);
+        this.queryISBN(b);
+    }
+
+    private void queryISBN(BarcodeSpec.Barcode b) {
+        String title = isbnCache.get(b.toString());
+        if(title != null) {
+            Toast.makeText(MainActivity.this, title, Toast.LENGTH_SHORT).show();
+        } else {
+            ISBNDbQuery q = new ISBNDbQuery(this, b.toString(), new ISBNDbQuery.ISBNCallback() {
+                @Override
+                public void onISBNQueried(String isbn, String title) {
+                    if(title != null) {
+                        Toast.makeText(MainActivity.this, title, Toast.LENGTH_SHORT).show();
+                        isbnCache.put(isbn, title);
+                    } else {
+                        Toast.makeText(MainActivity.this, "Error fetching ISBN data", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            q.query();
         }
     }
 
+    @Override
     public void onPreviewImage(byte[] data, int format, int width, int height) {
         try {
             long start = System.currentTimeMillis();

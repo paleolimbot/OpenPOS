@@ -182,7 +182,7 @@ public class BarcodeSpec {
         public boolean equals(Object o) {
             if(o instanceof Barcode) {
                 Barcode b = (Barcode)o;
-                return b.toString().equals(this.toString()) && this.type.equals(b.toString()) ;
+                return b.toString().equals(this.toString()) && this.type.equals(b.type) ;
             } else {
                 return false;
             }
