@@ -33,16 +33,12 @@ for(i in 1:nrow(digisbn)) {
       ";\n")
 }
 
-for(i in 1:nrow(digisbn)) {
+for(i in 1:nrow(dig1isbn)) {
   cat(paste0('dig1isbn.put("', 
-             paste0(lengthsisbn[i,], collapse=", "),
-             '}, ',
-             ifelse(digisbn$scheme[i]=="RIGHT", "true", "false"),
-             '), new BarcodeDigit("',
-             digisbn$dig[i],
-             '", "',
-             digisbn$scheme[i],
-             '")',
+             dig1isbn$code[i],
+             '", new BarcodeDigit("',
+             dig1isbn$dig[i],
+             '", "FIRSTDIGIT")',
              ")"), 
       ";\n")
 }
