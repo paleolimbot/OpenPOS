@@ -1,8 +1,7 @@
-package net.fishandwhistle.openpos.isbn;
+package net.fishandwhistle.openpos.api;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.PowerManager;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -21,57 +20,68 @@ import java.util.Set;
  * Created by dewey on 2016-10-02.
  */
 
-public class ISBNDbQuery {
+public abstract class APIQuery {
 
+    private static final String TAG = "APIQuery" ;
     private static Set<String> currentRequests = new HashSet<>();
 
-    private String isbnNum ;
-    private ISBNCallback callback ;
+    private String input;
+    private APICallback callback ;
     private Context context ;
     private DownloadTask task;
+    private TextApiCache cache;
 
-    public ISBNDbQuery(Context context, String isbn, ISBNCallback callback) {
-        this.isbnNum = isbn;
+    public APIQuery(Context context, String isbn, APICallback callback) {
+        this.input = isbn;
         this.callback = callback;
         this.context = context;
+        this.cache = new TextApiCache(context);
     }
 
+    protected abstract String getUrl(String input) ;
+    
+    protected abstract JSONObject parseJSON(String json);
+    
     public boolean query() {
-        String apikey = "T89SFTZN";
-        String url = "http://isbndb.com/api/v2/json/" + apikey + "/book/" + isbnNum;
+        String url = this.getUrl(this.input);
         if(currentRequests.contains(url)) {
-            Log.i("ISBNDbQuery", "Disregarding redundant request: " + isbnNum);
+            Log.i(TAG, "Disregarding redundant request: " + input);
             return false;
         } else {
-            currentRequests.add(url);
-            task = new DownloadTask(context);
-            task.execute(url);
-            return true;
+            String output = cache.get(url);
+            if(output != null) {
+                callback.onQueryResult(this.input, this.parseJSON(output));
+                return false;
+            } else {
+                currentRequests.add(url);
+                task = new DownloadTask(context);
+                task.execute(url);
+                return true;
+            }
         }
     }
 
-    public interface ISBNCallback {
-        void onISBNQueried(String isbn, String title);
+    public interface APICallback {
+        void onQueryResult(String input, JSONObject object);
     }
 
-    private class DownloadTask extends AsyncTask<String, Integer, String> {
+    protected class DownloadTask extends AsyncTask<String, Integer, JSONObject> {
 
         private Context context;
-        private PowerManager.WakeLock mWakeLock;
 
         public DownloadTask(Context context) {
             this.context = context;
         }
 
         @Override
-        protected String doInBackground(String... sUrl) {
+        protected JSONObject doInBackground(String... sUrl) {
             String out = null;
             InputStream input = null;
             ByteArrayOutputStream output = null;
             HttpURLConnection connection = null;
             try {
                 URL url = new URL(sUrl[0]);
-                Log.i("ISBNDbQuery", "starting download from " + url.toString());
+                Log.i(TAG, "starting download from " + url.toString());
                 connection = (HttpURLConnection) url.openConnection();
                 connection.connect();
 
@@ -79,7 +89,7 @@ public class ISBNDbQuery {
                 // instead of the file
                 if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     currentRequests.remove(sUrl[0]);
-                    Log.e("ISBNDbQuery", "Server returned HTTP " + connection.getResponseCode()
+                    Log.e(TAG, "Server returned HTTP " + connection.getResponseCode()
                             + " " + connection.getResponseMessage());
                     return null;
                 }
@@ -108,9 +118,9 @@ public class ISBNDbQuery {
                         publishProgress((int) (total * 100 / fileLength));
                     output.write(data, 0, count);
                 }
-                Log.i("ISBNDbQuery", "Download complete");
+                Log.i(TAG, "Download complete");
             } catch (Exception e) {
-                Log.e("ISBNDbQuery", "Exception in download", e);
+                Log.e(TAG, "Exception in download", e);
                 currentRequests.remove(sUrl[0]);
                 return null;
             } finally {
@@ -134,33 +144,18 @@ public class ISBNDbQuery {
             }
 
             // do parsing
-            try {
-                Log.i("ISBNDbQuery", "Parsing JSON data");
-                JSONObject o = new JSONObject(out);
-                if(o.has("error")) {
-                    Log.e("ISBNDbQuery", "Error from database: " + o.getString("error"));
-                    currentRequests.remove(sUrl[0]);
-                    return null;
-                } else {
-                    JSONArray a = o.getJSONArray("data");
-                    JSONObject book = a.getJSONObject(0);
-                    currentRequests.remove(sUrl[0]);
-                    return book.getString("title");
-                }
-            } catch(JSONException e) {
-                Log.e("ISBNDbQuery", "Error parsing JSON", e);
-                currentRequests.remove(sUrl[0]);
-                return null;
-            }
+            cache.put(sUrl[0], out);
+            currentRequests.remove(sUrl[0]);
+            return parseJSON(out);
 
         }
 
         @Override
-        protected void onPostExecute(String s) {
-            if(s==null) {
-                Log.e("ISBNDbQuery", "onPostExecute: null string");
+        protected void onPostExecute(JSONObject o) {
+            if(o==null) {
+                Log.e(TAG, "onPostExecute: null object");
             }
-            callback.onISBNQueried(isbnNum, s);
+            callback.onQueryResult(input, o);
         }
     }
 

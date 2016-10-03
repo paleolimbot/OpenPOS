@@ -1,23 +1,17 @@
 package net.fishandwhistle.openpos;
 
-import android.app.DownloadManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Color;
-import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
-import android.media.Image;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -31,25 +25,24 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import net.fishandwhistle.openpos.api.ISBNApi;
 import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
-import net.fishandwhistle.openpos.isbn.ISBNCache;
-import net.fishandwhistle.openpos.isbn.ISBNDbQuery;
+import net.fishandwhistle.openpos.barcode.ISBNSpec;
+import net.fishandwhistle.openpos.api.APIQuery;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, Camera.PictureCallback, CameraPreview.PreviewImageCallback {
+        implements NavigationView.OnNavigationItemSelectedListener, CameraPreview.PreviewImageCallback {
 
     private static final String TAG = "MainActivity";
     private static final String CHARS = "0123456789ABCDEF";
@@ -57,7 +50,6 @@ public class MainActivity extends AppCompatActivity
     private Camera mCamera;
     private CameraPreview mPreview;
     private FileWriter bos ;
-    private ISBNCache isbnCache ;
     private BarcodeSpec.Barcode lastBarcode ;
 
     @Override
@@ -88,16 +80,7 @@ public class MainActivity extends AppCompatActivity
             this.finish();
         }
 
-        isbnCache = new ISBNCache(this);
         lastBarcode = null;
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mCamera.takePicture(null, null, MainActivity.this);
-            }
-        });
     }
 
     @Override
@@ -254,23 +237,22 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void queryISBN(BarcodeSpec.Barcode b) {
-        String title = isbnCache.get(b.toString());
-        if(title != null) {
-            Toast.makeText(MainActivity.this, title, Toast.LENGTH_SHORT).show();
-        } else {
-            ISBNDbQuery q = new ISBNDbQuery(this, b.toString(), new ISBNDbQuery.ISBNCallback() {
-                @Override
-                public void onISBNQueried(String isbn, String title) {
-                    if(title != null) {
-                        Toast.makeText(MainActivity.this, title, Toast.LENGTH_SHORT).show();
-                        isbnCache.put(isbn, title);
-                    } else {
-                        Toast.makeText(MainActivity.this, "Error fetching ISBN data", Toast.LENGTH_SHORT).show();
+        APIQuery q = new ISBNApi(this, b.toString(), new APIQuery.APICallback() {
+            @Override
+            public void onQueryResult(String isbn, JSONObject o) {
+                if(o != null) {
+                    try {
+                        Toast.makeText(MainActivity.this, o.getString("title"), Toast.LENGTH_SHORT).show();
+                    } catch(JSONException e) {
+                        Log.e(TAG, "Error getting title", e);
                     }
+                } else {
+                    Toast.makeText(MainActivity.this, "Error fetching ISBN data", Toast.LENGTH_SHORT).show();
                 }
-            });
-            q.query();
-        }
+            }
+        });
+        q.query();
+
     }
 
     @Override
@@ -302,7 +284,7 @@ public class MainActivity extends AppCompatActivity
 
             //try java decoding
             BarcodeExtractor e = new BarcodeExtractor(vals);
-            BarcodeSpec.Barcode barcode = e.multiExtract(BarcodeSpec.ISBN);
+            BarcodeSpec.Barcode barcode = e.multiExtract(new ISBNSpec());
             if(barcode.isValid) {
                 Log.i(TAG, "ISBN Read: " + barcode.toString());
                 this.onBarcodeRead(barcode);
@@ -313,52 +295,6 @@ public class MainActivity extends AppCompatActivity
         } catch(IOException e) {
             Log.e(TAG, "IO exception on write image", e);
         }
-    }
-
-    @Override
-    public void onPictureTaken(byte[] data, Camera camera) {
-        Camera.Parameters params = camera.getParameters();
-        Camera.Size size = params.getPictureSize();
-        int width = size.width;
-        int height = size.height;
-        try {
-            long start = System.currentTimeMillis();
-            BitmapRegionDecoder d = BitmapRegionDecoder.newInstance(data, 0, data.length, false);
-            BitmapFactory.Options o = new BitmapFactory.Options();
-
-            Bitmap b = BitmapFactory.decodeByteArray(data, 0, data.length);
-            double[] vals = new double[b.getHeight()];
-            for(int i=0; i<b.getHeight(); i++) {
-                int col = b.getPixel(width / 4, i);
-                vals[b.getHeight()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
-                bos.write(String.valueOf(vals[b.getHeight()-1-i])) ;
-                if(i < 0) {
-                    bos.write(",");
-                }
-            }
-            bos.write("\n");
-            bos.flush();
-            b.recycle();
-            long decoded = System.currentTimeMillis();
-            Log.i(TAG, "Image read time: " + (decoded - start) + "ms");
-            start = System.currentTimeMillis();
-
-            //try java decoding
-            BarcodeExtractor e = new BarcodeExtractor(vals);
-            BarcodeSpec.Barcode barcode = e.multiExtract(BarcodeSpec.ISBN);
-            if(barcode.isValid) {
-                Toast.makeText(this, "ISBN Read: " + barcode.toString(),
-                        Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(this, "Error getting barcode: " + barcode.tag + ". Partial: " + barcode.toString(),
-                        Toast.LENGTH_LONG).show();
-            }
-            Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
-
-        } catch(IOException e) {
-            Log.e(TAG, "IOException on image decode", e);
-        }
-        mCamera.startPreview();
     }
 
 }
