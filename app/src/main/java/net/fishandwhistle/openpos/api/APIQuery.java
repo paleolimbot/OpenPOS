@@ -31,8 +31,8 @@ public abstract class APIQuery {
     private DownloadTask task;
     private TextApiCache cache;
 
-    public APIQuery(Context context, String isbn, APICallback callback) {
-        this.input = isbn;
+    public APIQuery(Context context, String input, APICallback callback) {
+        this.input = input;
         this.callback = callback;
         this.context = context;
         this.cache = new TextApiCache(context);
@@ -50,6 +50,7 @@ public abstract class APIQuery {
         } else {
             String output = cache.get(url);
             if(output != null) {
+                Log.i(TAG, "Using cached data for input " + input);
                 callback.onQueryResult(this.input, this.parseJSON(output));
                 return false;
             } else {

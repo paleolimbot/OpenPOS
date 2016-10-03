@@ -11,11 +11,11 @@ import org.json.JSONObject;
  * Created by dewey on 2016-10-02.
  */
 
-public class ISBNApi extends APIQuery {
+public class ISBNQuery extends APIQuery {
     private static final String TAG = "ISBNApi";
 
-    public ISBNApi(Context context, String isbn, APICallback callback) {
-        super(context, isbn, callback);
+    public ISBNQuery(Context context, String id, APICallback callback) {
+        super(context, id, callback);
     }
 
     @Override

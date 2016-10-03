@@ -3,7 +3,6 @@ package net.fishandwhistle.openpos;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BitmapRegionDecoder;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
@@ -11,9 +10,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
-import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -25,11 +22,13 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import net.fishandwhistle.openpos.api.ISBNApi;
+import net.fishandwhistle.openpos.api.ISBNQuery;
+import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.ISBNSpec;
 import net.fishandwhistle.openpos.api.APIQuery;
+import net.fishandwhistle.openpos.barcode.UPCSpec;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,7 +44,6 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, CameraPreview.PreviewImageCallback {
 
     private static final String TAG = "MainActivity";
-    private static final String CHARS = "0123456789ABCDEF";
 
     private Camera mCamera;
     private CameraPreview mPreview;
@@ -233,26 +231,40 @@ public class MainActivity extends AppCompatActivity
     private void onNewBarcode(BarcodeSpec.Barcode b) {
         Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(150);
-        this.queryISBN(b);
-    }
 
-    private void queryISBN(BarcodeSpec.Barcode b) {
-        APIQuery q = new ISBNApi(this, b.toString(), new APIQuery.APICallback() {
-            @Override
-            public void onQueryResult(String isbn, JSONObject o) {
-                if(o != null) {
-                    try {
-                        Toast.makeText(MainActivity.this, o.getString("title"), Toast.LENGTH_SHORT).show();
-                    } catch(JSONException e) {
-                        Log.e(TAG, "Error getting title", e);
+        APIQuery q ;
+        if(b.type.equals("ISBN") && (b.digits.get(0).digit.equals("9"))) {
+            q = new ISBNQuery(this, b.toString(), new APIQuery.APICallback() {
+                @Override
+                public void onQueryResult(String isbn, JSONObject o) {
+                    if(o != null) {
+                        try {
+                            Toast.makeText(MainActivity.this, o.getString("title"), Toast.LENGTH_SHORT).show();
+                        } catch(JSONException e) {
+                            Log.e(TAG, "Error getting title", e);
+                        }
+                    } else {
+                        Toast.makeText(MainActivity.this, "Error fetching ISBN data", Toast.LENGTH_SHORT).show();
                     }
-                } else {
-                    Toast.makeText(MainActivity.this, "Error fetching ISBN data", Toast.LENGTH_SHORT).show();
                 }
-            }
-        });
+            });
+        } else {
+            q = new UPCQuery(this, b.toString(), new APIQuery.APICallback() {
+                @Override
+                public void onQueryResult(String isbn, JSONObject o) {
+                    if(o != null) {
+                        try {
+                            Toast.makeText(MainActivity.this, o.getString("description"), Toast.LENGTH_SHORT).show();
+                        } catch(JSONException e) {
+                            Log.e(TAG, "Error getting title", e);
+                        }
+                    } else {
+                        Toast.makeText(MainActivity.this, "Error fetching ISBN data", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
         q.query();
-
     }
 
     @Override
@@ -284,12 +296,16 @@ public class MainActivity extends AppCompatActivity
 
             //try java decoding
             BarcodeExtractor e = new BarcodeExtractor(vals);
-            BarcodeSpec.Barcode barcode = e.multiExtract(new ISBNSpec());
-            if(barcode.isValid) {
-                Log.i(TAG, "ISBN Read: " + barcode.toString());
-                this.onBarcodeRead(barcode);
+            BarcodeSpec.Barcode isbn = e.multiExtract(new ISBNSpec());
+            BarcodeSpec.Barcode upc = e.multiExtract(new UPCSpec());
+            if(upc.isValid) {
+                Log.i(TAG, "UPC Read: " + upc.toString());
+                this.onBarcodeRead(upc);
+            } else if(isbn.isValid) {
+                Log.i(TAG, "ISBN Read: " + isbn.toString());
+                this.onBarcodeRead(isbn);
             } else {
-                Log.i(TAG, "Error getting barcode: " + barcode.tag + ". Partial: " + barcode.toString());
+                Log.i(TAG, "Barcode error. ISBN:" + isbn.toString() + " UPC:" + upc.toString());
             }
             Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
         } catch(IOException e) {
