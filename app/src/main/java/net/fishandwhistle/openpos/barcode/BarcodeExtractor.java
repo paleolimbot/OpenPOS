@@ -90,6 +90,22 @@ public class BarcodeExtractor {
         return out;
     }
 
+    public BarcodeSpec.Barcode multiExtract(BarcodeSpec[] specs) {
+        BarcodeSpec.Barcode best = null;
+        for(BarcodeSpec spec: specs) {
+            BarcodeSpec.Barcode b = multiExtract(spec);
+            if(b.isValid) {
+                return b;
+            } else if (best != null){
+                if(b.validDigits > best.validDigits) {
+                    best = b;
+                }
+            } else {
+                best = b;
+            }
+        }
+        return best;
+    }
 
     public BarcodeSpec.Barcode multiExtract(BarcodeSpec spec) {
         BarcodeSpec.Barcode best = null;

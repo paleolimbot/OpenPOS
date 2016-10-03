@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity
             long start = System.currentTimeMillis();
 
             YuvImage y = new YuvImage(data, format, width, height, null);
-            File f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
+            File f = new File(this.getCacheDir(), "temppic.jpg");
             FileOutputStream fos = new FileOutputStream(f);
             y.compressToJpeg(new Rect(width / 4, 0, width / 4 + 25, height-1), 95, fos);
             fos.close();
@@ -297,20 +297,12 @@ public class MainActivity extends AppCompatActivity
 
             //try java decoding
             BarcodeExtractor e = new BarcodeExtractor(vals);
-            BarcodeSpec.Barcode isbn = e.multiExtract(new EANSpec());
-            BarcodeSpec.Barcode upc = e.multiExtract(new UPCASpec());
-            BarcodeSpec.Barcode upce = e.multiExtract(new UPCESpec());
-            if(upc.isValid) {
-                Log.i(TAG, "UPC Read: " + upc.toString());
-                this.onBarcodeRead(upc);
-            } else if(isbn.isValid) {
-                Log.i(TAG, "EAN Read: " + isbn.toString());
-                this.onBarcodeRead(isbn);
-            } else if(upce.isValid) {
-                Log.i(TAG, "UPC/E Read: " + upce.toString());
-                this.onBarcodeRead(upce);
+            BarcodeSpec.Barcode code = e.multiExtract(new BarcodeSpec[] {new EANSpec(), new UPCASpec(), new UPCESpec()});
+            if(code.isValid) {
+                Log.i(TAG, code.type + " Read: " + code.toString());
+                this.onBarcodeRead(code);
             } else {
-                Log.i(TAG, "Barcode error. EAN:" + isbn.toString() + " UPC:" + upc.toString() + " UPC/E:" + upce.toString());
+                Log.i(TAG, "Barcode error. " + code.type + ": " + code.toString());
             }
             Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
         } catch(IOException e) {
