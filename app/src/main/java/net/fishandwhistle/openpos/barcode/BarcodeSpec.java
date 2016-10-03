@@ -41,7 +41,7 @@ public abstract class BarcodeSpec {
 
         for(Map.Entry<BarcodePattern, BarcodeDigit> entry : digits.entrySet()) {
             BarcodePattern p = entry.getKey();
-            if(entry.getKey().equals(pattern)) {
+            if(p.equals(pattern)) {
                 return entry.getValue();
             }
         }
@@ -94,19 +94,36 @@ public abstract class BarcodeSpec {
     public static class BarcodePattern {
         public int[] widths;
         public boolean startsWith;
+        private int intValue ;
 
         public BarcodePattern(int[] widths, boolean startsWith) {
             this.widths = widths;
             this.startsWith = startsWith;
+
+            String outbin = "";
+            boolean value = startsWith;
+            for (int width : widths) {
+                String val;
+                if (value) {
+                    val = "1";
+                } else {
+                    val = "0";
+                }
+                for (int j = 0; j < width; j++) {
+                    outbin += val;
+                }
+                value = !value;
+            }
+            intValue = Integer.valueOf(outbin, 2);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.intValue;
         }
 
         public boolean equals(Object o) {
-            if(o instanceof BarcodePattern) {
-                BarcodePattern b = (BarcodePattern) o;
-                return (b.startsWith == this.startsWith) && all(eq(this.widths, b.widths));
-            } else {
-                return false;
-            }
+            return this.hashCode() == o.hashCode();
         }
     }
 

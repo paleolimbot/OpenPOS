@@ -1,5 +1,6 @@
 package net.fishandwhistle.openpos.barcode;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static net.fishandwhistle.openpos.barcode.ArrayMath.any;
@@ -17,11 +18,19 @@ public abstract class ISBNUPCSpec extends BarcodeSpec {
 
     private int nbars;
     private int nbarsSide;
+    private int begGuardLength ;
+    private int endGuardLength ;
+    private int middleGuardLength ;
 
-    public ISBNUPCSpec(String type, Map<BarcodePattern, BarcodeDigit> digits) {
+    public ISBNUPCSpec(String type, Map<BarcodePattern, BarcodeDigit> digits,
+                       int begGuardLength, int middleGuardLength, int endGuardLength,
+                       int nbars) {
         super(type, digits, 7);
-        this.nbars = 59;
-        this.nbarsSide = (nbars - 3 - 3 - 5) / 2;
+        this.begGuardLength = begGuardLength;
+        this.endGuardLength = endGuardLength;
+        this.middleGuardLength = middleGuardLength;
+        this.nbars = nbars;
+        this.nbarsSide = (nbars - begGuardLength - endGuardLength - middleGuardLength) / 2;
     }
 
 
@@ -36,22 +45,22 @@ public abstract class ISBNUPCSpec extends BarcodeSpec {
         //test number of bars
         if(bars.length < nbars) throw new BarcodeException("Not enough bars to create code", b);
         // test start code
-        int[] leftguard = subset(bars, 0, 3);
+        int[] leftguard = subset(bars, 0, begGuardLength);
         double barsize = mean(leftguard);
-        if(any(gt(div(leftguard, barsize), 3))) throw new BarcodeException("Left guard has irregular barsize", b);
+        if(any(gt(div(leftguard, barsize), 3.0))) throw new BarcodeException("Left guard has irregular barsize", b);
         // assign left side
-        int[] leftside = subset(bars, 3, nbarsSide);
-        boolean[] vleftside = subset(vals, 3, nbarsSide);
+        int[] leftside = subset(bars, begGuardLength, nbarsSide);
+        boolean[] vleftside = subset(vals, begGuardLength, nbarsSide);
         // test middle guard
-        int[] middleguard = subset(bars, nbarsSide+3, 5);
-        barsize = (barsize * 3 + mean(middleguard) * 5) / 8.0;
-        if(any(gt(div(middleguard, barsize), 3))) throw new BarcodeException("Middle guard has irregular barsize", b);
-        int[] rightside = subset(bars, nbarsSide+3+5, nbarsSide);
-        boolean[] vrightside = subset(vals, nbarsSide+3+5, nbarsSide);
+        int[] middleguard = subset(bars, nbarsSide+begGuardLength, middleGuardLength);
+        barsize = (barsize * begGuardLength + mean(middleguard) * middleGuardLength) / (begGuardLength+middleGuardLength);
+        if(any(gt(div(middleguard, barsize), 3.0))) throw new BarcodeException("Middle guard has irregular barsize", b);
+        int[] rightside = subset(bars, nbarsSide+begGuardLength+middleGuardLength, nbarsSide);
+        boolean[] vrightside = subset(vals, nbarsSide+begGuardLength+middleGuardLength, nbarsSide);
         // test end guard
-        int[] endguard = subset(bars, nbarsSide+3+5+nbarsSide, 3);
-        barsize = (barsize * 8 + mean(endguard) * 3) / 11.0;
-        if(any(gt(div(endguard, barsize), 3))) throw new BarcodeException("End guard has irregular barsize", b);
+        int[] endguard = subset(bars, nbarsSide+begGuardLength+middleGuardLength+nbarsSide, endGuardLength);
+        barsize = (barsize * (begGuardLength+middleGuardLength) + mean(endguard) * endGuardLength) / (begGuardLength+middleGuardLength+endGuardLength);
+        if(any(gt(div(endguard, barsize), 3.0))) throw new BarcodeException("End guard has irregular barsize", b);
 
         int[] decodable = concatenate(leftside, rightside);
         boolean[] vdecodable = concatenate(vleftside, vrightside);
@@ -61,7 +70,5 @@ public abstract class ISBNUPCSpec extends BarcodeSpec {
 
         return b;
     }
-
-
 
 }

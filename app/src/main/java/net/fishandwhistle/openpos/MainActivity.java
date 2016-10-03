@@ -28,7 +28,8 @@ import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.ISBNSpec;
 import net.fishandwhistle.openpos.api.APIQuery;
-import net.fishandwhistle.openpos.barcode.UPCSpec;
+import net.fishandwhistle.openpos.barcode.UPCASpec;
+import net.fishandwhistle.openpos.barcode.UPCESpec;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -297,15 +298,19 @@ public class MainActivity extends AppCompatActivity
             //try java decoding
             BarcodeExtractor e = new BarcodeExtractor(vals);
             BarcodeSpec.Barcode isbn = e.multiExtract(new ISBNSpec());
-            BarcodeSpec.Barcode upc = e.multiExtract(new UPCSpec());
+            BarcodeSpec.Barcode upc = e.multiExtract(new UPCASpec());
+            BarcodeSpec.Barcode upce = e.multiExtract(new UPCESpec());
             if(upc.isValid) {
                 Log.i(TAG, "UPC Read: " + upc.toString());
                 this.onBarcodeRead(upc);
             } else if(isbn.isValid) {
                 Log.i(TAG, "ISBN Read: " + isbn.toString());
                 this.onBarcodeRead(isbn);
+            } else if(upce.isValid) {
+                Log.i(TAG, "UPC/E Read: " + upce.toString());
+                this.onBarcodeRead(upce);
             } else {
-                Log.i(TAG, "Barcode error. ISBN:" + isbn.toString() + " UPC:" + upc.toString());
+                Log.i(TAG, "Barcode error. ISBN:" + isbn.toString() + " UPC:" + upc.toString() + " UPC/E:" + upce.toString());
             }
             Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
         } catch(IOException e) {

@@ -10,7 +10,7 @@ import java.util.Map;
 public class ISBNSpec extends ISBNUPCSpec {
 
     public ISBNSpec() {
-        super("ISBN", digisbn);
+        super("ISBN", digisbn, 3, 5, 3, 59);
     }
 
     private boolean checksum(Barcode b) {
@@ -67,8 +67,9 @@ public class ISBNSpec extends ISBNUPCSpec {
         return b;
     }
 
-    private static Map<BarcodePattern, BarcodeDigit> digisbn = new HashMap<>();
-    private static Map<String, BarcodeDigit> dig1isbn = new HashMap<>();
+
+    protected static Map<BarcodePattern, BarcodeDigit> digisbn = new HashMap<>();
+    protected static Map<String, BarcodeDigit> dig1isbn = new HashMap<>();
     static {
         digisbn.put(new BarcodePattern(new int[] {3, 2, 1, 1}, false), new BarcodeDigit("0", "A")) ;
         digisbn.put(new BarcodePattern(new int[] {2, 2, 2, 1}, false), new BarcodeDigit("1", "A")) ;
@@ -112,4 +113,5 @@ public class ISBNSpec extends ISBNUPCSpec {
         dig1isbn.put("ABABBA", new BarcodeDigit("8", "FIRSTDIGIT")) ;
         dig1isbn.put("ABBABA", new BarcodeDigit("9", "FIRSTDIGIT")) ;
     }
+
 }
