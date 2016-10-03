@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static net.fishandwhistle.openpos.barcode.ArrayMath.all;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.div;
-import static net.fishandwhistle.openpos.barcode.ArrayMath.eq;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.round;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.sum;
 
@@ -38,14 +36,11 @@ public abstract class BarcodeSpec {
 
     protected BarcodeDigit getDigit(int[] bars, boolean start) {
         BarcodePattern pattern = new BarcodePattern(round(div(bars, sum(bars)/(double)this.getNStripesPerDigit())), start);
-
-        for(Map.Entry<BarcodePattern, BarcodeDigit> entry : digits.entrySet()) {
-            BarcodePattern p = entry.getKey();
-            if(p.equals(pattern)) {
-                return entry.getValue();
-            }
+        if(digits.containsKey(pattern)) {
+           return digits.get(pattern);
+        } else {
+            return null;
         }
-        return null;
     }
 
     public static class Barcode {
