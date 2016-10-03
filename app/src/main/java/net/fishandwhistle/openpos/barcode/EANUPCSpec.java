@@ -14,7 +14,7 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
  * Created by dewey on 2016-10-02.
  */
 
-public abstract class ISBNUPCSpec extends BarcodeSpec {
+public abstract class EANUPCSpec extends BarcodeSpec {
 
     private int nbars;
     private int nbarsSide;
@@ -22,9 +22,9 @@ public abstract class ISBNUPCSpec extends BarcodeSpec {
     private int endGuardLength ;
     private int middleGuardLength ;
 
-    public ISBNUPCSpec(String type, Map<BarcodePattern, BarcodeDigit> digits,
-                       int begGuardLength, int middleGuardLength, int endGuardLength,
-                       int nbars) {
+    public EANUPCSpec(String type, Map<BarcodePattern, BarcodeDigit> digits,
+                      int begGuardLength, int middleGuardLength, int endGuardLength,
+                      int nbars) {
         super(type, digits, 7);
         this.begGuardLength = begGuardLength;
         this.endGuardLength = endGuardLength;

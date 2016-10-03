@@ -7,7 +7,7 @@ import java.util.Map;
  * Created by dewey on 2016-10-02.
  */
 
-public class UPCASpec extends ISBNUPCSpec {
+public class UPCASpec extends EANUPCSpec {
 
     public UPCASpec() {
         super("UPC/A", digupc, 3, 5, 3, 59);

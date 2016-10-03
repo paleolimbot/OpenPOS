@@ -26,7 +26,7 @@ import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
-import net.fishandwhistle.openpos.barcode.ISBNSpec;
+import net.fishandwhistle.openpos.barcode.EANSpec;
 import net.fishandwhistle.openpos.api.APIQuery;
 import net.fishandwhistle.openpos.barcode.UPCASpec;
 import net.fishandwhistle.openpos.barcode.UPCESpec;
@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity
         v.vibrate(150);
 
         APIQuery q ;
-        if(b.type.equals("ISBN") && (b.digits.get(0).digit.equals("9"))) {
+        if(b.type.equals("EAN") && (b.digits.get(0).digit.equals("9"))) {
             q = new ISBNQuery(this, b.toString(), new APIQuery.APICallback() {
                 @Override
                 public void onQueryResult(String isbn, JSONObject o) {
@@ -297,20 +297,20 @@ public class MainActivity extends AppCompatActivity
 
             //try java decoding
             BarcodeExtractor e = new BarcodeExtractor(vals);
-            BarcodeSpec.Barcode isbn = e.multiExtract(new ISBNSpec());
+            BarcodeSpec.Barcode isbn = e.multiExtract(new EANSpec());
             BarcodeSpec.Barcode upc = e.multiExtract(new UPCASpec());
             BarcodeSpec.Barcode upce = e.multiExtract(new UPCESpec());
             if(upc.isValid) {
                 Log.i(TAG, "UPC Read: " + upc.toString());
                 this.onBarcodeRead(upc);
             } else if(isbn.isValid) {
-                Log.i(TAG, "ISBN Read: " + isbn.toString());
+                Log.i(TAG, "EAN Read: " + isbn.toString());
                 this.onBarcodeRead(isbn);
             } else if(upce.isValid) {
                 Log.i(TAG, "UPC/E Read: " + upce.toString());
                 this.onBarcodeRead(upce);
             } else {
-                Log.i(TAG, "Barcode error. ISBN:" + isbn.toString() + " UPC:" + upc.toString() + " UPC/E:" + upce.toString());
+                Log.i(TAG, "Barcode error. EAN:" + isbn.toString() + " UPC:" + upc.toString() + " UPC/E:" + upce.toString());
             }
             Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
         } catch(IOException e) {
