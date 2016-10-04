@@ -14,7 +14,11 @@ import android.util.Log;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
+import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import net.fishandwhistle.openpos.api.ISBNQuery;
@@ -25,6 +29,8 @@ import net.fishandwhistle.openpos.barcode.EANSpec;
 import net.fishandwhistle.openpos.api.APIQuery;
 import net.fishandwhistle.openpos.barcode.UPCASpec;
 import net.fishandwhistle.openpos.barcode.UPCESpec;
+import net.fishandwhistle.openpos.items.ScannedItem;
+import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,15 +42,20 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BarcodeReaderActivity extends AppCompatActivity implements CameraPreview.PreviewImageCallback {
+public class BarcodeReaderActivity extends AppCompatActivity implements CameraPreview.PreviewImageCallback, APIQuery.APICallback {
 
     private static final String TAG = "BarcodeReader";
 
     private Camera mCamera;
     private CameraPreview mPreview;
-    private FileWriter bos ;
     private BarcodeSpec.Barcode lastBarcode ;
     private ImageBarcodeExtractor extractor ;
+    private ScannedItemAdapter items ;
+    private ListView list;
+    private TextView scannedItemsText ;
+    private Button showHideButton ;
+
+    private boolean enableScanning ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +69,50 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         FrameLayout mPreviewF = (FrameLayout) findViewById(R.id.bcreader_imageframe);
         mPreviewF.addView(mPreview, 0);
 
+        mPreview.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setEnableScanning(!enableScanning);
+            }
+        });
+
         lastBarcode = null;
         extractor = null;
+
+        items = new ScannedItemAdapter(this);
+        list = ((ListView)findViewById(R.id.bcreader_itemlist));
+        list.setAdapter(items);
+        scannedItemsText = ((TextView)findViewById(R.id.bcreader_scannedtitle));
+        showHideButton = (Button)findViewById(R.id.bcreader_showhide);
+        showHideButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(list.getVisibility() == View.VISIBLE) {
+                    list.setVisibility(View.GONE);
+                    showHideButton.setText(R.string.bcreader_show);
+                } else {
+                    list.setVisibility(View.VISIBLE);
+                    showHideButton.setText(R.string.bcreader_hide);
+                }
+            }
+        });
+
+        refreshItems();
+        enableScanning = true;
+    }
+
+    private void setEnableScanning(boolean value) {
+        TextView text = (TextView)findViewById(R.id.bcreader_disablescantext);
+        if(value) {
+            text.setText(R.string.bcreader_disablescan);
+            text.setTextColor(Color.argb(100, 255, 0, 0));
+            findViewById(R.id.bcreader_redbar).setVisibility(View.VISIBLE);
+        } else {
+            text.setText(R.string.bcreader_enablescan);
+            text.setTextColor(Color.argb(100, 0, 255, 0));
+            findViewById(R.id.bcreader_redbar).setVisibility(View.GONE);
+        }
+        enableScanning = value;
     }
 
     @Override
@@ -84,6 +137,11 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    private void refreshItems() {
+        scannedItemsText.setText(String.format(getString(R.string.bcreader_scanneditems), items.getCount()));
+        items.notifyDataSetInvalidated();
     }
 
     private void resetCamera(boolean reset) {
@@ -152,7 +210,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
     @Override
     public void onPreviewImage(byte[] data, int format, int width, int height) {
-        if((extractor == null) || extractor.isCancelled()) {
+        if(enableScanning && ((extractor == null) || extractor.isCancelled())) {
             Log.i(TAG, "Launching barcode extractor");
             extractor = new ImageBarcodeExtractor(data, format, width, height);
             extractor.execute("");
@@ -182,41 +240,29 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(150);
 
+        ScannedItem item = new ScannedItem(b.toString());
+        item.scanTime = b.timeread;
+        items.add(item);
+        this.refreshItems();
+
         APIQuery q ;
         if(b.type.equals("EAN") && (b.digits.get(0).digit.equals("9"))) {
-            q = new ISBNQuery(this, b.toString(), new APIQuery.APICallback() {
-                @Override
-                public void onQueryResult(String isbn, JSONObject o) {
-                    if(o != null) {
-                        try {
-                            Toast.makeText(BarcodeReaderActivity.this, o.getString("title"), Toast.LENGTH_SHORT).show();
-                        } catch(JSONException e) {
-                            Log.e(TAG, "Error getting title", e);
-                        }
-                    } else {
-                        Toast.makeText(BarcodeReaderActivity.this, "Error fetching ISBN data", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
+            q = new ISBNQuery(this, b.toString(), item, this);
         } else {
-            q = new UPCQuery(this, b.toString(), new APIQuery.APICallback() {
-                @Override
-                public void onQueryResult(String isbn, JSONObject o) {
-                    if(o != null) {
-                        try {
-                            Toast.makeText(BarcodeReaderActivity.this, o.getString("description"), Toast.LENGTH_SHORT).show();
-                        } catch(JSONException e) {
-                            Log.e(TAG, "Error getting title", e);
-                        }
-                    } else {
-                        Toast.makeText(BarcodeReaderActivity.this, "Error fetching ISBN data", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
+            q = new UPCQuery(this, b.toString(), item, this);
         }
         q.query();
     }
 
+    @Override
+    public void onQueryResult(String input, JSONObject object) {
+        if(object != null) {
+            this.refreshItems();
+            Log.i(TAG, "Got result for input " + input);
+        } else {
+            Log.e(TAG, "No result for input " + input);
+        }
+    }
 
 
     private class ImageBarcodeExtractor extends AsyncTask<String, String, BarcodeSpec.Barcode> {

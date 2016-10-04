@@ -5,4 +5,10 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+
+    <string name="bcreader_show">Show</string>
+    <string name="bcreader_hide">Hide</string>
+    <string name="bcreader_scanneditems" formatted="false">Scanned Items (%d)</string>
+    <string name="bcreader_enablescan">Tap to enable scanning</string>
+    <string name="bcreader_disablescan">Tap to disable scanning</string>
 </resources>

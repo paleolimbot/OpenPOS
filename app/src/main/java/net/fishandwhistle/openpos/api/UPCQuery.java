@@ -3,6 +3,8 @@ package net.fishandwhistle.openpos.api;
 import android.content.Context;
 import android.util.Log;
 
+import net.fishandwhistle.openpos.items.ScannedItem;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,8 +17,8 @@ public class UPCQuery extends APIQuery {
 
     private static final String TAG = "UPCApi";
 
-    public UPCQuery(Context context, String isbn, APICallback callback) {
-        super(context, isbn, callback);
+    public UPCQuery(Context context, String isbn, ScannedItem item, APICallback callback) {
+        super(context, isbn, item, callback);
     }
 
     @Override
@@ -26,7 +28,7 @@ public class UPCQuery extends APIQuery {
     }
 
     @Override
-    protected JSONObject parseJSON(String json) {
+    protected JSONObject parseJSON(String json, ScannedItem item) {
         try {
             Log.i(TAG, "Parsing JSON data");
             JSONObject o = new JSONObject(json);
@@ -34,6 +36,8 @@ public class UPCQuery extends APIQuery {
                 Log.e(TAG, "Error from database: " + o.getString("reason"));
                 return null;
             } else {
+                if(item != null)
+                    item.description = o.getString("description");
                 return o;
             }
         } catch(JSONException e) {

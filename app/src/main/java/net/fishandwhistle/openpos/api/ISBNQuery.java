@@ -3,6 +3,8 @@ package net.fishandwhistle.openpos.api;
 import android.content.Context;
 import android.util.Log;
 
+import net.fishandwhistle.openpos.items.ScannedItem;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,8 +16,8 @@ import org.json.JSONObject;
 public class ISBNQuery extends APIQuery {
     private static final String TAG = "ISBNApi";
 
-    public ISBNQuery(Context context, String id, APICallback callback) {
-        super(context, id, callback);
+    public ISBNQuery(Context context, String id, ScannedItem item, APICallback callback) {
+        super(context, id, item, callback);
     }
 
     @Override
@@ -25,7 +27,7 @@ public class ISBNQuery extends APIQuery {
     }
 
     @Override
-    protected JSONObject parseJSON(String json) {
+    protected JSONObject parseJSON(String json, ScannedItem item) {
         try {
             Log.i(TAG, "Parsing JSON data");
             JSONObject o = new JSONObject(json);
@@ -36,6 +38,22 @@ public class ISBNQuery extends APIQuery {
             } else {
                 JSONArray a = o.getJSONArray("data");
                 JSONObject book = a.getJSONObject(0);
+                String authorlist = "";
+                if(book.has("author_data")) {
+                    JSONArray authors = book.getJSONArray("author_data");
+                    for (int i = 0; i < authors.length(); i++) {
+                        if (authorlist.equals("")) {
+                            authorlist += authors.getJSONObject(i).getString("name");
+                        } else {
+                            authorlist += "; " + authors.get(i);
+                        }
+                    }
+                }
+                if(authorlist.equals("")) {
+                    authorlist = "No author";
+                }
+                if(item != null)
+                    item.description = String.format("%s (%s)", book.getString("title"), authorlist);
                 return book;
             }
         } catch(JSONException e) {

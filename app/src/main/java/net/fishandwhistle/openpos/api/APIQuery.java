@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import net.fishandwhistle.openpos.items.ScannedItem;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,17 +32,19 @@ public abstract class APIQuery {
     private Context context ;
     private DownloadTask task;
     private TextApiCache cache;
+    private ScannedItem item;
 
-    public APIQuery(Context context, String input, APICallback callback) {
+    public APIQuery(Context context, String input, ScannedItem item, APICallback callback) {
         this.input = input;
         this.callback = callback;
         this.context = context;
+        this.item = item;
         this.cache = new TextApiCache(context);
     }
 
     protected abstract String getUrl(String input) ;
     
-    protected abstract JSONObject parseJSON(String json);
+    protected abstract JSONObject parseJSON(String json, ScannedItem item);
     
     public boolean query() {
         String url = this.getUrl(this.input);
@@ -51,7 +55,7 @@ public abstract class APIQuery {
             String output = cache.get(url);
             if(output != null) {
                 Log.i(TAG, "Using cached data for input " + input);
-                callback.onQueryResult(this.input, this.parseJSON(output));
+                callback.onQueryResult(this.input, this.parseJSON(output, item));
                 return false;
             } else {
                 currentRequests.add(url);
@@ -147,7 +151,7 @@ public abstract class APIQuery {
             // do parsing
             cache.put(sUrl[0], out);
             currentRequests.remove(sUrl[0]);
-            return parseJSON(out);
+            return parseJSON(out, item);
 
         }
 
@@ -155,6 +159,9 @@ public abstract class APIQuery {
         protected void onPostExecute(JSONObject o) {
             if(o==null) {
                 Log.e(TAG, "onPostExecute: null object");
+            } else {
+                if(item != null)
+                    item.json = o.toString();
             }
             callback.onQueryResult(input, o);
         }
