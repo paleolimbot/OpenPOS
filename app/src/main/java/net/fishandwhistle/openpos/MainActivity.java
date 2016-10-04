@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity
     private CameraPreview mPreview;
     private FileWriter bos ;
     private BarcodeSpec.Barcode lastBarcode ;
+    private ImageBarcodeExtractor extractor ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,14 +74,8 @@ public class MainActivity extends AppCompatActivity
         FrameLayout mPreviewF = (FrameLayout) findViewById(R.id.main_imageframe);
         mPreviewF.addView(mPreview, 0);
 
-        File fout = new File(Environment.getExternalStorageDirectory(), "output.txt");
-        try {
-            bos = new FileWriter(fout);
-        } catch(IOException e) {
-            this.finish();
-        }
-
         lastBarcode = null;
+        extractor = null;
     }
 
     @Override
@@ -88,13 +84,8 @@ public class MainActivity extends AppCompatActivity
         mPreview.releaseCamera();
         mCamera.release();
         mCamera = null;
-        try {
-            bos.flush();
-            if(isFinishing()) {
-                bos.close();
-            }
-        } catch(IOException e) {
-            Log.e(TAG, "ERROR flushing stream");
+        if(extractor != null) {
+            extractor.cancel(false);
         }
     }
 
@@ -218,15 +209,35 @@ public class MainActivity extends AppCompatActivity
         return c; // returns null if camera is unavailable
     }
 
-    private void onBarcodeRead(BarcodeSpec.Barcode b) {
-        if(lastBarcode == null) {
-            onNewBarcode(b);
-        } else if(!b.equals(lastBarcode)) {
-            onNewBarcode(b);
-        } else if(b.equals(lastBarcode) && ((b.timeread - lastBarcode.timeread) > 1000)) {
-            onNewBarcode(b);
+
+    @Override
+    public void onPreviewImage(byte[] data, int format, int width, int height) {
+        if((extractor == null) || extractor.isCancelled()) {
+            Log.i(TAG, "Launching barcode extractor");
+            extractor = new ImageBarcodeExtractor(data, format, width, height);
+            extractor.execute("");
+        } else {
+            Log.i(TAG, "Currently decoding barcode, ignoring preview image");
         }
-        lastBarcode = b;
+    }
+
+    private void onBarcodeRead(BarcodeSpec.Barcode b) {
+        //release extractor
+        extractor = null;
+
+        if(b.isValid) {
+            Log.i(TAG, b.type + " Read: " + b.toString());
+            if(lastBarcode == null) {
+                onNewBarcode(b);
+            } else if(!b.equals(lastBarcode)) {
+                onNewBarcode(b);
+            } else if(b.equals(lastBarcode) && ((b.timeread - lastBarcode.timeread) > 1000)) {
+                onNewBarcode(b);
+            }
+            lastBarcode = b;
+        } else {
+            Log.i(TAG, "Barcode error. " + b.type + ": " + b.toString());
+        }
     }
 
     private void onNewBarcode(BarcodeSpec.Barcode b) {
@@ -268,45 +279,58 @@ public class MainActivity extends AppCompatActivity
         q.query();
     }
 
-    @Override
-    public void onPreviewImage(byte[] data, int format, int width, int height) {
-        try {
+
+
+    private class ImageBarcodeExtractor extends AsyncTask<String, String, BarcodeSpec.Barcode> {
+        private byte[] data;
+        private int format;
+        private int width;
+        private int height;
+
+        public ImageBarcodeExtractor(byte[] data, int format, int width, int height) {
+            this.data = data;
+            this.format = format;
+            this.width = width;
+            this.height = height;
+        }
+
+        @Override
+        protected BarcodeSpec.Barcode doInBackground(String... params) {
             long start = System.currentTimeMillis();
-
-            YuvImage y = new YuvImage(data, format, width, height, null);
-            File f = new File(this.getCacheDir(), "temppic.jpg");
-            FileOutputStream fos = new FileOutputStream(f);
-            y.compressToJpeg(new Rect(width / 4, 0, width / 4 + 25, height-1), 95, fos);
-            fos.close();
-            Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath());
-            double[] vals = new double[b.getHeight()];
-            for(int i=0; i<b.getHeight(); i++) {
-                int col = b.getPixel(0, i);
-                vals[b.getHeight()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
-                bos.write(String.valueOf(vals[b.getHeight()-1-i])) ;
-                if(i < 0) {
-                    bos.write(",");
+            BarcodeSpec.Barcode barcode = null;
+            try {
+                YuvImage y = new YuvImage(data, format, width, height, null);
+                File f = new File(MainActivity.this.getCacheDir(), "temppic.jpg");
+                FileOutputStream fos = new FileOutputStream(f);
+                y.compressToJpeg(new Rect(width / 4, 0, width / 4 + 25, height-1), 95, fos);
+                fos.close();
+                Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath());
+                double[] vals = new double[b.getHeight()];
+                for(int i=0; i<b.getHeight(); i++) {
+                    int col = b.getPixel(0, i);
+                    vals[b.getHeight()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
                 }
-            }
-            bos.flush();
-            b.recycle();
+                b.recycle();
+                data = null;
 
-            long decoded = System.currentTimeMillis();
-            Log.i(TAG, "Image read time: " + (decoded - start) + "ms");
-            start = System.currentTimeMillis();
+                long decoded = System.currentTimeMillis();
+                Log.i(TAG, "Image read time: " + (decoded - start) + "ms");
+                start = System.currentTimeMillis();
 
-            //try java decoding
-            BarcodeExtractor e = new BarcodeExtractor(vals);
-            BarcodeSpec.Barcode code = e.multiExtract(new BarcodeSpec[] {new EANSpec(), new UPCASpec(), new UPCESpec()});
-            if(code.isValid) {
-                Log.i(TAG, code.type + " Read: " + code.toString());
-                this.onBarcodeRead(code);
-            } else {
-                Log.i(TAG, "Barcode error. " + code.type + ": " + code.toString());
+                //do java decoding
+                BarcodeExtractor e = new BarcodeExtractor(vals);
+                barcode = e.multiExtract(new BarcodeSpec[] {new EANSpec(), new UPCASpec(), new UPCESpec()});
+
+            } catch(IOException e) {
+                Log.e(TAG, "IO exception on write image", e);
             }
             Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
-        } catch(IOException e) {
-            Log.e(TAG, "IO exception on write image", e);
+            return barcode;
+        }
+
+        @Override
+        protected void onPostExecute(BarcodeSpec.Barcode code) {
+            MainActivity.this.onBarcodeRead(code);
         }
     }
 
