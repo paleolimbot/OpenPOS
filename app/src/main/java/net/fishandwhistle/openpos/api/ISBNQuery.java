@@ -45,7 +45,7 @@ public class ISBNQuery extends APIQuery {
                         if (authorlist.equals("")) {
                             authorlist += authors.getJSONObject(i).getString("name");
                         } else {
-                            authorlist += "; " + authors.get(i);
+                            authorlist += "; " + authors.getJSONObject(i).getString("name");
                         }
                     }
                 }

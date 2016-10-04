@@ -97,7 +97,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
             }
         });
 
-        refreshItems();
+        refreshItems(false);
         enableScanning = true;
     }
 
@@ -139,9 +139,18 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         return true;
     }
 
-    private void refreshItems() {
+    private void refreshItems(boolean scrollToEnd) {
         scannedItemsText.setText(String.format(getString(R.string.bcreader_scanneditems), items.getCount()));
         items.notifyDataSetInvalidated();
+        if(scrollToEnd && items.getCount() > 1) {
+            list.post(new Runnable() {
+                @Override
+                public void run() {
+                    // Select the last row so it will scroll into view...
+                    list.setSelection(items.getCount() - 1);
+                }
+            });
+        }
     }
 
     private void resetCamera(boolean reset) {
@@ -243,7 +252,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         ScannedItem item = new ScannedItem(b.toString());
         item.scanTime = b.timeread;
         items.add(item);
-        this.refreshItems();
+        this.refreshItems(true);
 
         APIQuery q ;
         if(b.type.equals("EAN") && (b.digits.get(0).digit.equals("9"))) {
@@ -257,7 +266,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     @Override
     public void onQueryResult(String input, JSONObject object) {
         if(object != null) {
-            this.refreshItems();
+            this.refreshItems(false);
             Log.i(TAG, "Got result for input " + input);
         } else {
             Log.e(TAG, "No result for input " + input);
@@ -303,7 +312,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
                 //do java decoding
                 BarcodeExtractor e = new BarcodeExtractor(vals);
-                barcode = e.multiExtract(new BarcodeSpec[] {new EANSpec(), new UPCASpec(), new UPCESpec()});
+                barcode = e.multiExtract(new BarcodeSpec[] {new EANSpec(), new UPCASpec()});
 
             } catch(IOException e) {
                 Log.e(TAG, "IO exception on write image", e);
