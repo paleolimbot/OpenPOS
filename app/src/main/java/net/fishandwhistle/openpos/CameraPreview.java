@@ -42,6 +42,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         // underlying surface is created and destroyed.
         mHolder = getHolder();
         mHolder.addCallback(this);
+        Camera.Parameters params = mCamera.getParameters();
+        this.surfaceChanged(mHolder, params.getPreviewFormat(), params.getPreviewSize().width, params.getPreviewSize().height);
     }
 
     public void releaseCamera() {
