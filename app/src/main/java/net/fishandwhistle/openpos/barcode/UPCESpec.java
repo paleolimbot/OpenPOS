@@ -18,8 +18,6 @@ public class UPCESpec extends UPCASpec {
     public Barcode parse(int[] bars) throws BarcodeException {
         Barcode b = parse_common(bars) ;
 
-        if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
-
         //add additional digits
         String parityPattern = "";
         for(BarcodeDigit d: b.digits) {

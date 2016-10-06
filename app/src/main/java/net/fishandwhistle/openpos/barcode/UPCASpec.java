@@ -21,8 +21,6 @@ public class UPCASpec extends EANUPCSpec {
     public Barcode parse(int[] bars) throws BarcodeException {
         Barcode b = parse_common(bars) ;
 
-        if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
-
         //try checksum
         if(!this.checksum(b, 1, 3)) throw new BarcodeException("Checksum failed for barcode", b);
         //checksum isn't part of the code, remove it

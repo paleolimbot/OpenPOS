@@ -87,6 +87,8 @@ public abstract class EANUPCSpec extends BarcodeSpec {
             b.digits.add(this.getDigit(subset(decodable, i, 4), vdecodable[i]));
         }
 
+        if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
+
         return b;
     }
 
