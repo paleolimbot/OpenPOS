@@ -198,10 +198,20 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         Camera.Size best = sizes.get(0);
         for(int i=1; i<sizes.size(); i++) {
             Camera.Size s = sizes.get(i);
-            if(s.height > best.height) {
-                best = s;
-            } else if(s.height == best.height && s.width < best.width) {
-                best = s;
+            if(orientation == 0 || orientation == 2) {
+                //pick 'tallest' option
+                if (s.height > best.height) {
+                    best = s;
+                } else if (s.height == best.height && s.width < best.width) {
+                    best = s;
+                }
+            } else {
+                //pick 'widest' option
+                if (s.width > best.width) {
+                    best = s;
+                } else if (s.width == best.width && s.height < best.height) {
+                    best = s;
+                }
             }
         }
         params.setPictureSize(best.width, best.height);
