@@ -25,6 +25,7 @@ import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
+import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EANSpec;
 import net.fishandwhistle.openpos.api.APIQuery;
 import net.fishandwhistle.openpos.barcode.UPCASpec;
@@ -312,7 +313,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
                 //do java decoding
                 BarcodeExtractor e = new BarcodeExtractor(vals);
-                barcode = e.multiExtract(new BarcodeSpec[] {new EANSpec(), new UPCASpec()});
+                barcode = e.multiExtract(new BarcodeSpec[] {new UPCASpec(), new EANSpec(), new EAN8Spec()});
 
             } catch(IOException e) {
                 Log.e(TAG, "IO exception on write image", e);

@@ -13,23 +13,8 @@ public class EANSpec extends EANUPCSpec {
         super("EAN", digean, 3, 5, 3, 59);
     }
 
-    private boolean checksum(Barcode b) {
-        int[] numbers = new int[b.digits.size()];
-        for(int i=0; i<numbers.length; i++) {
-            numbers[i] = Integer.valueOf(b.digits.get(i).digit);
-        }
-        int oddsum = 0;
-        for(int i=0; i<numbers.length-1; i+=2) {
-            oddsum += numbers[i];
-        }
-        int evensum = 0;
-        for(int i=1; i<numbers.length; i+=2) {
-            evensum += numbers[i];
-        }
-        int s1 = evensum * 3 + oddsum;
-        int checksum = 10*(s1/10+1) - s1;
-        if(checksum == 10) checksum = 0;
-        return checksum == numbers[numbers.length-1];
+    public EANSpec(String type, int begGuardLength, int middleGuardLength, int endGuardLength, int nbars) {
+        super(type, digean, begGuardLength, middleGuardLength, endGuardLength, nbars);
     }
 
     public Barcode parse(int[] bars) throws BarcodeException {
@@ -61,7 +46,7 @@ public class EANSpec extends EANUPCSpec {
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
 
         //try checksum
-        if(!this.checksum(b)) throw new BarcodeException("Checksum failed for barcode", b);
+        if(!this.checksum(b, 3, 1)) throw new BarcodeException("Checksum failed for barcode", b);
         b.isValid = true;
 
         return b;
