@@ -63,6 +63,7 @@ public class CodabarSpec extends BarcodeSpec {
 
         // look for start/end character
         int startIndex = -1;
+        int endIndex = -1;
         List<BarcodeDigit> newdigs = new ArrayList<>();
         for(int i=0; i<b.digits.size(); i++) {
             BarcodeDigit d = b.digits.get(i);
@@ -72,6 +73,7 @@ public class CodabarSpec extends BarcodeSpec {
                 }
             } else {
                 if((d != null) && endChars.contains(d.digit)) {
+                    endIndex = i;
                     newdigs.add(d);
                     break;
                 }
@@ -81,6 +83,7 @@ public class CodabarSpec extends BarcodeSpec {
                 newdigs.add(d);
             }
         }
+        if(endIndex == -1) throw new BarcodeException("Invalid end character", b);
         if(fixedLength && newdigs.size() != minLength) throw new BarcodeException("Wrong number of decoded digits", b);
         if(newdigs.size() < minLength) throw new BarcodeException("Too few decoded digits", b);
         b.digits = newdigs;
