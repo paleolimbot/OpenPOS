@@ -17,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Display;
 import android.view.Menu;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ListView;
@@ -58,6 +59,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     private ListView list;
     private TextView scannedItemsText ;
     private Button showHideButton ;
+    private int cameraDisplayOrientation ;
 
     private boolean enableScanning ;
 
@@ -103,6 +105,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
         refreshItems(false);
         enableScanning = true;
+        cameraDisplayOrientation = -1;
     }
 
     private void setEnableScanning(boolean value) {
@@ -164,11 +167,20 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         }
         mCamera = getCameraInstance();
         int orientation = this.getScreenOrientation();
-        if(orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            mCamera.setDisplayOrientation(0);
+        Log.i(TAG, "resetCamera: Orientation: " + orientation);
+        if(orientation == 0) {
+            cameraDisplayOrientation = 90;
+        } else if(orientation == 1) {
+            cameraDisplayOrientation = 0;
+        } else if(orientation == 2) {
+            cameraDisplayOrientation = 270;
+        } else if(orientation == 3) {
+            cameraDisplayOrientation = 180;
         } else {
-            mCamera.setDisplayOrientation(90);
+            throw new RuntimeException("Unsupported orientation selected");
         }
+        mCamera.setDisplayOrientation(cameraDisplayOrientation);
+
         // get Camera parameters
         Camera.Parameters params = mCamera.getParameters();
         // set the focus mode
@@ -209,18 +221,8 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     }
 
     public int getScreenOrientation() {
-        Display getOrient = getWindowManager().getDefaultDisplay();
-        int orientation = Configuration.ORIENTATION_UNDEFINED;
-        if(getOrient.getWidth()==getOrient.getHeight()){
-            orientation = Configuration.ORIENTATION_SQUARE;
-        } else {
-            if(getOrient.getWidth() < getOrient.getHeight()){
-                orientation = Configuration.ORIENTATION_PORTRAIT;
-            } else {
-                orientation = Configuration.ORIENTATION_LANDSCAPE;
-            }
-        }
-        return orientation;
+        Display display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        return display.getRotation();
     }
 
     @Override
@@ -298,28 +300,50 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     }
 
     private Rect getRegion(int orientation, int width, int height) {
-        if(orientation == Configuration.ORIENTATION_PORTRAIT) {
+        if(orientation == 0) {
             return new Rect(width / 10, 0, width / 10 + 25, height-1);
-        } else {
+        } else if (orientation == 1){
             return new Rect(0, height / 10, width-1, height / 10 + 25);
+        } else if (orientation == 3) {
+            return new Rect(0, 9*height / 10, width-1, 9*height / 10 + 25);
+        } else if (orientation == 2) {
+            return new Rect(9*width / 10, 0, 9*width / 10 + 25, height-1);
+        } else {
+            throw new RuntimeException("Unsupported rotation detected: " + orientation);
         }
     }
 
-    private static double[] extractLineFromBitmap(Bitmap b) {
-        if(b.getHeight() > b.getWidth()) {
+    private static double[] extractLineFromBitmap(Bitmap b, int orientation) {
+        if(orientation == 0) {
             double[] vals = new double[b.getHeight()];
             for (int i = 0; i < b.getHeight(); i++) {
                 int col = b.getPixel(0, i);
                 vals[b.getHeight() - 1 - i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
             }
             return vals;
-        } else {
+        } else if (orientation == 1){
             double[] vals = new double[b.getWidth()];
             for (int i = 0; i < b.getWidth(); i++) {
                 int col = b.getPixel(i, 0);
                 vals[i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
             }
             return vals;
+        } else if (orientation == 3) {
+            double[] vals = new double[b.getWidth()];
+            for (int i = 0; i < b.getWidth(); i++) {
+                int col = b.getPixel(i, 0);
+                vals[b.getWidth()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
+            }
+            return vals;
+        } else if (orientation == 2) {
+            double[] vals = new double[b.getHeight()];
+            for (int i = 0; i < b.getHeight(); i++) {
+                int col = b.getPixel(0, i);
+                vals[i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
+            }
+            return vals;
+        } else {
+            throw new RuntimeException("Unsupported rotation detected: " + orientation);
         }
     }
 
@@ -349,7 +373,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
                 y.compressToJpeg(getRegion(orientation, width, height), 95, fos);
                 fos.close();
                 Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath());
-                double[] vals = extractLineFromBitmap(b);
+                double[] vals = extractLineFromBitmap(b, orientation);
                 b.recycle();
                 data = null;
 
