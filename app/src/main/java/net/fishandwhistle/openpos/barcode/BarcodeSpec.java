@@ -15,17 +15,11 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.sum;
 public abstract class BarcodeSpec {
 
     private Map<BarcodePattern, BarcodeDigit> digits ;
-    private int nstripesDigit ;
     private String type;
 
-    public BarcodeSpec(String type, Map<BarcodePattern, BarcodeDigit> digits, int nstripesDigit) {
+    public BarcodeSpec(String type, Map<BarcodePattern, BarcodeDigit> digits) {
         this.type = type;
         this.digits = digits;
-        this.nstripesDigit = nstripesDigit;
-    }
-
-    public int getNStripesPerDigit() {
-        return this.nstripesDigit;
     }
 
     public String getType() {
@@ -34,8 +28,10 @@ public abstract class BarcodeSpec {
 
     public abstract Barcode parse(int[] bars) throws BarcodeException;
 
+    protected abstract BarcodePattern getBarcodePattern(int[] bars, boolean start) ;
+
     protected BarcodeDigit getDigit(int[] bars, boolean start) {
-        BarcodePattern pattern = new BarcodePattern(round(div(bars, sum(bars)/(double)this.getNStripesPerDigit())), start);
+        BarcodePattern pattern = this.getBarcodePattern(bars, start);
         if(digits.containsKey(pattern)) {
            return digits.get(pattern);
         } else {

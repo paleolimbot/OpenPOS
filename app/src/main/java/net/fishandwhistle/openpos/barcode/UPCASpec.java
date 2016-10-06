@@ -30,7 +30,7 @@ public class UPCASpec extends EANUPCSpec {
         return b;
     }
 
-    protected static Map<BarcodePattern, BarcodeDigit> digupc = new HashMap<>();
+    private static Map<BarcodePattern, BarcodeDigit> digupc = new HashMap<>();
     static {
         digupc.put(new BarcodePattern(new int[]{3, 2, 1, 1}, false), new BarcodeDigit("0", "O"));
         digupc.put(new BarcodePattern(new int[]{2, 2, 2, 1}, false), new BarcodeDigit("1", "O"));

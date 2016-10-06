@@ -1,6 +1,7 @@
 package net.fishandwhistle.openpos;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -13,6 +14,7 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Display;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
@@ -25,6 +27,7 @@ import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
+import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EANSpec;
 import net.fishandwhistle.openpos.api.APIQuery;
@@ -73,7 +76,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         mPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setEnableScanning(!enableScanning);
+                mCamera.autoFocus(null);
             }
         });
 
@@ -160,7 +163,12 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
             mCamera.release();
         }
         mCamera = getCameraInstance();
-        mCamera.setDisplayOrientation(90);
+        int orientation = this.getScreenOrientation();
+        if(orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            mCamera.setDisplayOrientation(0);
+        } else {
+            mCamera.setDisplayOrientation(90);
+        }
         // get Camera parameters
         Camera.Parameters params = mCamera.getParameters();
         // set the focus mode
@@ -200,6 +208,21 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         mPreview.setCamera(mCamera);
     }
 
+    public int getScreenOrientation() {
+        Display getOrient = getWindowManager().getDefaultDisplay();
+        int orientation = Configuration.ORIENTATION_UNDEFINED;
+        if(getOrient.getWidth()==getOrient.getHeight()){
+            orientation = Configuration.ORIENTATION_SQUARE;
+        } else {
+            if(getOrient.getWidth() < getOrient.getHeight()){
+                orientation = Configuration.ORIENTATION_PORTRAIT;
+            } else {
+                orientation = Configuration.ORIENTATION_LANDSCAPE;
+            }
+        }
+        return orientation;
+    }
+
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -222,7 +245,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     public void onPreviewImage(byte[] data, int format, int width, int height) {
         if(enableScanning && ((extractor == null) || extractor.isCancelled())) {
             Log.i(TAG, "Launching barcode extractor");
-            extractor = new ImageBarcodeExtractor(data, format, width, height);
+            extractor = new ImageBarcodeExtractor(data, format, width, height, getScreenOrientation());
             extractor.execute("");
         }
     }
@@ -274,18 +297,45 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         }
     }
 
+    private Rect getRegion(int orientation, int width, int height) {
+        if(orientation == Configuration.ORIENTATION_PORTRAIT) {
+            return new Rect(width / 10, 0, width / 10 + 25, height-1);
+        } else {
+            return new Rect(0, height / 10, width-1, height / 10 + 25);
+        }
+    }
+
+    private static double[] extractLineFromBitmap(Bitmap b) {
+        if(b.getHeight() > b.getWidth()) {
+            double[] vals = new double[b.getHeight()];
+            for (int i = 0; i < b.getHeight(); i++) {
+                int col = b.getPixel(0, i);
+                vals[b.getHeight() - 1 - i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
+            }
+            return vals;
+        } else {
+            double[] vals = new double[b.getWidth()];
+            for (int i = 0; i < b.getWidth(); i++) {
+                int col = b.getPixel(i, 0);
+                vals[i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
+            }
+            return vals;
+        }
+    }
 
     private class ImageBarcodeExtractor extends AsyncTask<String, String, BarcodeSpec.Barcode> {
         private byte[] data;
         private int format;
         private int width;
         private int height;
+        private int orientation;
 
-        public ImageBarcodeExtractor(byte[] data, int format, int width, int height) {
+        public ImageBarcodeExtractor(byte[] data, int format, int width, int height, int orientation) {
             this.data = data;
             this.format = format;
             this.width = width;
             this.height = height;
+            this.orientation = orientation;
         }
 
         @Override
@@ -296,14 +346,10 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
                 YuvImage y = new YuvImage(data, format, width, height, null);
                 File f = new File(BarcodeReaderActivity.this.getCacheDir(), "temppic.jpg");
                 FileOutputStream fos = new FileOutputStream(f);
-                y.compressToJpeg(new Rect(width / 10, 0, width / 10 + 25, height-1), 95, fos);
+                y.compressToJpeg(getRegion(orientation, width, height), 95, fos);
                 fos.close();
                 Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath());
-                double[] vals = new double[b.getHeight()];
-                for(int i=0; i<b.getHeight(); i++) {
-                    int col = b.getPixel(0, i);
-                    vals[b.getHeight()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
-                }
+                double[] vals = extractLineFromBitmap(b);
                 b.recycle();
                 data = null;
 
@@ -313,7 +359,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
                 //do java decoding
                 BarcodeExtractor e = new BarcodeExtractor(vals);
-                barcode = e.multiExtract(new BarcodeSpec[] {new UPCASpec(), new EANSpec(), new EAN8Spec(), new UPCESpec()});
+                barcode = e.multiExtract(new BarcodeSpec[] {new CodabarSpec(), new UPCASpec(), new EANSpec(), new EAN8Spec()});
 
             } catch(IOException e) {
                 Log.e(TAG, "IO exception on write image", e);

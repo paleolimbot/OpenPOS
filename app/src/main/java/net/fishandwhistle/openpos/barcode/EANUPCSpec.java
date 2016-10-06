@@ -8,7 +8,9 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.concatenate;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.div;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.gt;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.mean;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.round;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.sum;
 
 /**
  * Created by dewey on 2016-10-02.
@@ -25,7 +27,7 @@ public abstract class EANUPCSpec extends BarcodeSpec {
     public EANUPCSpec(String type, Map<BarcodePattern, BarcodeDigit> digits,
                       int begGuardLength, int middleGuardLength, int endGuardLength,
                       int nbars) {
-        super(type, digits, 7);
+        super(type, digits);
         this.begGuardLength = begGuardLength;
         this.endGuardLength = endGuardLength;
         this.middleGuardLength = middleGuardLength;
@@ -33,6 +35,9 @@ public abstract class EANUPCSpec extends BarcodeSpec {
         this.nbarsSide = (nbars - begGuardLength - endGuardLength - middleGuardLength) / 2;
     }
 
+    protected BarcodePattern getBarcodePattern(int[] bars, boolean start) {
+        return new BarcodePattern(round(div(bars, sum(bars)/7.0)), start);
+    }
 
     protected boolean checksum(Barcode b, int evenweight, int oddweight) {
         int[] numbers = new int[b.digits.size()];
