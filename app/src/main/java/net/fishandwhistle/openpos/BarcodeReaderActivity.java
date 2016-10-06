@@ -44,12 +44,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BarcodeReaderActivity extends AppCompatActivity implements CameraPreview.PreviewImageCallback, APIQuery.APICallback {
 
     private static final String TAG = "BarcodeReader";
+    private static final String INSTANCE_ITEMS = "instance_items";
+    private static final String INSTANCE_ITEMLIST_STATE = "itemlist_state";
 
     private Camera mCamera;
     private CameraPreview mPreview;
@@ -87,9 +91,31 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
         items = new ScannedItemAdapter(this);
         list = ((ListView)findViewById(R.id.bcreader_itemlist));
+        showHideButton = (Button)findViewById(R.id.bcreader_showhide);
+
+        // get items from saved instance, if exists, and set visibility
+        if(savedInstanceState != null) {
+            if (savedInstanceState.containsKey(INSTANCE_ITEMS)) {
+                ArrayList<ScannedItem> oldItems = (ArrayList<ScannedItem>) savedInstanceState.getSerializable(INSTANCE_ITEMS);
+                assert oldItems != null;
+                for (ScannedItem s : oldItems) {
+                    items.add(s);
+                }
+            }
+            if (savedInstanceState.containsKey(INSTANCE_ITEMLIST_STATE)) {
+                //noinspection WrongConstant
+                int vis = savedInstanceState.getInt(INSTANCE_ITEMLIST_STATE, View.VISIBLE);
+                if(vis != View.VISIBLE) {
+                    list.setVisibility(View.GONE);
+                    showHideButton.setText(R.string.bcreader_show);
+                } else {
+                    list.setVisibility(View.VISIBLE);
+                    showHideButton.setText(R.string.bcreader_hide);
+                }
+            }
+        }
         list.setAdapter(items);
         scannedItemsText = ((TextView)findViewById(R.id.bcreader_scannedtitle));
-        showHideButton = (Button)findViewById(R.id.bcreader_showhide);
         showHideButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -103,23 +129,22 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
             }
         });
 
-        refreshItems(false);
+        refreshItems(true);
         enableScanning = true;
         cameraDisplayOrientation = -1;
     }
 
-    private void setEnableScanning(boolean value) {
-        TextView text = (TextView)findViewById(R.id.bcreader_disablescantext);
-        if(value) {
-            text.setText(R.string.bcreader_disablescan);
-            text.setTextColor(Color.argb(100, 255, 0, 0));
-            findViewById(R.id.bcreader_redbar).setVisibility(View.VISIBLE);
-        } else {
-            text.setText(R.string.bcreader_enablescan);
-            text.setTextColor(Color.argb(100, 0, 255, 0));
-            findViewById(R.id.bcreader_redbar).setVisibility(View.GONE);
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        ArrayList<ScannedItem> scanned = new ArrayList<>();
+        for(int i=0; i<items.getCount(); i++) {
+            scanned.add(items.getItem(i));
         }
-        enableScanning = value;
+        if(scanned.size() > 0) {
+            outState.putSerializable(INSTANCE_ITEMS, scanned);
+        }
+        outState.putInt(INSTANCE_ITEMLIST_STATE, list.getVisibility());
     }
 
     @Override
@@ -137,6 +162,20 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     public void onResume() {
         super.onResume();
         resetCamera(false);
+    }
+
+    private void setEnableScanning(boolean value) {
+        TextView text = (TextView)findViewById(R.id.bcreader_disablescantext);
+        if(value) {
+            text.setText(R.string.bcreader_disablescan);
+            text.setTextColor(Color.argb(100, 255, 0, 0));
+            findViewById(R.id.bcreader_redbar).setVisibility(View.VISIBLE);
+        } else {
+            text.setText(R.string.bcreader_enablescan);
+            text.setTextColor(Color.argb(100, 0, 255, 0));
+            findViewById(R.id.bcreader_redbar).setVisibility(View.GONE);
+        }
+        enableScanning = value;
     }
 
     @Override

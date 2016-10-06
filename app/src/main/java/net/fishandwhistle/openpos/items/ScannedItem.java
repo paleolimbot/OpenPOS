@@ -2,13 +2,14 @@ package net.fishandwhistle.openpos.items;
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 
+import java.io.Serializable;
 import java.util.Locale;
 
 /**
  * Created by dewey on 2016-10-04.
  */
 
-public class ScannedItem {
+public class ScannedItem implements Serializable {
 
     public long scanTime = 0;
     public String productCode = null;
