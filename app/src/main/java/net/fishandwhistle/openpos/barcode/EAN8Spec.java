@@ -14,13 +14,6 @@ public class EAN8Spec extends EANSpec {
     public Barcode parse(int[] bars) throws BarcodeException {
         Barcode b = this.parse_common(bars);
 
-        int validDigits = 0;
-        for(int i=0; i<b.digits.size(); i++) {
-            if(b.digits.get(i) != null)
-                validDigits++;
-        }
-        b.validDigits = validDigits;
-
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
 
         //try checksum

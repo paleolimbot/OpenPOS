@@ -10,7 +10,7 @@ import java.util.Map;
 public class EANSpec extends EANUPCSpec {
 
     public EANSpec() {
-        super("EAN", digean, 3, 5, 3, 59);
+        super("EAN/13", digean, 3, 5, 3, 59);
     }
 
     public EANSpec(String type, int begGuardLength, int middleGuardLength, int endGuardLength, int nbars) {
@@ -35,13 +35,6 @@ public class EANSpec extends EANUPCSpec {
         } else {
             b.digits.add(0, null);
         }
-
-        int validDigits = 0;
-        for(int i=0; i<b.digits.size(); i++) {
-            if(b.digits.get(i) != null)
-                validDigits++;
-        }
-        b.validDigits = validDigits;
 
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
 

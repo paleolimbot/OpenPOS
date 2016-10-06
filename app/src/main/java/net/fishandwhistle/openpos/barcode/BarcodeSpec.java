@@ -46,7 +46,6 @@ public abstract class BarcodeSpec {
     public static class Barcode {
         public String type;
         public List<BarcodeDigit> digits;
-        public int validDigits;
         public String tag;
         public boolean isValid;
         public long timeread ;
@@ -54,7 +53,6 @@ public abstract class BarcodeSpec {
         public Barcode(String type) {
             this.type = type;
             digits = new ArrayList<>();
-            validDigits = 0;
             tag = null;
             isValid = false;
             timeread = 0;
@@ -81,7 +79,17 @@ public abstract class BarcodeSpec {
             }
         }
 
+        public int getValidDigits() {
+            int validDigits = 0;
+            for(int i=0; i<this.digits.size(); i++) {
+                if(this.digits.get(i) != null)
+                    validDigits++;
+            }
+            return validDigits;
+        }
+
         public boolean isComplete() {
+            int validDigits = this.getValidDigits();
             return (validDigits == digits.size()) && validDigits != 0;
         }
     }

@@ -97,7 +97,7 @@ public class BarcodeExtractor {
             if(b.isValid) {
                 return b;
             } else if (best != null){
-                if(b.validDigits > best.validDigits) {
+                if(b.getValidDigits() > best.getValidDigits()) {
                     best = b;
                 }
             } else {
@@ -119,7 +119,7 @@ public class BarcodeExtractor {
                         return spec.parse(subset(bars, i, bars.length-i));
                     } catch(BarcodeSpec.BarcodeException e) {
                         if(best != null) {
-                            if(e.partial.validDigits > best.validDigits) {
+                            if(e.partial.getValidDigits() > best.getValidDigits()) {
                                 best = e.partial;
                                 best.tag = e.getMessage();
                             }
