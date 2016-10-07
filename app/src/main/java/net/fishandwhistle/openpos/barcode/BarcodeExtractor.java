@@ -90,42 +90,31 @@ public class BarcodeExtractor {
         return out;
     }
 
-    public BarcodeSpec.Barcode multiExtract(BarcodeSpec[] specs) {
-        BarcodeSpec.Barcode best = null;
-        for(BarcodeSpec spec: specs) {
-            BarcodeSpec.Barcode b = multiExtract(spec);
-            if(b.isValid) {
-                return b;
-            } else if (best != null){
-                if(b.getValidDigits() > best.getValidDigits()) {
-                    best = b;
-                }
-            } else {
-                best = b;
-            }
-        }
-        return best;
+    public BarcodeSpec.Barcode multiExtract(BarcodeSpec spec) {
+        return multiExtract(new BarcodeSpec[] {spec});
     }
 
-    public BarcodeSpec.Barcode multiExtract(BarcodeSpec spec) {
+    public BarcodeSpec.Barcode multiExtract(BarcodeSpec[] specs) {
         BarcodeSpec.Barcode best = null;
-        double[] thresholds = new double[] {0.4, 0.5, 0.6};
+        double[] thresholds = new double[] {0.2, 0.4, 0.5, 0.6};
         this.transform(10, 0.5);
         for(double d: thresholds) {
                 this.threshold(d);
                 int[] bars = this.getBars();
                 for(int i=0; i<Math.min(5, bars.length); i+= 2) {
-                    try {
-                        return spec.parse(subset(bars, i, bars.length-i));
-                    } catch(BarcodeSpec.BarcodeException e) {
-                        if(best != null) {
-                            if(e.partial.getValidDigits() > best.getValidDigits()) {
+                    for(BarcodeSpec spec: specs) {
+                        try {
+                            return spec.parse(subset(bars, i, bars.length-i));
+                        } catch(BarcodeSpec.BarcodeException e) {
+                            if(best != null) {
+                                if(e.partial.getValidDigits() > best.getValidDigits()) {
+                                    best = e.partial;
+                                    best.tag = e.getMessage();
+                                }
+                            } else {
                                 best = e.partial;
                                 best.tag = e.getMessage();
                             }
-                        } else {
-                            best = e.partial;
-                            best.tag = e.getMessage();
                         }
                     }
                 }

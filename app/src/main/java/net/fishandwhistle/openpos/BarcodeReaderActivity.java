@@ -1,15 +1,17 @@
 package net.fishandwhistle.openpos;
 
+import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Vibrator;
 import android.util.Log;
 import android.support.v7.app.AppCompatActivity;
@@ -49,7 +51,8 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BarcodeReaderActivity extends AppCompatActivity implements CameraPreview.PreviewImageCallback, APIQuery.APICallback {
+public class BarcodeReaderActivity extends AppCompatActivity implements CameraPreview.PreviewImageCallback, APIQuery.APICallback,
+ Camera.PictureCallback {
 
     private static final String TAG = "BarcodeReader";
     private static final String INSTANCE_ITEMS = "instance_items";
@@ -66,6 +69,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     private int cameraDisplayOrientation ;
 
     private boolean enableScanning ;
+    private ProgressDialog highResDecodeProgress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +87,14 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
             @Override
             public void onClick(View v) {
                 mCamera.autoFocus(null);
+            }
+        });
+
+        mPreview.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                mCamera.takePicture(null, null, BarcodeReaderActivity.this);
+                return true;
             }
         });
 
@@ -132,6 +144,12 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         refreshItems(true);
         enableScanning = true;
         cameraDisplayOrientation = -1;
+
+        highResDecodeProgress = new ProgressDialog(this);
+        highResDecodeProgress.setCancelable(false);
+        highResDecodeProgress.setIndeterminate(true);
+        highResDecodeProgress.setMessage("Decoding image...");
+
     }
 
     @Override
@@ -254,17 +272,29 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
             }
         }
         params.setPictureSize(best.width, best.height);
+        Log.i(TAG, "resetCamera: Setting picture size to " + best.width + "x" + best.height);
         sizes = params.getSupportedPreviewSizes() ;
         best = sizes.get(0);
         for(int i=1; i<sizes.size(); i++) {
             Camera.Size s = sizes.get(i);
-            if(s.height > best.height) {
-                best = s;
-            } else if(s.height == best.height && s.width < best.width) {
-                best = s;
+            if(orientation == 0 || orientation == 2) {
+                //pick 'tallest' option
+                if (s.height > best.height) {
+                    best = s;
+                } else if (s.height == best.height && s.width < best.width) {
+                    best = s;
+                }
+            } else {
+                //pick 'widest' option
+                if (s.width > best.width) {
+                    best = s;
+                } else if (s.width == best.width && s.height < best.height) {
+                    best = s;
+                }
             }
         }
         params.setPreviewSize(best.width, best.height);
+        Log.i(TAG, "resetCamera: Setting preview size to " + best.width + "x" + best.height);
         mCamera.setParameters(params);
         mPreview.setCamera(mCamera);
     }
@@ -301,9 +331,27 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         }
     }
 
+    @Override
+    public void onPictureTaken(byte[] data, Camera camera) {
+        if(extractor != null) {
+            extractor.cancel(false);
+        }
+        Camera.Parameters params = camera.getParameters();
+        int format = params.getPictureFormat();
+        Camera.Size size = params.getPictureSize();
+        highResDecodeProgress.show();
+        extractor = new ImageBarcodeExtractor(data, format, size.width, size.height, getScreenOrientation());
+        extractor.execute("");
+    }
+
     private void onBarcodeRead(BarcodeSpec.Barcode b) {
-        //release extractor
+        //release extractor and close progressDialog, if showing
+        int format = extractor.format;
         extractor = null;
+        boolean notifyFail = format == mCamera.getParameters().getPictureFormat();
+        if(highResDecodeProgress.isShowing()) {
+            highResDecodeProgress.hide();
+        }
 
         if(b.isValid) {
             Log.i(TAG, b.type + " Read: " + b.toString());
@@ -316,7 +364,17 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
             }
             lastBarcode = b;
         } else {
-            Log.i(TAG, "Barcode error. " + b.type + ": " + b.toString());
+            String partial = b.toString();
+            if(partial.length() > 0) {
+                partial = " Partial result: " + b.type + "/" + partial;
+            }
+            Log.i(TAG, "Barcode error." + partial);
+            if(notifyFail) {
+                Toast.makeText(this, "Failed to read barcode." + partial, Toast.LENGTH_LONG).show();
+            }
+        }
+        if(notifyFail) {
+            mCamera.startPreview();
         }
     }
 
@@ -415,13 +473,27 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         protected BarcodeSpec.Barcode doInBackground(String... params) {
             long start = System.currentTimeMillis();
             BarcodeSpec.Barcode barcode = null;
+            File f = new File(BarcodeReaderActivity.this.getCacheDir(), "temppic.jpg");
+            Rect decodeRegion = getRegion(orientation, width, height);
+            Bitmap b;
             try {
-                YuvImage y = new YuvImage(data, format, width, height, null);
-                File f = new File(BarcodeReaderActivity.this.getCacheDir(), "temppic.jpg");
-                FileOutputStream fos = new FileOutputStream(f);
-                y.compressToJpeg(getRegion(orientation, width, height), 95, fos);
-                fos.close();
-                Bitmap b = BitmapFactory.decodeFile(f.getAbsolutePath());
+                if((format != ImageFormat.NV21 && format != ImageFormat.YUY2)) {
+                    Bitmap bigBitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    b = Bitmap.createBitmap(bigBitmap, decodeRegion.left, decodeRegion.top,
+                            decodeRegion.width(), decodeRegion.height());
+                    //test to see what image we are analyzing
+                    f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
+                    FileOutputStream fos = new FileOutputStream(f);
+                    b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
+                    fos.close();
+                    bigBitmap.recycle();
+                } else {
+                    YuvImage y = new YuvImage(data, format, width, height, null);
+                    FileOutputStream fos = new FileOutputStream(f);
+                    y.compressToJpeg(decodeRegion, 95, fos);
+                    fos.close();
+                    b = BitmapFactory.decodeFile(f.getAbsolutePath());
+                }
                 double[] vals = extractLineFromBitmap(b, orientation);
                 b.recycle();
                 data = null;
