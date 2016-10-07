@@ -185,9 +185,13 @@ parse.isbn.real <- function(bars) {
 
 # test with picture
 testpic <- jpeg::readJPEG('R/2016-09-25 11.43.53.jpg')
+testpic2 <- jpeg::readJPEG('R/codabarpic.jpg')
 testrow <- data.frame(testpic[, 1500, ])
+testrow2 <- data.frame(testpic2[, 1, ])
 picnums <- rev((testrow$X1 + testrow$X2 + testrow$X3) / 3)
-rm(testpic, testrow)
+picnums2 <- rev((testrow2$X1 + testrow2$X2 + testrow2$X3) / 3)
+
+rm(testpic, testrow, testpic2, testrow2)
 # 
 # plotlines(picnums)
 # plotbars(picnums)
