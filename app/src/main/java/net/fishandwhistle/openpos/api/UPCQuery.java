@@ -36,8 +36,13 @@ public class UPCQuery extends APIQuery {
                 Log.e(TAG, "Error from database: " + o.getString("reason"));
                 return null;
             } else {
-                if(item != null)
-                    item.description = o.getString("description");
+                if(item != null) {
+                    String description = o.getString("description");
+                    if((description != null) && (description.trim().length() > 0)) {
+                        item.description = description.trim();
+                    }
+                }
+
                 return o;
             }
         } catch(JSONException e) {

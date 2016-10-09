@@ -382,7 +382,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(150);
 
-        ScannedItem item = new ScannedItem(b.toString());
+        ScannedItem item = new ScannedItem(b.type, b.toString());
         item.scanTime = b.timeread;
         items.add(item);
         this.refreshItems(true);
