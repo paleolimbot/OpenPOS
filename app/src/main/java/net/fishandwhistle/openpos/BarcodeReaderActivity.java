@@ -504,7 +504,8 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
                 //do java decoding
                 BarcodeExtractor e = new BarcodeExtractor(vals);
-                barcode = e.multiExtract(new BarcodeSpec[] {new CodabarSpec(), new UPCASpec(), new EANSpec(), new EAN8Spec()});
+                boolean dofilter = this.format == ImageFormat.JPEG;
+                barcode = e.multiExtract(new BarcodeSpec[] {new CodabarSpec(), new UPCASpec(), new EANSpec(), new EAN8Spec()}, dofilter);
 
             } catch(IOException e) {
                 Log.e(TAG, "IO exception on write image", e);

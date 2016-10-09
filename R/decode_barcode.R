@@ -38,7 +38,7 @@ checksum.isbn <- function(isbn) {
 
 threshold.amp <- function(nums, threshold=0.5, minrange=0.5, nwindows=12, plot=FALSE) {
   # rescale
-  nums <- scales::rescale(nums)
+  nums <- scales::rescale(smoothed <- stats::filter(nums, c(1, 2, 4, 8, 10, 8, 4, 2, 1), circular=T))
   # apply windowed scaling
   window <- round(length(nums) / nwindows)
   minmax <- t(sapply(1:length(nums), function(i) {
@@ -57,6 +57,76 @@ threshold.amp <- function(nums, threshold=0.5, minrange=0.5, nwindows=12, plot=F
   #plotbars(thr)
   return(thr)
 }
+
+
+getpeaks <- function(x, threshold, scaler=1) {
+  peaks <- as.vector(ifelse((x*scaler) > threshold, 1, 0))
+  peaks[is.na(peaks)] <- 0
+  peaks <- rle(peaks)
+  peaks$endi <- cumsum(peaks$lengths)
+  peaks$starti <- peaks$endi - peaks$lengths + 1
+  peaks$meani <- sapply(1:length(peaks$endi), function(i) {
+    floor(mean(c(peaks$starti[i], peaks$endi[i])))
+  })
+  return(peaks$meani[peaks$values==1])
+}
+
+derivprocess <- function(nums, threshold=0.45) {
+  # smooth
+  smoothed <- stats::filter(nums, c(1, 2, 4, 8, 10, 8, 4, 2, 1)/40)
+  # compute derivatives
+  d1 <- scales::rescale(stats::filter(smoothed, c(0.5, 0, -0.5)), to=c(-1, 1))
+  peaks <- getpeaks(d1, 0.5, 1)
+  valleys <- getpeaks(d1, 0.5, -1)
+  plotlines(nums)
+  segments(peaks, 0, peaks, 1, col="red")
+  segments(valleys, 0, valleys, 1, col="blue")
+  
+  npeaks <- c()
+  nvalleys <- valleys[1]
+  peaki <- 1
+  valleyi <- 2
+  peakorvalley <- "peak"
+  while((peaki <= (length(peaks)-1)) && (valleyi <= (length(valleys)-1))) {
+    if(peakorvalley == "peak") {
+      peakloc <- peaks[peaki]
+      valleyrange <- c(nvalleys[length(nvalleys)], valleys[valleyi])
+      if((peakloc > valleyrange[1]) && (peakloc < valleyrange[2])) {
+        npeaks <- c(npeaks, peakloc)
+        peaki <- peaki + 1
+      } else {
+        # need to look for a peak in valley range
+        npeaks <- c(npeaks, valleyrange[1] + which.max(d1[valleyrange[1]:valleyrange[2]]))
+      }
+      peakorvalley <- "valley"
+    } else {
+      valleyloc <- valleys[valleyi]
+      peakrange <- c(npeaks[length(npeaks)], peaks[peaki])
+      if((valleyloc > peakrange[1]) && (valleyloc < peakrange[2])) {
+        nvalleys <- c(nvalleys, valleyloc)
+        valleyi <- valleyi + 1
+      } else {
+        # need to look for a valley in the peak range
+        nvalleys <- c(nvalleys, peakrange[1]+which.min(d1[peakrange[1]:peakrange[2]]))
+      }
+      peakorvalley <- "peak"
+    }
+    
+  }
+  # normalize length
+  npeaks <- npeaks[1:min(c(length(npeaks), length(nvalleys)))]
+  nvalleys <- nvalleys[1:length(npeaks)]
+  plotlines(nums)
+  segments(npeaks, 0, npeaks, 1, col="red")
+  segments(nvalleys, 0, nvalleys, 1, col="blue")
+  
+  bars <- data.frame(starti=nvalleys, endi=npeaks, values=1)
+  bars <- rbind(bars, data.frame(starti=npeaks[1:(length(npeaks)-1)], endi=nvalleys[2:length(nvalleys)], values=0))
+  bars$lengths <- bars$endi - bars$starti
+  bars <- bars[order(bars$starti),]
+  return(bars)
+}
+
 
 digit.isbn <- function(lengths, values, barsizeest) {
   for(barsize in c(barsizeest, seq(0.7, 1.3, 0.2)*barsizeest)) {
@@ -83,6 +153,12 @@ digit.isbn2 <- function(lengths, values, barsize) {
     sum((lengthsisbn[i,] - nbars)^2)
   })
   return(digisbn[which.min(distest),])
+}
+
+parse.isbn2 <- function(nums) {
+  bars <- derivprocess(nums)
+  if(nrow(bars) < 59) stop("Not enough bars to process")
+  parse.isbn.real(bars)
 }
 
 parse.isbn <- function(nums, thresholds=c(0.5, 0.4, 0.6, 0.3, 0.7)) {

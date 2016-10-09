@@ -2,6 +2,7 @@ package net.fishandwhistle.openpos.barcode;
 
 import java.util.ArrayList;
 
+import static net.fishandwhistle.openpos.barcode.ArrayMath.filter;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.lt;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.range;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.rescale;
@@ -23,15 +24,18 @@ public class BarcodeExtractor {
         this.thresholded = null;
     }
 
-    public void transform(int nwindows, double minrange) {
+    public void transform(int nwindows, double minrange, boolean dofilter) {
         this.transformed = new double[data.length];
         //set params
         //int nwindows = 15;
         //double minrange = 0.5;
 
-        //rescale data
+        //rescale and filter data
         double[] datarange = range(data);
         double[] rescaled = rescale(data, datarange[0], datarange[1]-datarange[0]);
+        if(dofilter) {
+            rescaled = filter(rescaled, new double[] {1, 2, 4, 8, 10, 8, 4, 2, 1});
+        }
 
         //do floating range contrast enhancer
         int windowsize = data.length / nwindows;
@@ -90,24 +94,31 @@ public class BarcodeExtractor {
         return out;
     }
 
-    public BarcodeSpec.Barcode multiExtract(BarcodeSpec spec) {
-        return multiExtract(new BarcodeSpec[] {spec});
+    public BarcodeSpec.Barcode multiExtract(BarcodeSpec spec, boolean dofilter) {
+        return multiExtract(new BarcodeSpec[] {spec}, dofilter);
     }
 
-    public BarcodeSpec.Barcode multiExtract(BarcodeSpec[] specs) {
+    public BarcodeSpec.Barcode multiExtract(BarcodeSpec[] specs, boolean filter) {
         BarcodeSpec.Barcode best = null;
         double[] thresholds = new double[] {0.2, 0.4, 0.5, 0.6};
-        this.transform(10, 0.5);
-        for(double d: thresholds) {
+        boolean[] filterOpts ;
+        if(filter) {
+            filterOpts = new boolean[] {false, true};
+        } else {
+            filterOpts = new boolean[] {false};
+        }
+        for(boolean dofilter : filterOpts) {
+            this.transform(10, 0.5, dofilter);
+            for (double d : thresholds) {
                 this.threshold(d);
                 int[] bars = this.getBars();
-                for(int i=0; i<Math.min(5, bars.length); i+= 2) {
-                    for(BarcodeSpec spec: specs) {
+                for (int i = 0; i < Math.min(5, bars.length); i += 2) {
+                    for (BarcodeSpec spec : specs) {
                         try {
-                            return spec.parse(subset(bars, i, bars.length-i));
-                        } catch(BarcodeSpec.BarcodeException e) {
-                            if(best != null) {
-                                if(e.partial.getValidDigits() > best.getValidDigits()) {
+                            return spec.parse(subset(bars, i, bars.length - i));
+                        } catch (BarcodeSpec.BarcodeException e) {
+                            if (best != null) {
+                                if (e.partial.getValidDigits() > best.getValidDigits()) {
                                     best = e.partial;
                                     best.tag = e.getMessage();
                                 }
@@ -118,6 +129,7 @@ public class BarcodeExtractor {
                         }
                     }
                 }
+            }
         }
         return best;
     }

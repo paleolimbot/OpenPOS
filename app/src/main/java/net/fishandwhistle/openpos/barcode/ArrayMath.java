@@ -117,6 +117,22 @@ public class ArrayMath {
         return out;
     }
 
+    public static double[] filter(double[] in, double[] filter) {
+        if(((filter.length % 2) == 0) || filter.length < 3) throw new IllegalArgumentException("Need odd-length filter with n>=3");
+        double[] out = new double[in.length];
+        for(int i=0; i<in.length; i++) {
+            double cumsum = 0;
+            int i0 = i-filter.length/2;
+            for(int j=0; j<filter.length; j++) {
+                int ind = i0+j;
+                if((ind < 0) || (ind >= in.length))
+                    continue;
+                cumsum += in[ind] * filter[j];
+            }
+            out[i] = cumsum;
+        }
+        return out;
+    }
 
     public static int sum(int[] in) {
         int cumsum = 0;
