@@ -117,7 +117,7 @@ public abstract class BarcodeSpec {
                 }
                 value = !value;
             }
-            intValue = Integer.valueOf(outbin, 2);
+            intValue = Long.valueOf(outbin, 2).intValue();
         }
 
         @Override

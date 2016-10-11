@@ -102,7 +102,7 @@ public class BarcodeExtractor {
         BarcodeSpec.Barcode best = null;
         double bestRatio = 0;
 
-        double[] thresholds = new double[] {0.2, 0.4, 0.5, 0.6};
+        double[] thresholds = new double[] {0.6, 0.5, 0.4, 0.3};
         boolean[] filterOpts ;
         if(filter) {
             filterOpts = new boolean[] {false, true};

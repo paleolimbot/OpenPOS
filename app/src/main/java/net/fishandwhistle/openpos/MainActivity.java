@@ -1,36 +1,20 @@
 package net.fishandwhistle.openpos;
 
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
-import android.hardware.Camera;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import net.fishandwhistle.openpos.api.APIQuery;
-import net.fishandwhistle.openpos.api.ISBNQuery;
-import net.fishandwhistle.openpos.api.UPCQuery;
-import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
+
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.Code25Spec;
@@ -38,7 +22,6 @@ import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EANSpec;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
 import net.fishandwhistle.openpos.barcode.UPCASpec;
-import net.fishandwhistle.openpos.barcode.UPCESpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
