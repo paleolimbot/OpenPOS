@@ -1,0 +1,112 @@
+package net.fishandwhistle.openpos.barcode;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static net.fishandwhistle.openpos.barcode.ArrayMath.any;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.div;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.gt;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.mean;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
+
+/**
+ * Created by dewey on 2016-10-11.
+ */
+
+public class ITFSpec extends Code25Spec {
+
+
+    public ITFSpec() {
+        this(5, false);
+    }
+
+    public ITFSpec(int minLength, boolean fixedLength) {
+        super("ITF", digITF, minLength, fixedLength);
+    }
+
+
+    @Override
+    public Barcode parse(int[] bars) throws BarcodeException {
+        Barcode b = new Barcode(this.getType());
+        //check if there are enough bars for minLength
+        if(bars.length < (4 + minLength/2*10 + 3)) throw new BarcodeException("Not enough bars to cover minimum length", b);
+
+        //create vals array
+        boolean[] vals = new boolean[bars.length];
+        for(int i=0; i<vals.length; i++) {
+            vals[i] = (i%2) == 0 ;
+        }
+        int startIndex = -1;
+        int endIndex = -1;
+        int starti = 0;
+
+        while(true) {
+            if(startIndex == -1) {
+                //look for start pattern (BWB)
+                if((starti+3) > bars.length) break;
+                int[] start = subset(bars, starti, 3);
+                double barsize = mean(start);
+                if(!any(gt(div(start, barsize), 3.0))) {
+                    startIndex = starti;
+                }
+                starti += 4;
+            } else {
+                //try to decode digit
+                if((starti+3) > bars.length) break;
+                boolean end = false;
+                try {
+                    BarcodePattern p = this.getBarcodePattern(subset(bars, starti, 3), true);
+                    if (STOP.equals(p)) {
+                        end = true;
+                    }
+                } catch(BarWidthException e) {
+                    //nothing to do here
+                }
+                BarcodeDigit d1;
+                BarcodeDigit d2;
+                if((starti+9) < bars.length) {
+                    int[] local = subset(bars, starti, 10);
+                    d1 = this.getDigit(new int[] {local[0], local[2], local[4], local[6], local[8]}, true);
+                    d2 = this.getDigit(new int[] {local[1], local[3], local[5], local[7], local[9]}, true);
+                } else {
+                    d1 = null;
+                    d2 = null;
+                }
+                if(end && (d1 == null) && (d2 == null)) {
+                    endIndex = starti;
+                    break;
+                } else {
+                    b.digits.add(d1);
+                    b.digits.add(d2);
+                }
+                starti += 10;
+            }
+        }
+        // try to decode end digit
+        if(startIndex == -1) throw new BarcodeException("No start character encountered", b);
+        if(endIndex == -1) throw new BarcodeException("No end character encountered", b);
+        if(fixedLength && b.digits.size() != minLength) throw new BarcodeException("Wrong number of decoded digits", b);
+        if(b.digits.size() < minLength) throw new BarcodeException("Too few decoded digits", b);
+        if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
+        b.isValid = true;
+        return b;
+    }
+
+    private static Map<BarcodePattern, BarcodeDigit> digITF = new HashMap<>();
+    static {
+        digITF.put(new BarcodePattern(new int[] {1, 1, 2, 2, 1}, true), new BarcodeDigit("0"));
+        digITF.put(new BarcodePattern(new int[] {2, 1, 1, 1, 2}, true), new BarcodeDigit("1"));
+        //2 is encoded differently in ITF than in Code25
+        digITF.put(new BarcodePattern(new int[] {1, 2, 1, 1, 2}, true), new BarcodeDigit("2"));
+        digITF.put(new BarcodePattern(new int[] {2, 2, 1, 1, 1}, true), new BarcodeDigit("3"));
+        digITF.put(new BarcodePattern(new int[] {1, 1, 2, 1, 2}, true), new BarcodeDigit("4"));
+        digITF.put(new BarcodePattern(new int[] {2, 1, 2, 1, 1}, true), new BarcodeDigit("5"));
+        digITF.put(new BarcodePattern(new int[] {1, 2, 2, 1, 1}, true), new BarcodeDigit("6"));
+        digITF.put(new BarcodePattern(new int[] {1, 1, 1, 2, 2}, true), new BarcodeDigit("7"));
+        digITF.put(new BarcodePattern(new int[] {2, 1, 1, 2, 1}, true), new BarcodeDigit("8"));
+        digITF.put(new BarcodePattern(new int[] {1, 2, 1, 2, 1}, true), new BarcodeDigit("9"));
+    }
+
+    private static final BarcodePattern STOP = new BarcodePattern(new int[] {2, 1, 1}, true);
+
+}

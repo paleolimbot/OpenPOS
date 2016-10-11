@@ -12,15 +12,19 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
 
 public class Code25Spec extends BarcodeSpec {
 
-    private int minLength;
-    private boolean fixedLength;
+    protected int minLength;
+    protected boolean fixedLength;
 
     public Code25Spec() {
         this(5, false);
     }
 
     public Code25Spec(int minLength, boolean fixedLength) {
-        super("Code25", digc25);
+        this("Code25", digc25, minLength, fixedLength);
+    }
+
+    protected Code25Spec(String type, Map<BarcodePattern, BarcodeDigit> digits, int minLength, boolean fixedLength) {
+        super(type, digits);
         this.minLength = minLength;
         this.fixedLength = fixedLength;
     }
@@ -49,22 +53,34 @@ public class Code25Spec extends BarcodeSpec {
             if(startIndex == -1) {
                 //look for start pattern
                 if((starti+3) > blackbars.length) break;
-                BarcodeDigit d = this.getDigit(subset(blackbars, starti, 3), true);
-                if((d != null) && d.digit.equals("A")) {
-                    startIndex = starti;
+                try {
+                    BarcodePattern p = this.getBarcodePattern(subset(blackbars, starti, 3), true);
+                    if (START.equals(p)) {
+                        startIndex = starti;
+                    }
+                } catch(BarWidthException e) {
+                    //nothing to do here
                 }
                 starti += 3;
             } else {
                 //try to decode digit
                 if((starti+3) > blackbars.length) break;
-                BarcodeDigit d = this.getDigit(subset(blackbars, starti, 3), true);
+                boolean end = false;
+                try {
+                    BarcodePattern p = this.getBarcodePattern(subset(blackbars, starti, 3), true);
+                    if (STOP.equals(p)) {
+                        end = true;
+                    }
+                } catch(BarWidthException e) {
+                    //nothing to do here
+                }
                 BarcodeDigit d2;
                 if((starti+4) < blackbars.length) {
                     d2 = this.getDigit(subset(blackbars, starti, 5), true);
                 } else {
                     d2 = null;
                 }
-                if((d != null) && d.digit.equals("B") && ((d2 == null) || (!d2.digit.equals("5")))) {
+                if(end && ((d2 == null) || (!d2.digit.equals("5")))) {
                     endIndex = starti;
                     break;
                 } else {
@@ -104,6 +120,7 @@ public class Code25Spec extends BarcodeSpec {
     static {
         digc25.put(new BarcodePattern(new int[] {1, 1, 2, 2, 1}, true), new BarcodeDigit("0"));
         digc25.put(new BarcodePattern(new int[] {2, 1, 1, 1, 2}, true), new BarcodeDigit("1"));
+        //2 is encoded differently in ITF than in Code25
         digc25.put(new BarcodePattern(new int[] {1, 2, 1, 1, 1}, true), new BarcodeDigit("2"));
         digc25.put(new BarcodePattern(new int[] {2, 2, 1, 1, 1}, true), new BarcodeDigit("3"));
         digc25.put(new BarcodePattern(new int[] {1, 1, 2, 1, 2}, true), new BarcodeDigit("4"));
@@ -112,7 +129,8 @@ public class Code25Spec extends BarcodeSpec {
         digc25.put(new BarcodePattern(new int[] {1, 1, 1, 2, 2}, true), new BarcodeDigit("7"));
         digc25.put(new BarcodePattern(new int[] {2, 1, 1, 2, 1}, true), new BarcodeDigit("8"));
         digc25.put(new BarcodePattern(new int[] {1, 2, 1, 2, 1}, true), new BarcodeDigit("9"));
-        digc25.put(new BarcodePattern(new int[] {2, 2, 1}, true), new BarcodeDigit("A"));
-        digc25.put(new BarcodePattern(new int[] {2, 1, 2}, true), new BarcodeDigit("B"));
     }
+    private static final BarcodePattern START = new BarcodePattern(new int[] {2, 2, 1}, true);
+    private static final BarcodePattern STOP = new BarcodePattern(new int[] {2, 1, 2}, true);
+
 }
