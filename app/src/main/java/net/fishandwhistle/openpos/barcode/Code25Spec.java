@@ -3,17 +3,13 @@ package net.fishandwhistle.openpos.barcode;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.fishandwhistle.openpos.barcode.ArrayMath.range;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
 
 /**
  * Created by dewey on 2016-10-10.
  */
 
-public class Code25Spec extends BarcodeSpec {
-
-    protected int minLength;
-    protected boolean fixedLength;
+public class Code25Spec extends DualWidthSpec {
 
     public Code25Spec() {
         this(5, false);
@@ -24,9 +20,7 @@ public class Code25Spec extends BarcodeSpec {
     }
 
     protected Code25Spec(String type, Map<BarcodePattern, BarcodeDigit> digits, int minLength, boolean fixedLength) {
-        super(type, digits);
-        this.minLength = minLength;
-        this.fixedLength = fixedLength;
+        super(type, digits, minLength, fixedLength);
     }
 
     @Override
@@ -92,27 +86,11 @@ public class Code25Spec extends BarcodeSpec {
         // try to decode end digit
         if(startIndex == -1) throw new BarcodeException("No start character encountered", b);
         if(endIndex == -1) throw new BarcodeException("No end character encountered", b);
-        if(fixedLength && b.digits.size() != minLength) throw new BarcodeException("Wrong number of decoded digits", b);
-        if(b.digits.size() < minLength) throw new BarcodeException("Too few decoded digits", b);
+        this.checkLength(b);
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
         b.isValid = true;
 
         return b;
-    }
-
-    @Override
-    protected BarcodePattern getBarcodePattern(int[] bars, boolean start) throws BarWidthException {
-        int[] widthrange = range(bars);
-        if(widthrange[1] / widthrange[0] > 10) throw new BarWidthException("Width range too great", bars);
-        int threshold = widthrange[0] + (widthrange[1]-widthrange[0]) / 2;
-        for(int i=0; i<bars.length; i++) {
-            if(bars[i] >= threshold) {
-                bars[i] = 2;
-            } else {
-                bars[i] = 1;
-            }
-        }
-        return new BarcodePattern(bars, start);
     }
 
 

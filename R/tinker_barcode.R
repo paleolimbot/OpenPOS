@@ -21,3 +21,19 @@ parse.isbn2(nums)
 
 parse.isbn(picnums)
 plotbars(threshold.amp(picnums, threshold = 0.4, plot=T))
+
+c39 <- read.csv("R/code39spec", colClasses = "character")
+
+for(i in 1:nrow(c39)) {
+  p <- c39$pattern[i]
+  ints <- sapply(1:nchar(p), function(i) {
+    ifelse(substr(p, i, i)=="W", 2, 1)
+  })
+  cat(paste0("digc39.put(new BarcodePattern(new int[] {",
+             paste0(ints, collapse=", "),
+             '}, true), new BarcodeDigit("',
+             c39$sym[i],
+             '", "',
+             c39$checksum[i], 
+             '"));\n'))
+}

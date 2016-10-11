@@ -12,37 +12,26 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
  * Created by dewey on 2016-10-05.
  */
 
-public class CodabarSpec extends BarcodeSpec {
+public class CodabarSpec extends DualWidthSpec {
 
-    private int minLength;
-    private boolean fixedLength;
     private String endChars;
     private String startChars;
+    private int nbarsPerDigit ;
 
     public CodabarSpec() {
-        this(5, "abcd", "abcd", false);
+        this(5, false, "ABCD", "ABCD");
     }
 
-    public CodabarSpec(int minLength, String startChars, String endChars, boolean fixedLength) {
-        super("Codabar", digcodabar);
-        this.minLength = minLength;
+    public CodabarSpec(int minLength, boolean fixedLength, String startChars, String endChars) {
+        this("Codabar", digcodabar, 7, minLength, fixedLength, startChars, endChars);
+    }
+
+    protected CodabarSpec(String type, Map<BarcodePattern, BarcodeDigit> digits, int nbarsPerDigit, int minLength,
+                          boolean fixedLength, String startChars, String endChars) {
+        super(type, digits, minLength, fixedLength);
+        this.nbarsPerDigit = nbarsPerDigit;
         this.startChars = startChars;
         this.endChars = endChars;
-    }
-
-    @Override
-    protected BarcodePattern getBarcodePattern(int[] bars, boolean start) throws BarWidthException {
-        int[] widthrange = range(bars);
-        if(widthrange[1] / widthrange[0] > 10) throw new BarWidthException("Width range too great", bars);
-        int threshold = widthrange[0] + (widthrange[1]-widthrange[0]) / 2;
-        for(int i=0; i<bars.length; i++) {
-            if(bars[i] >= threshold) {
-                bars[i] = 2;
-            } else {
-                bars[i] = 1;
-            }
-        }
-        return new BarcodePattern(bars, start);
     }
 
     @Override
@@ -55,12 +44,15 @@ public class CodabarSpec extends BarcodeSpec {
         Barcode b = new Barcode(this.getType());
         b.timeread = System.currentTimeMillis();
 
-        if(bars.length < 15) throw new BarcodeException("To few bars to decode barcode", b);
+        if(bars.length < (nbarsPerDigit + 1 + (nbarsPerDigit+1)*minLength + nbarsPerDigit))
+            throw new BarcodeException("Too few bars to decode barcode", b);
 
-        for(int i=0; i<(bars.length-7); i+= 8) {
-            b.digits.add(this.getDigit(subset(bars, i, 7), vals[i]));
+        for(int i=0; i<(bars.length-nbarsPerDigit); i+= (nbarsPerDigit+1)) {
+            b.digits.add(this.getDigit(subset(bars, i, nbarsPerDigit), vals[i]));
         }
-        if(b.digits.size() < minLength) throw new BarcodeException("Too few decoded digits", b);
+
+        //check for length requirement but disregard exact length
+        if(b.digits.size() < minLength) throw new BarcodeException("Not enough digits", b);
 
         // look for start/end character
         int startIndex = -1;
@@ -85,9 +77,8 @@ public class CodabarSpec extends BarcodeSpec {
             }
         }
         if(endIndex == -1) throw new BarcodeException("Invalid end character", b);
-        if(fixedLength && newdigs.size() != minLength) throw new BarcodeException("Wrong number of decoded digits", b);
-        if(newdigs.size() < minLength) throw new BarcodeException("Too few decoded digits", b);
         b.digits = newdigs;
+        this.checkLength(b);
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
         b.isValid = true;
 
@@ -116,9 +107,9 @@ public class CodabarSpec extends BarcodeSpec {
         //digcodabar.put(new BarcodePattern(new int[]{1, 2, 1, 2, 1, 1, 2}, true), new BarcodeDigit("n"));
         //digcodabar.put(new BarcodePattern(new int[]{1, 1, 1, 2, 1, 2, 2}, true), new BarcodeDigit("*"));
         //digcodabar.put(new BarcodePattern(new int[]{1, 1, 1, 2, 2, 2, 1}, true), new BarcodeDigit("e"));
-        digcodabar.put(new BarcodePattern(new int[]{1, 1, 2, 2, 1, 2, 1}, true), new BarcodeDigit("a")); // was t
-        digcodabar.put(new BarcodePattern(new int[]{1, 2, 1, 2, 1, 1, 2}, true), new BarcodeDigit("b")); // was n
-        digcodabar.put(new BarcodePattern(new int[]{1, 1, 1, 2, 1, 2, 2}, true), new BarcodeDigit("c")); // was *
-        digcodabar.put(new BarcodePattern(new int[]{1, 1, 1, 2, 2, 2, 1}, true), new BarcodeDigit("d")); // was e
+        digcodabar.put(new BarcodePattern(new int[]{1, 1, 2, 2, 1, 2, 1}, true), new BarcodeDigit("A")); // was t
+        digcodabar.put(new BarcodePattern(new int[]{1, 2, 1, 2, 1, 1, 2}, true), new BarcodeDigit("B")); // was n
+        digcodabar.put(new BarcodePattern(new int[]{1, 1, 1, 2, 1, 2, 2}, true), new BarcodeDigit("C")); // was *
+        digcodabar.put(new BarcodePattern(new int[]{1, 1, 1, 2, 2, 2, 1}, true), new BarcodeDigit("D")); // was e
     }
 }
