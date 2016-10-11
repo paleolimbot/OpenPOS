@@ -100,6 +100,8 @@ public class BarcodeExtractor {
 
     public BarcodeSpec.Barcode multiExtract(BarcodeSpec[] specs, boolean filter) {
         BarcodeSpec.Barcode best = null;
+        double bestRatio = 0;
+
         double[] thresholds = new double[] {0.2, 0.4, 0.5, 0.6};
         boolean[] filterOpts ;
         if(filter) {
@@ -112,15 +114,23 @@ public class BarcodeExtractor {
             for (double d : thresholds) {
                 this.threshold(d);
                 int[] bars = this.getBars();
-                for (int i = 0; i < Math.min(5, bars.length); i += 2) {
+                for (int i = 0; i < Math.min(9, bars.length); i += 2) {
                     for (BarcodeSpec spec : specs) {
                         try {
                             return spec.parse(subset(bars, i, bars.length - i));
                         } catch (BarcodeSpec.BarcodeException e) {
                             if (best != null) {
-                                if (e.partial.getValidDigits() > best.getValidDigits()) {
+                                BarcodeSpec.Barcode p = e.partial;
+                                double ratio ;
+                                if(p.digits.size() == 0) {
+                                    ratio = 0;
+                                } else {
+                                    ratio = p.getValidDigits() / (double)p.digits.size();
+                                }
+                                if (ratio > bestRatio) {
                                     best = e.partial;
                                     best.tag = e.getMessage();
+                                    bestRatio = ratio;
                                 }
                             } else {
                                 best = e.partial;
