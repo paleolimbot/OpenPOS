@@ -39,7 +39,7 @@ public class EANSpec extends EANUPCSpec {
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
 
         //try checksum
-        if(!this.checksum(b, 3, 1)) throw new BarcodeException("Checksum failed for barcode", b);
+        if(!Checksums.checksum(b, 3, 1)) throw new BarcodeException("Checksum failed for barcode", b);
         b.isValid = true;
 
         return b;

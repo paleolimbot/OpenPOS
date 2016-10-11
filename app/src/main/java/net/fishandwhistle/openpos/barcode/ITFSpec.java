@@ -24,6 +24,10 @@ public class ITFSpec extends Code25Spec {
         super("ITF", digITF, minLength, fixedLength);
     }
 
+    protected ITFSpec(String type, int minLength, boolean fixedLength) {
+        super(type, digITF, minLength, fixedLength);
+    }
+
 
     @Override
     public Barcode parse(int[] bars) throws BarcodeException {

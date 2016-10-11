@@ -22,7 +22,7 @@ public class UPCASpec extends EANUPCSpec {
         Barcode b = parse_common(bars) ;
 
         //try checksum
-        if(!this.checksum(b, 1, 3)) throw new BarcodeException("Checksum failed for barcode", b);
+        if(!Checksums.checksum(b, 1, 3)) throw new BarcodeException("Checksum failed for barcode", b);
         //checksum isn't part of the code, remove it
         b.digits.remove(b.digits.size()-1);
         b.isValid = true;

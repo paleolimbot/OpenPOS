@@ -20,20 +20,13 @@ import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.Code25Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EANSpec;
+import net.fishandwhistle.openpos.barcode.ITF14Spec;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
 import net.fishandwhistle.openpos.barcode.UPCASpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends BarcodeReaderActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -52,7 +45,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     protected BarcodeSpec[] getBarcodeSpecs() {
         //TODO get this based on preferences
         return new BarcodeSpec[] {new CodabarSpec(), new Code25Spec(), new UPCASpec(),
-                new EANSpec(), new EAN8Spec(), new ITFSpec()};
+                new EANSpec(), new EAN8Spec(), new ITF14Spec(), new ITFSpec()};
+//        return new BarcodeSpec[] {new ITF14Spec()};
     }
 
     @Override
