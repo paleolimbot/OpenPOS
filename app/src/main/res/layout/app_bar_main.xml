@@ -21,6 +21,55 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_main" />
+    <include layout="@layout/content_bcreader" />
+
+    <LinearLayout
+        android:id="@+id/bcreader_itemlist_wrap"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:gravity="bottom">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="150dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary"
+            android:weightSum="1">
+
+            <TextView
+                android:id="@+id/bcreader_scannedtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:textColor="#FFFFFF"
+                android:text="@string/bcreader_scanneditems"
+                android:layout_weight="1"
+                android:layout_gravity="left|center_vertical" />
+
+            <Button
+                android:id="@+id/bcreader_showhide"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/bcreader_hide"
+                android:layout_weight="1"
+                android:layout_gravity="right|center_vertical" />
+
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/bcreader_itemlist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:visibility="visible" />
+
+
+    </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>

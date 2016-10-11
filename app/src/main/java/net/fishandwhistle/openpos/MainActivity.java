@@ -23,6 +23,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import net.fishandwhistle.openpos.api.APIQuery;
@@ -30,9 +32,14 @@ import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
+import net.fishandwhistle.openpos.barcode.CodabarSpec;
+import net.fishandwhistle.openpos.barcode.Code25Spec;
+import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EANSpec;
 import net.fishandwhistle.openpos.barcode.UPCASpec;
 import net.fishandwhistle.openpos.barcode.UPCESpec;
+import net.fishandwhistle.openpos.items.ScannedItem;
+import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,14 +51,34 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends BarcodeReaderActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "MainActivity";
+    private static final String INSTANCE_ITEMS = "instance_items";
+    private static final String INSTANCE_ITEMLIST_STATE = "itemlist_state";
+
+    private ScannedItemAdapter items ;
+    private ListView list;
+    private Button showHideButton ;
+    private TextView scannedItemsText ;
+
+
+
+    @Override
+    protected BarcodeSpec[] getBarcodeSpecs() {
+        //TODO get this based on preferences
+        return new BarcodeSpec[] {new CodabarSpec(), new Code25Spec(), new UPCASpec(),
+                new EANSpec(), new EAN8Spec()};
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.activity_main;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -64,14 +91,61 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        findViewById(R.id.main_scan).setOnClickListener(new View.OnClickListener() {
+        scannedItemsText = (TextView)findViewById(R.id.bcreader_scannedtitle);
+        items = new ScannedItemAdapter(this);
+        list = ((ListView)findViewById(R.id.bcreader_itemlist));
+        showHideButton = (Button)findViewById(R.id.bcreader_showhide);
+
+        // get items from saved instance, if exists, and set visibility
+        if(savedInstanceState != null) {
+            if (savedInstanceState.containsKey(INSTANCE_ITEMS)) {
+                ArrayList<ScannedItem> oldItems = (ArrayList<ScannedItem>) savedInstanceState.getSerializable(INSTANCE_ITEMS);
+                assert oldItems != null;
+                for (ScannedItem s : oldItems) {
+                    items.add(s);
+                }
+            }
+            if (savedInstanceState.containsKey(INSTANCE_ITEMLIST_STATE)) {
+                //noinspection WrongConstant
+                int vis = savedInstanceState.getInt(INSTANCE_ITEMLIST_STATE, View.VISIBLE);
+                if(vis != View.VISIBLE) {
+                    list.setVisibility(View.GONE);
+                    showHideButton.setText(R.string.bcreader_show);
+                } else {
+                    list.setVisibility(View.VISIBLE);
+                    showHideButton.setText(R.string.bcreader_hide);
+                }
+            }
+        }
+        list.setAdapter(items);
+        showHideButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, BarcodeReaderActivity.class);
-                startActivity(i);
+                if(list.getVisibility() == View.VISIBLE) {
+                    list.setVisibility(View.GONE);
+                    showHideButton.setText(R.string.bcreader_show);
+                } else {
+                    list.setVisibility(View.VISIBLE);
+                    showHideButton.setText(R.string.bcreader_hide);
+                }
             }
         });
 
+
+        refreshItems(true);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        ArrayList<ScannedItem> scanned = new ArrayList<>();
+        for(int i=0; i<items.getCount(); i++) {
+            scanned.add(items.getItem(i));
+        }
+        if(scanned.size() > 0) {
+            outState.putSerializable(INSTANCE_ITEMS, scanned);
+        }
+        outState.putInt(INSTANCE_ITEMLIST_STATE, list.getVisibility());
     }
 
     @Override
@@ -129,6 +203,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    protected boolean onNewBarcode(BarcodeSpec.Barcode b) {
+        ScannedItem item = new ScannedItem(b.type, b.toString());
+        item.scanTime = b.timeread;
+        items.add(item);
+        this.refreshItems(true);
+        return true;
+    }
+
+    private void refreshItems(boolean scrollToEnd) {
+        scannedItemsText.setText(String.format(getString(R.string.bcreader_scanneditems), items.getCount()));
+        items.notifyDataSetInvalidated();
+        if(scrollToEnd && items.getCount() > 1) {
+            list.post(new Runnable() {
+                @Override
+                public void run() {
+                    // Select the last row so it will scroll into view...
+                    list.setSelection(items.getCount() - 1);
+                }
+            });
+        }
     }
 
 }

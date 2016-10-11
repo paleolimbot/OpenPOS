@@ -52,32 +52,30 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BarcodeReaderActivity extends AppCompatActivity implements CameraPreview.PreviewImageCallback, APIQuery.APICallback,
+public abstract class BarcodeReaderActivity extends AppCompatActivity implements CameraPreview.PreviewImageCallback,
  Camera.PictureCallback {
 
     private static final String TAG = "BarcodeReader";
-    private static final String INSTANCE_ITEMS = "instance_items";
-    private static final String INSTANCE_ITEMLIST_STATE = "itemlist_state";
+
 
     private Camera mCamera;
     private CameraPreview mPreview;
-    private BarcodeSpec.Barcode lastBarcode ;
     private ImageBarcodeExtractor extractor ;
-    private ScannedItemAdapter items ;
-    private ListView list;
-    private TextView scannedItemsText ;
-    private Button showHideButton ;
+
     private int cameraDisplayOrientation ;
 
     private boolean enableScanning ;
     private ProgressDialog highResDecodeProgress;
 
+
+    protected abstract BarcodeSpec[] getBarcodeSpecs() ;
+
+    protected abstract int getLayoutId();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.app_bar_bcreader);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setContentView(getLayoutId());
 
         mPreview = new CameraPreview(this);
         mPreview.setPreviewImageCallback(this);
@@ -126,50 +124,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
             }
         });
 
-        lastBarcode = null;
         extractor = null;
-
-        items = new ScannedItemAdapter(this);
-        list = ((ListView)findViewById(R.id.bcreader_itemlist));
-        showHideButton = (Button)findViewById(R.id.bcreader_showhide);
-
-        // get items from saved instance, if exists, and set visibility
-        if(savedInstanceState != null) {
-            if (savedInstanceState.containsKey(INSTANCE_ITEMS)) {
-                ArrayList<ScannedItem> oldItems = (ArrayList<ScannedItem>) savedInstanceState.getSerializable(INSTANCE_ITEMS);
-                assert oldItems != null;
-                for (ScannedItem s : oldItems) {
-                    items.add(s);
-                }
-            }
-            if (savedInstanceState.containsKey(INSTANCE_ITEMLIST_STATE)) {
-                //noinspection WrongConstant
-                int vis = savedInstanceState.getInt(INSTANCE_ITEMLIST_STATE, View.VISIBLE);
-                if(vis != View.VISIBLE) {
-                    list.setVisibility(View.GONE);
-                    showHideButton.setText(R.string.bcreader_show);
-                } else {
-                    list.setVisibility(View.VISIBLE);
-                    showHideButton.setText(R.string.bcreader_hide);
-                }
-            }
-        }
-        list.setAdapter(items);
-        scannedItemsText = ((TextView)findViewById(R.id.bcreader_scannedtitle));
-        showHideButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(list.getVisibility() == View.VISIBLE) {
-                    list.setVisibility(View.GONE);
-                    showHideButton.setText(R.string.bcreader_show);
-                } else {
-                    list.setVisibility(View.VISIBLE);
-                    showHideButton.setText(R.string.bcreader_hide);
-                }
-            }
-        });
-
-        refreshItems(true);
         enableScanning = false;
         cameraDisplayOrientation = -1;
 
@@ -178,19 +133,6 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         highResDecodeProgress.setIndeterminate(true);
         highResDecodeProgress.setMessage("Decoding image...");
 
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        ArrayList<ScannedItem> scanned = new ArrayList<>();
-        for(int i=0; i<items.getCount(); i++) {
-            scanned.add(items.getItem(i));
-        }
-        if(scanned.size() > 0) {
-            outState.putSerializable(INSTANCE_ITEMS, scanned);
-        }
-        outState.putInt(INSTANCE_ITEMLIST_STATE, list.getVisibility());
     }
 
     @Override
@@ -208,27 +150,6 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     public void onResume() {
         super.onResume();
         resetCamera(false);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    private void refreshItems(boolean scrollToEnd) {
-        scannedItemsText.setText(String.format(getString(R.string.bcreader_scanneditems), items.getCount()));
-        items.notifyDataSetInvalidated();
-        if(scrollToEnd && items.getCount() > 1) {
-            list.post(new Runnable() {
-                @Override
-                public void run() {
-                    // Select the last row so it will scroll into view...
-                    list.setSelection(items.getCount() - 1);
-                }
-            });
-        }
     }
 
     private void resetCamera(boolean reset) {
@@ -372,9 +293,8 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         }
 
         if(b.isValid) {
-            enableScanning = false;
             Log.i(TAG, b.type + " Read: " + b.toString());
-            this.onNewBarcode(b);
+            enableScanning = !this.onNewBarcodeWrapper(b);
         } else {
             String partial = b.toString();
             if(partial.length() > 0) {
@@ -391,33 +311,13 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         }
     }
 
-    protected void onNewBarcode(BarcodeSpec.Barcode b) {
+    protected boolean onNewBarcodeWrapper(BarcodeSpec.Barcode b) {
         Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(150);
-
-        ScannedItem item = new ScannedItem(b.type, b.toString());
-        item.scanTime = b.timeread;
-        items.add(item);
-        this.refreshItems(true);
-
-        APIQuery q ;
-        if(b.type.equals("EAN") && (b.digits.get(0).digit.equals("9"))) {
-            q = new ISBNQuery(this, b.toString(), item, this);
-        } else {
-            q = new UPCQuery(this, b.toString(), item, this);
-        }
-        q.query();
+        return this.onNewBarcode(b);
     }
 
-    @Override
-    public void onQueryResult(String input, JSONObject object) {
-        if(object != null) {
-            this.refreshItems(false);
-            Log.i(TAG, "Got result for input " + input);
-        } else {
-            Log.e(TAG, "No result for input " + input);
-        }
-    }
+    protected abstract boolean onNewBarcode(BarcodeSpec.Barcode b) ;
 
     private Rect getRegion(int orientation, int width, int height) {
         if(orientation == 0) {
@@ -518,8 +418,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
                 //do java decoding
                 BarcodeExtractor e = new BarcodeExtractor(vals);
                 boolean dofilter = this.format == ImageFormat.JPEG;
-                barcode = e.multiExtract(new BarcodeSpec[] {new CodabarSpec(), new Code25Spec(), new UPCASpec(),
-                        new EANSpec(), new EAN8Spec()}, dofilter);
+                barcode = e.multiExtract(getBarcodeSpecs(), dofilter);
 
             } catch(IOException e) {
                 Log.e(TAG, "IO exception on write image", e);
