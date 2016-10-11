@@ -104,7 +104,7 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
                                     }
                                     //else ignore
                                 }
-                            }, 250);
+                            }, 400);
                         } else {
                             if(enableScanning) {
                                 Toast.makeText(BarcodeReaderActivity.this, "Auto focus failed", Toast.LENGTH_SHORT).show();
@@ -395,10 +395,10 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
                     b = Bitmap.createBitmap(bigBitmap, decodeRegion.left, decodeRegion.top,
                             decodeRegion.width(), decodeRegion.height());
                     //test to see what image we are analyzing
-                    f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
-                    FileOutputStream fos = new FileOutputStream(f);
-                    b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
-                    fos.close();
+                    //f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
+                    //FileOutputStream fos = new FileOutputStream(f);
+                    //b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
+                    //fos.close();
                     bigBitmap.recycle();
                 } else {
                     YuvImage y = new YuvImage(data, format, width, height, null);
