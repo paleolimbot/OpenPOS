@@ -28,13 +28,17 @@ public abstract class BarcodeSpec {
 
     public abstract Barcode parse(int[] bars) throws BarcodeException;
 
-    protected abstract BarcodePattern getBarcodePattern(int[] bars, boolean start) ;
+    protected abstract BarcodePattern getBarcodePattern(int[] bars, boolean start) throws BarWidthException ;
 
     protected BarcodeDigit getDigit(int[] bars, boolean start) {
-        BarcodePattern pattern = this.getBarcodePattern(bars, start);
-        if(digits.containsKey(pattern)) {
-           return digits.get(pattern);
-        } else {
+        try {
+            BarcodePattern pattern = this.getBarcodePattern(bars, start);
+            if (digits.containsKey(pattern)) {
+                return digits.get(pattern);
+            } else {
+                return null;
+            }
+        } catch(BarWidthException e) {
             return null;
         }
     }
@@ -150,6 +154,14 @@ public abstract class BarcodeSpec {
         public BarcodeException(String message, Barcode partial) {
             super(message);
             this.partial = partial;
+        }
+    }
+
+    public static class BarWidthException extends Exception {
+        public int[] bars;
+        public BarWidthException(String message, int[] bars) {
+            super(message);
+            this.bars = bars;
         }
     }
 

@@ -31,8 +31,9 @@ public class CodabarSpec extends BarcodeSpec {
     }
 
     @Override
-    protected BarcodePattern getBarcodePattern(int[] bars, boolean start) {
+    protected BarcodePattern getBarcodePattern(int[] bars, boolean start) throws BarWidthException {
         int[] widthrange = range(bars);
+        if(widthrange[1] / widthrange[0] > 10) throw new BarWidthException("Width range too great", bars);
         int threshold = widthrange[0] + (widthrange[1]-widthrange[0]) / 2;
         for(int i=0; i<bars.length; i++) {
             if(bars[i] >= threshold) {
