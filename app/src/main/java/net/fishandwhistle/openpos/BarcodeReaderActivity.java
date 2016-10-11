@@ -31,6 +31,7 @@ import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.CodabarSpec;
+import net.fishandwhistle.openpos.barcode.Code25Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EANSpec;
 import net.fishandwhistle.openpos.api.APIQuery;
@@ -80,13 +81,40 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
         mPreview = new CameraPreview(this);
         mPreview.setPreviewImageCallback(this);
-        FrameLayout mPreviewF = (FrameLayout) findViewById(R.id.bcreader_imageframe);
+        final FrameLayout mPreviewF = (FrameLayout) findViewById(R.id.bcreader_imageframe);
         mPreviewF.addView(mPreview, 0);
 
         mPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mCamera.autoFocus(null);
+                if(enableScanning) {
+                    //scan already in progress
+                    return;
+                }
+                enableScanning = true;
+                mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean success, Camera camera) {
+                        if(success) {
+                            // wait 250 ms before taking a picture
+                            mPreview.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (enableScanning) {
+                                        //still no barcode
+                                        mCamera.takePicture(null, null, BarcodeReaderActivity.this);
+                                    }
+                                    //else ignore
+                                }
+                            }, 250);
+                        } else {
+                            if(enableScanning) {
+                                Toast.makeText(BarcodeReaderActivity.this, "Auto focus failed", Toast.LENGTH_SHORT).show();
+                                enableScanning = false;
+                            }
+                        }
+                    }
+                });
             }
         });
 
@@ -142,7 +170,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         });
 
         refreshItems(true);
-        enableScanning = true;
+        enableScanning = false;
         cameraDisplayOrientation = -1;
 
         highResDecodeProgress = new ProgressDialog(this);
@@ -180,20 +208,6 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
     public void onResume() {
         super.onResume();
         resetCamera(false);
-    }
-
-    private void setEnableScanning(boolean value) {
-        TextView text = (TextView)findViewById(R.id.bcreader_disablescantext);
-        if(value) {
-            text.setText(R.string.bcreader_disablescan);
-            text.setTextColor(Color.argb(100, 255, 0, 0));
-            findViewById(R.id.bcreader_redbar).setVisibility(View.VISIBLE);
-        } else {
-            text.setText(R.string.bcreader_enablescan);
-            text.setTextColor(Color.argb(100, 0, 255, 0));
-            findViewById(R.id.bcreader_redbar).setVisibility(View.GONE);
-        }
-        enableScanning = value;
     }
 
     @Override
@@ -333,6 +347,10 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
 
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
+        if(!enableScanning) {
+            mCamera.startPreview();
+            return;
+        }
         if(extractor != null) {
             extractor.cancel(false);
         }
@@ -354,15 +372,9 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         }
 
         if(b.isValid) {
+            enableScanning = false;
             Log.i(TAG, b.type + " Read: " + b.toString());
-            if(lastBarcode == null) {
-                onNewBarcode(b);
-            } else if(!b.equals(lastBarcode)) {
-                onNewBarcode(b);
-            } else if(b.equals(lastBarcode) && ((b.timeread - lastBarcode.timeread) > 1000)) {
-                onNewBarcode(b);
-            }
-            lastBarcode = b;
+            this.onNewBarcode(b);
         } else {
             String partial = b.toString();
             if(partial.length() > 0) {
@@ -375,6 +387,7 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
         }
         if(notifyFail) {
             mCamera.startPreview();
+            enableScanning = false;
         }
     }
 
@@ -505,7 +518,8 @@ public class BarcodeReaderActivity extends AppCompatActivity implements CameraPr
                 //do java decoding
                 BarcodeExtractor e = new BarcodeExtractor(vals);
                 boolean dofilter = this.format == ImageFormat.JPEG;
-                barcode = e.multiExtract(new BarcodeSpec[] {new CodabarSpec(), new UPCASpec(), new EANSpec(), new EAN8Spec()}, dofilter);
+                barcode = e.multiExtract(new BarcodeSpec[] {new CodabarSpec(), new Code25Spec(), new UPCASpec(),
+                        new EANSpec(), new EAN8Spec()}, dofilter);
 
             } catch(IOException e) {
                 Log.e(TAG, "IO exception on write image", e);
