@@ -63,3 +63,21 @@ for(d in 0:9) {
 
 c128 <- read.csv("R/code128spec.csv", colClasses = "character")
 
+
+for(i in 1:(nrow(c128)-1)) {
+  p <- c128$widths[i]
+  ints <- sapply(1:nchar(p), function(j) {
+    as.integer(substr(p, j, j))
+  })
+  cat(paste0("digc128.put(new BarcodePattern(new int[] {",
+             paste0(ints, collapse=", "),
+             '}, true), new Code128Digit(',
+             c128$value[i],
+             ', "',
+             c128$charA,
+             '", "',
+             c128$charB,
+             '", "',
+             c128$value[i],
+             '"));\n'))
+}
