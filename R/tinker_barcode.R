@@ -37,3 +37,20 @@ for(i in 1:nrow(c39)) {
              c39$checksum[i], 
              '"));\n'))
 }
+
+pad <- function(ch) {
+  nzeroes <- 4-nchar(ch)
+  paste0(paste(rep("0", nzeroes), collapse=""), ch)
+}
+
+binary<-function(i) {
+  a<-2^(0:9)
+  b<-2*a
+  pad(as.character(sapply(i,function(x) sum(10^(0:9)[(x %% b)>=a]))))
+}
+
+for(d in 0:9) {
+  string <- binary(d)
+  
+}
+

@@ -35,11 +35,6 @@ public class ITFSpec extends Code25Spec {
         //check if there are enough bars for minLength
         if(bars.length < (4 + minLength/2*10 + 3)) throw new BarcodeException("Not enough bars to cover minimum length", b);
 
-        //create vals array
-        boolean[] vals = new boolean[bars.length];
-        for(int i=0; i<vals.length; i++) {
-            vals[i] = (i%2) == 0 ;
-        }
         int startIndex = -1;
         int endIndex = -1;
         int starti = 0;
@@ -89,8 +84,7 @@ public class ITFSpec extends Code25Spec {
         // try to decode end digit
         if(startIndex == -1) throw new BarcodeException("No start character encountered", b);
         if(endIndex == -1) throw new BarcodeException("No end character encountered", b);
-        if(fixedLength && b.digits.size() != minLength) throw new BarcodeException("Wrong number of decoded digits", b);
-        if(b.digits.size() < minLength) throw new BarcodeException("Too few decoded digits", b);
+        this.checkLength(b);
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
         b.isValid = true;
         return b;

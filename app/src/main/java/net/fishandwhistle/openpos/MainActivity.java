@@ -23,6 +23,7 @@ import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EANSpec;
 import net.fishandwhistle.openpos.barcode.ITF14Spec;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
+import net.fishandwhistle.openpos.barcode.MSISpec;
 import net.fishandwhistle.openpos.barcode.UPCASpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
