@@ -50,7 +50,16 @@ binary<-function(i) {
 }
 
 for(d in 0:9) {
-  string <- binary(d)
-  
+  p <- binary(d)
+  ints <- sapply(1:nchar(p), function(i) {
+    ifelse(substr(p, i, i)=="1", 2, 1)
+  })
+  cat(paste0("digMSI.put(new BarcodePattern(new int[] {",
+             paste0(ints, collapse=", "),
+             '}, true), new BarcodeDigit("',
+             d,
+             '"));\n'))
 }
+
+c128 <- read.csv("R/code128spec.csv", colClasses = "character")
 
