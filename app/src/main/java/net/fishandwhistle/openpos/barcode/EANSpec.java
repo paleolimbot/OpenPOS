@@ -46,7 +46,6 @@ public abstract class EANSpec extends BarcodeSpec {
             vals[i] = (i%2) == 0 ;
         }
         Barcode b = new Barcode(this.getType());
-        b.timeread = System.currentTimeMillis();
         //test number of bars
         if(bars.length < nbars) throw new BarcodeException("Not enough bars to create code", b);
         // test start code

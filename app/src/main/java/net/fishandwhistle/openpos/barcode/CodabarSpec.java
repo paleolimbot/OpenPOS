@@ -42,7 +42,6 @@ public class CodabarSpec extends DualWidthSpec {
             vals[i] = (i%2) == 0 ;
         }
         Barcode b = new Barcode(this.getType());
-        b.timeread = System.currentTimeMillis();
 
         if(bars.length < (nbarsPerDigit + 1 + (nbarsPerDigit+1)*minLength + nbarsPerDigit))
             throw new BarcodeException("Too few bars to decode barcode", b);

@@ -55,7 +55,7 @@ public abstract class BarcodeSpec {
             digits = new ArrayList<>();
             tag = null;
             isValid = false;
-            timeread = 0;
+            timeread = System.currentTimeMillis();
         }
 
         public String toString() {
