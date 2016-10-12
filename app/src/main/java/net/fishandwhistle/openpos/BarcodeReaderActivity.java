@@ -33,17 +33,20 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
  Camera.PictureCallback {
 
     private static final String TAG = "BarcodeReader";
+    private static final int READ_DELAY = 1000;
 
+    enum ScanModes {TAP, CONTINUOUS}
 
     private Camera mCamera;
     private CameraPreview mPreview;
     private List<ImageBarcodeExtractor> extractors;
 
     private int cameraDisplayOrientation ;
-
+    private ScanModes scanMode;
     private boolean enableScanning ;
     private ProgressDialog highResDecodeProgress;
-
+    private BarcodeSpec.Barcode lastBarcode;
+    private BarcodeSpec.Barcode lastValidBarcode ;
 
     protected abstract BarcodeSpec[] getBarcodeSpecs() ;
 
@@ -62,35 +65,39 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
         mPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(enableScanning) {
-                    //scan already in progress
-                    return;
-                }
-                enableScanning = true;
+                if(scanMode == ScanModes.CONTINUOUS) {
+                    mCamera.autoFocus(null);
+                } else if(scanMode == ScanModes.TAP) {
+                    if (enableScanning) {
+                        //scan already in progress
+                        return;
+                    }
+                    enableScanning = true;
 
-                mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                    @Override
-                    public void onAutoFocus(boolean success, Camera camera) {
-                        if(success) {
-                            // wait 250 ms before taking a picture
-                            mPreview.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (enableScanning) {
-                                        //still no barcode
-                                        mCamera.takePicture(null, null, BarcodeReaderActivity.this);
+                    mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                        @Override
+                        public void onAutoFocus(boolean success, Camera camera) {
+                            if (success) {
+                                // wait 250 ms before taking a picture
+                                mPreview.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (enableScanning) {
+                                            //still no barcode
+                                            mCamera.takePicture(null, null, BarcodeReaderActivity.this);
+                                        }
+                                        //else ignore
                                     }
-                                    //else ignore
+                                }, 400);
+                            } else {
+                                if (enableScanning) {
+                                    Toast.makeText(BarcodeReaderActivity.this, "Auto focus failed", Toast.LENGTH_SHORT).show();
+                                    enableScanning = false;
                                 }
-                            }, 400);
-                        } else {
-                            if(enableScanning) {
-                                Toast.makeText(BarcodeReaderActivity.this, "Auto focus failed", Toast.LENGTH_SHORT).show();
-                                enableScanning = false;
                             }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
 
@@ -103,8 +110,10 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
         });
 
         extractors = new ArrayList<>();
-        enableScanning = false;
         cameraDisplayOrientation = -1;
+        setScanMode(ScanModes.TAP);
+        lastBarcode = null;
+        lastValidBarcode = null;
 
         highResDecodeProgress = new ProgressDialog(this);
         highResDecodeProgress.setCancelable(false);
@@ -126,6 +135,15 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     public void onResume() {
         super.onResume();
         resetCamera(false);
+    }
+
+    private void setScanMode(ScanModes scanMode) {
+        if(scanMode == ScanModes.CONTINUOUS) {
+            this.enableScanning = true;
+        } else if(scanMode == ScanModes.TAP) {
+            this.enableScanning = false;
+        }
+        this.scanMode = scanMode;
     }
 
     private void resetExtractors(boolean restartPreview) {
@@ -251,10 +269,12 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     @Override
     public void onPreviewImage(byte[] data, int format, int width, int height) {
         if(enableScanning) {
-            Log.i(TAG, "Launching barcode extractor");
-            ImageBarcodeExtractor extractor = new ImageBarcodeExtractor(data, format, width, height, getScreenOrientation());
-            extractors.add(extractor);
-            extractor.execute("");
+            if((scanMode == ScanModes.TAP) || ((scanMode == ScanModes.CONTINUOUS) && (extractors.size() == 0))) {
+                Log.i(TAG, "Launching barcode extractor");
+                ImageBarcodeExtractor extractor = new ImageBarcodeExtractor(data, format, width, height, getScreenOrientation());
+                extractors.add(extractor);
+                extractor.execute("");
+            }
         }
     }
 
@@ -282,9 +302,18 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
             }
 
             if (b.isValid) {
-                enableScanning = !this.onNewBarcodeWrapper(b);
-                if(!enableScanning) {
-                    resetExtractors(true);
+                if(scanMode == ScanModes.CONTINUOUS) {
+                    if((lastValidBarcode == null) || (b.timeread - lastValidBarcode.timeread) > READ_DELAY) {
+                        if((lastBarcode != null &&!b.equals(lastBarcode)) && onNewBarcodeWrapper(b)) {
+                            lastValidBarcode = b;
+                        }
+                    }
+                    resetExtractors(notifyFail);
+                } else if(scanMode == ScanModes.TAP) {
+                    enableScanning = !this.onNewBarcodeWrapper(b);
+                    if (!enableScanning) {
+                        resetExtractors(true);
+                    }
                 }
             } else {
                 String partial = b.toString();
@@ -292,10 +321,14 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
                     partial = " Partial result: " + b.type + "/" + partial;
                 }
                 Log.i(TAG, "Barcode error." + partial);
+                if(scanMode == ScanModes.CONTINUOUS) {
+                    resetExtractors(false);
+                }
                 if (notifyFail) {
                     Toast.makeText(this, "Failed to read barcode." + partial, Toast.LENGTH_LONG).show();
                 }
             }
+            lastBarcode = b;
         }
         if (notifyFail) {
             enableScanning = false;
