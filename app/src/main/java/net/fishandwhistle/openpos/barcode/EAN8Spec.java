@@ -4,7 +4,7 @@ package net.fishandwhistle.openpos.barcode;
  * Created by dewey on 2016-10-05.
  */
 
-public class EAN8Spec extends EANSpec {
+public class EAN8Spec extends EAN13Spec {
 
     public EAN8Spec() {
         super("EAN/8", 3, 5, 3, 43);

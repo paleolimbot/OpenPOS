@@ -1,5 +1,7 @@
 package net.fishandwhistle.openpos.barcode;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 import static net.fishandwhistle.openpos.barcode.ArrayMath.filter;
@@ -13,6 +15,7 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
  */
 
 public class BarcodeExtractor {
+    private static final String TAG = "BarcodeExtractor";
 
     private double[] data;
     private double[] transformed;
@@ -51,11 +54,11 @@ public class BarcodeExtractor {
         }
     }
 
-    public void threshold(double value) {
-        if(this.transformed == null) {
-            this.thresholded = lt(this.data, value);
-        } else {
+    public void threshold(double value, boolean transformed) {
+        if(transformed) {
             this.thresholded = lt(this.transformed, value);
+        } else {
+            this.thresholded = lt(this.data, value);
         }
     }
 
@@ -99,42 +102,52 @@ public class BarcodeExtractor {
     }
 
     public BarcodeSpec.Barcode multiExtract(BarcodeSpec[] specs, boolean filter) {
-        BarcodeSpec.Barcode best = null;
-        double bestRatio = 0;
-
-        double[] thresholds = new double[] {0.6, 0.5, 0.4, 0.3};
-        boolean[] filterOpts ;
+        double[] thresholds = new double[] {0.6, 0.5, 0.4};
+        boolean[] filterOpts;
         if(filter) {
-            filterOpts = new boolean[] {false, true};
+            filterOpts = new boolean[] {true, false};
         } else {
             filterOpts = new boolean[] {false};
         }
+        return this.multiExtract(specs, filterOpts, thresholds, new boolean[] {true});
+    }
+
+    public BarcodeSpec.Barcode multiExtract(BarcodeSpec[] specs, boolean[] filterOpts, double[] thresholds, boolean[] transforms) {
+        BarcodeSpec.Barcode best = null;
+        double bestRatio = 0;
+
         for(boolean dofilter : filterOpts) {
-            this.transform(10, 0.5, dofilter);
-            for (double d : thresholds) {
-                this.threshold(d);
-                int[] bars = this.getBars();
-                for (int i = 0; i < Math.min(9, bars.length); i += 2) {
-                    for (BarcodeSpec spec : specs) {
-                        try {
-                            return spec.parse(subset(bars, i, bars.length - i));
-                        } catch (BarcodeSpec.BarcodeException e) {
-                            if (best != null) {
-                                BarcodeSpec.Barcode p = e.partial;
-                                double ratio ;
-                                if(p.digits.size() == 0) {
-                                    ratio = 0;
+            for (boolean transform : transforms) {
+                if (transform)
+                    this.transform(10, 0.5, dofilter);
+                for (double d : thresholds) {
+                    this.threshold(d, transform);
+                    int[] bars = this.getBars();
+                    for (int i = 0; i < Math.min(9, bars.length); i += 2) {
+                        for (BarcodeSpec spec : specs) {
+                            try {
+                                BarcodeSpec.Barcode b = spec.parse(subset(bars, i, bars.length - i));
+                                Log.i(TAG, String.format("Barcode %s; ratio=%s; offset=%s; transform=%s; filter=%s",
+                                        b.type + "/" + b.toString(), d, i, transform, dofilter));
+                                return b;
+                            } catch (BarcodeSpec.BarcodeException e) {
+                                if (best != null) {
+                                    BarcodeSpec.Barcode p = e.partial;
+                                    double ratio;
+                                    if (p.digits.size() == 0) {
+                                        ratio = 0;
+                                    } else {
+                                        ratio = p.getValidDigits() / (double) p.digits.size();
+                                    }
+                                    if (ratio > bestRatio) {
+                                        best = e.partial;
+                                        best.tag = e.getMessage();
+                                        bestRatio = ratio;
+                                    }
                                 } else {
-                                    ratio = p.getValidDigits() / (double)p.digits.size();
-                                }
-                                if (ratio > bestRatio) {
                                     best = e.partial;
                                     best.tag = e.getMessage();
-                                    bestRatio = ratio;
                                 }
-                            } else {
-                                best = e.partial;
-                                best.tag = e.getMessage();
                             }
                         }
                     }

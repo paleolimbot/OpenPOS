@@ -86,6 +86,11 @@ public class ITFSpec extends Code25Spec {
         if(endIndex == -1) throw new BarcodeException("No end character encountered", b);
         this.checkLength(b);
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
+
+        if(b.digits.size() == 14 && Checksums.checksum(b, 1, 3)) {
+            b.type = "ITF-14";
+        }
+
         b.isValid = true;
         return b;
     }

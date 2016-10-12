@@ -9,9 +9,9 @@ import java.util.Map;
  * Created by dewey on 2016-10-03.
  */
 
-public class UPCESpec extends UPCASpec {
+public class UPCESpec extends EANSpec {
     public UPCESpec() {
-        super("UPC/E", digupce, 3, 0, 6, 33);
+        super("UPC-E", digupce, 3, 0, 6, 33);
     }
 
     @Override
@@ -65,20 +65,6 @@ public class UPCESpec extends UPCASpec {
         return b;
     }
 
-        /*
-Last UPC-E digit 	UPC-E numerical pattern 	UPC-A equivalent
-0 	XXNNN0 	0 or 1 + XX000-00NNN + check digit
-1 	XXNNN1 	0 or 1 + XX100-00NNN + check digit
-2 	XXNNN2 	0 or 1 + XX200-00NNN + check digit
-3 	XXXNN3 	0 or 1 + XXX00-000NN + check digit
-4 	XXXXN4 	0 or 1 + XXXX0-0000N + check digit
-5 	XXXXX5 	0 or 1 + XXXXX-00005 + check digit
-6 	XXXXX6 	0 or 1 + XXXXX-00006 + check digit
-7 	XXXXX7 	0 or 1 + XXXXX-00007 + check digit
-8 	XXXXX8 	0 or 1 + XXXXX-00008 + check digit
-9 	XXXXX9 	0 or 1 + XXXXX-00009 + check digit
-    */
-
     private static final int[][] upceZeroPatterns = new int[][] {
             new int[] {2, 0, 4, 3},
             new int[] {2, 1, 4, 3},
@@ -117,26 +103,6 @@ Last UPC-E digit 	UPC-E numerical pattern 	UPC-A equivalent
         upceParities.put("OEOEEO", new int[] {1, 8});
         upceParities.put("OEEOEO", new int[] {1, 9});
     }
-
-    /*
-UPC-A
-check digit 	UPC-E parity pattern for UPC-A
-
-number system 0
-	UPC-E parity pattern for UPC-A
-
-check   ns0 ns1
-0 	EEEOOO 	OOOEEE
-1 	EEOEOO 	OOEOEE
-2 	EEOOEO 	OOEEOE
-3 	EEOOOE 	OOEEEO
-4 	EOEEOO 	OEOOEE
-5 	EOOEEO 	OEEOOE
-6 	EOOOEE 	OEEEOO
-7 	EOEOEO 	OEOEOE
-8 	EOEOOE 	OEOEEO
-9 	EOOEOE 	OEEOEO
-     */
 
     protected static Map<BarcodePattern, BarcodeDigit> digupce = new HashMap<>();
     static {

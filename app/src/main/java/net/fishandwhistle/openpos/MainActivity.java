@@ -6,7 +6,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,11 +19,8 @@ import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.Code25Spec;
 import net.fishandwhistle.openpos.barcode.Code39Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
-import net.fishandwhistle.openpos.barcode.EANSpec;
-import net.fishandwhistle.openpos.barcode.ITF14Spec;
+import net.fishandwhistle.openpos.barcode.EAN13Spec;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
-import net.fishandwhistle.openpos.barcode.MSISpec;
-import net.fishandwhistle.openpos.barcode.UPCASpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
@@ -46,7 +42,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     @Override
     protected BarcodeSpec[] getBarcodeSpecs() {
         //TODO get this based on preferences
-        return new BarcodeSpec[] {new UPCASpec(), new EANSpec(), new EAN8Spec(), new ITF14Spec(),
+        return new BarcodeSpec[] {new EAN13Spec(), new EAN8Spec(),
                 new ITFSpec(), new CodabarSpec(), new Code25Spec(), new Code39Spec()};
     }
 
