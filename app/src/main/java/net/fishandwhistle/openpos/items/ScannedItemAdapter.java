@@ -1,7 +1,9 @@
 package net.fishandwhistle.openpos.items;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -20,12 +22,14 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
     private ArrayList<ScannedItem> allItems ;
     private int maxLength;
     private boolean enableQtyUpdate;
+    private Context context;
 
     public ScannedItemAdapter(Context context, boolean enableQtyUpdate) {
         super(context, R.layout.item_scanner, R.id.item_text);
         allItems = new ArrayList<>();
         this.maxLength = 0;
         this.enableQtyUpdate = enableQtyUpdate;
+        this.context = context;
     }
 
     @NonNull
@@ -39,9 +43,15 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
             v.findViewById(R.id.item_button_minus).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    i.nScans--;
-                    i.updateTime = System.currentTimeMillis();
-                    ScannedItemAdapter.this.notifyDataSetInvalidated();
+                    if((i.nScans - 1) == 0) {
+                        //trigger delete
+                        confirmDelete(i);
+                    } else {
+                        i.nScans--;
+                        i.updateTime = System.currentTimeMillis();
+                        ScannedItemAdapter.this.notifyDataSetInvalidated();
+                    }
+
                 }
             });
             v.findViewById(R.id.item_button_plus).setOnClickListener(new View.OnClickListener() {
@@ -94,4 +104,21 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
             }
         }
     }
+
+    private void confirmDelete(final ScannedItem item) {
+        AlertDialog.Builder b = new AlertDialog.Builder(context);
+        b.setTitle("Confirm Delete");
+        b.setMessage("Delete item " + item.toString() + "?");
+        b.setCancelable(true);
+        b.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                allItems.remove(item);
+                syncLists();
+            }
+        });
+        b.setNegativeButton("Cancel", null);
+        b.create().show();
+    }
+
 }

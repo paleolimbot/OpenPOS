@@ -70,7 +70,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         navigationView.setNavigationItemSelectedListener(this);
 
         scannedItemsText = (TextView)findViewById(R.id.bcreader_scannedtitle);
-        items = new ScannedItemAdapter(this);
+        items = new ScannedItemAdapter(this, true);
         list = ((ListView)findViewById(R.id.bcreader_itemlist));
         showHideButton = (Button)findViewById(R.id.bcreader_showhide);
 
