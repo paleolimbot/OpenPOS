@@ -15,6 +15,7 @@ public class ScannedItem implements Serializable {
     public String productCode = null;
     public String barcodeType = null;
     public String description = null;
+    public int nScans = 1;
     public double price = 0;
 
     public String json = null;
@@ -33,6 +34,18 @@ public class ScannedItem implements Serializable {
         } else {
             d = description;
         }
-        return d;
+
+        String qty = "";
+        if(nScans > 1) {
+            qty = " (" + nScans + ")";
+        }
+        return d + qty;
+    }
+
+    @Override
+    public boolean equals(Object othero) {
+        return othero instanceof ScannedItem &&
+                ((ScannedItem) othero).barcodeType.equals(this.barcodeType) &&
+                ((ScannedItem) othero).productCode.equals(this.productCode);
     }
 }
