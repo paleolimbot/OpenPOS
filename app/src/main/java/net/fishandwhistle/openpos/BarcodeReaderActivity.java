@@ -145,8 +145,8 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     }
 
     private void startReadRequest() {
-        Log.i(TAG, "Launching read request " + currentReadRequest);
         currentReadRequest = System.currentTimeMillis();
+        Log.i(TAG, "Launching read request " + currentReadRequest);
         enableScanning = true;
     }
 
