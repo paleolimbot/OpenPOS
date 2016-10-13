@@ -74,6 +74,7 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
                         //scan already in progress
                         return;
                     }
+                    mCamera.cancelAutoFocus();
                     startReadRequest();
 
                     mCamera.autoFocus(new Camera.AutoFocusCallback() {
@@ -156,9 +157,6 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
 
     private void finishReadRequest(BarcodeSpec.Barcode b) {
         Log.i(TAG, "Finishing read request " + currentReadRequest);
-        if((extractor != null) && !extractor.isCancelled()) {
-            extractor.cancel(false);
-        }
         extractor = null;
         currentReadRequest = 0;
         if(b != null) {
@@ -300,9 +298,10 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     }
 
     private void onBarcodeRead(long request, BarcodeSpec.Barcode b, int format) {
-        if(request != currentReadRequest)
-            return;
         boolean highres = format == mCamera.getParameters().getPictureFormat();
+        if(request != currentReadRequest) {
+            return;
+        }
 
         if(scanMode == ScanModes.CONTINUOUS) {
             if(b.isValid && ((lastValidBarcode == null) || (b.timeread - lastValidBarcode.timeread) > READ_DELAY)) {
