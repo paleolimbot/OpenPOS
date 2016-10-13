@@ -1,6 +1,10 @@
 package net.fishandwhistle.openpos.barcode;
 
+import android.util.Log;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static net.fishandwhistle.openpos.barcode.ArrayMath.div;
@@ -43,56 +47,125 @@ public class Code128Spec extends DualWidthSpec {
         int startIndex = -1;
         int endIndex = -1;
         int starti = 0;
+        int checksumTotal = 0;
 
         while(true) {
             if((starti+6) > bars.length) break;
+            Code128Digit d = (Code128Digit)this.getDigit(subset(bars, starti, 6), true);
 
-            if(startIndex == -1) {
+            if((startIndex == -1) && (d != null)) {
                 //look for start characters
-                Code128Digit d = (Code128Digit)this.getDigit(subset(bars, starti, 6), true);
-                if((d!= null)) {
-                    for(int startVal: startVals) {
-                        if(startVal == d.value) {
-                            startIndex = starti;
-                            break;
-                        }
+                for(int startVal: startVals) {
+                    if(startVal == d.value) {
+                        startIndex = starti;
+                        b.digits.add(d);
+                        checksumTotal += d.value;
+                        break;
                     }
                 }
-                starti += 6;
             } else {
-                //try to decode digit
-                boolean end = false;
-                BarcodePattern p = this.getBarcodePattern(subset(bars, starti, 7), true);
-                if (STOP.equals(p)) {
-                    end = true;
-                }
-                BarcodeDigit d2;
-                if((starti+4) < bars.length) {
-                    d2 = this.getDigit(subset(bars, starti, 5), true);
-                } else {
-                    d2 = null;
-                }
-                if(end && ((d2 == null) || (!d2.digit.equals("5")))) {
+                //use as general character, if next 7 don't match stop character
+                if((starti+7) > bars.length) break;
+                if(STOP.equals(getBarcodePattern(subset(bars, starti, 7), true))) {
                     endIndex = starti;
                     break;
                 } else {
-                    b.digits.add(d2);
+                    if(d != null)
+                        checksumTotal += d.value * b.digits.size();
+                    b.digits.add(d);
                 }
-                starti += 6;
+
             }
+            starti += 6;
         }
+
         // try to decode end digit
         if(startIndex == -1) throw new BarcodeException("No start character encountered", b);
         if(endIndex == -1) throw new BarcodeException("No end character encountered", b);
-        this.checkLength(b);
+        if(b.digits.size() < minLength) throw new BarcodeException("Encoded string is too short", b);
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
+
+        // try checksum
+        int lastVal = ((Code128Digit)b.digits.get(b.digits.size()-1)).value;
+        checksumTotal -=  lastVal * (b.digits.size()-1);
+        if((checksumTotal % 103) != lastVal) throw new BarcodeException("Checksum failed", b);
+        // remove check digit
+        b.digits.remove(b.digits.size()-1);
+
+        // transform to regular barcode digits
+        int system = -1;
+        List<BarcodeDigit> newdigs = new ArrayList<>();
+        boolean shift = false;
+
+        for(BarcodeDigit digit: b.digits) {
+            Code128Digit d = (Code128Digit)digit;
+
+            if(system == -1) {
+                system = d.value;
+                //don't add code to digits
+                continue;
+            } else if(d.value == 99 && (system == 103 || system == 104)) {
+                //switch to code C
+                system = 105;
+                //newdigs.add(new BarcodeDigit("[CodeC]"));
+                continue;
+            } else if(d.value == 100 && (system == 103 || system == 105)) {
+                //switch to code B
+                system = 104;
+                //newdigs.add(new BarcodeDigit("[CodeB]"));
+                continue;
+            } else if(d.value == 101 && (system == 104 || system == 105)) {
+                //switch to code A
+                system = 103;
+                //newdigs.add(new BarcodeDigit("[CodeA]"));
+                continue;
+            }
+
+            switch(system) {
+                case 103:
+                    if(d.value == 98) {
+                        shift = !shift;
+                    } else if(shift) {
+                        newdigs.add(new BarcodeDigit(d.getCodeB()));
+                        shift = false;
+                    } else {
+                        newdigs.add(new BarcodeDigit(d.getCodeA()));
+                    }
+                    break;
+                case 104:
+                    if(d.value == 98) {
+                        shift = !shift;
+                    } else if(shift) {
+                        newdigs.add(new BarcodeDigit(d.getCodeA()));
+                        shift = false;
+                    } else {
+                        newdigs.add(new BarcodeDigit(d.getCodeB()));
+                    }
+                    break;
+                case 105:
+                    newdigs.add(new BarcodeDigit(d.getCodeC()));
+                    break;
+            }
+        }
+
+        //Possibly parse GS1-128 here using https://en.wikipedia.org/wiki/GS1-128
+
+        b.digits = newdigs;
+        // now check for exact length
+        this.checkLength(b);
         b.isValid = true;
 
         return b;
     }
 
     protected BarcodePattern getBarcodePattern(int[] bars, boolean start) {
-        return new BarcodePattern(round(div(bars, sum(bars)/11.0)), start);
+        if(bars.length == 6) {
+            return new BarcodePattern(round(div(bars, sum(bars) / 11.0)), start);
+        } else if(bars.length == 7) {
+            return new BarcodePattern(round(div(bars, sum(bars) / 13.0)), start);
+        } else {
+            throw new IllegalArgumentException("Incorrect length of bars input");
+        }
     }
 
     public static class Code128Digit extends BarcodeDigit {
@@ -121,16 +194,16 @@ public class Code128Spec extends DualWidthSpec {
 
     private static Map<BarcodePattern, BarcodeDigit> digc128 = new HashMap<>();
     static {
-        digc128.put(new BarcodePattern(new int[] {2, 1, 2, 2, 2, 2}, true), new Code128Digit(0, " ", " ", "0"));
-        digc128.put(new BarcodePattern(new int[] {2, 2, 2, 1, 2, 2}, true), new Code128Digit(1, "!", "!", "1"));
-        digc128.put(new BarcodePattern(new int[] {2, 2, 2, 2, 2, 1}, true), new Code128Digit(2, "\"", "\"", "2"));
-        digc128.put(new BarcodePattern(new int[] {1, 2, 1, 2, 2, 3}, true), new Code128Digit(3, "#", "#", "3"));
-        digc128.put(new BarcodePattern(new int[] {1, 2, 1, 3, 2, 2}, true), new Code128Digit(4, "$", "$", "4"));
-        digc128.put(new BarcodePattern(new int[] {1, 3, 1, 2, 2, 2}, true), new Code128Digit(5, "%", "%", "5"));
-        digc128.put(new BarcodePattern(new int[] {1, 2, 2, 2, 1, 3}, true), new Code128Digit(6, "&", "&", "6"));
-        digc128.put(new BarcodePattern(new int[] {1, 2, 2, 3, 1, 2}, true), new Code128Digit(7, "'", "'", "7"));
-        digc128.put(new BarcodePattern(new int[] {1, 3, 2, 2, 1, 2}, true), new Code128Digit(8, "(", "(", "8"));
-        digc128.put(new BarcodePattern(new int[] {2, 2, 1, 2, 1, 3}, true), new Code128Digit(9, ")", ")", "9"));
+        digc128.put(new BarcodePattern(new int[] {2, 1, 2, 2, 2, 2}, true), new Code128Digit(0, " ", " ", "00"));
+        digc128.put(new BarcodePattern(new int[] {2, 2, 2, 1, 2, 2}, true), new Code128Digit(1, "!", "!", "01"));
+        digc128.put(new BarcodePattern(new int[] {2, 2, 2, 2, 2, 1}, true), new Code128Digit(2, "\"", "\"", "02"));
+        digc128.put(new BarcodePattern(new int[] {1, 2, 1, 2, 2, 3}, true), new Code128Digit(3, "#", "#", "03"));
+        digc128.put(new BarcodePattern(new int[] {1, 2, 1, 3, 2, 2}, true), new Code128Digit(4, "$", "$", "04"));
+        digc128.put(new BarcodePattern(new int[] {1, 3, 1, 2, 2, 2}, true), new Code128Digit(5, "%", "%", "05"));
+        digc128.put(new BarcodePattern(new int[] {1, 2, 2, 2, 1, 3}, true), new Code128Digit(6, "&", "&", "06"));
+        digc128.put(new BarcodePattern(new int[] {1, 2, 2, 3, 1, 2}, true), new Code128Digit(7, "'", "'", "07"));
+        digc128.put(new BarcodePattern(new int[] {1, 3, 2, 2, 1, 2}, true), new Code128Digit(8, "(", "(", "08"));
+        digc128.put(new BarcodePattern(new int[] {2, 2, 1, 2, 1, 3}, true), new Code128Digit(9, ")", ")", "09"));
         digc128.put(new BarcodePattern(new int[] {2, 2, 1, 3, 1, 2}, true), new Code128Digit(10, "*", "*", "10"));
         digc128.put(new BarcodePattern(new int[] {2, 3, 1, 2, 1, 2}, true), new Code128Digit(11, "+", "+", "11"));
         digc128.put(new BarcodePattern(new int[] {1, 1, 2, 2, 3, 2}, true), new Code128Digit(12, ",", ",", "12"));
@@ -216,14 +289,14 @@ public class Code128Spec extends DualWidthSpec {
         digc128.put(new BarcodePattern(new int[] {1, 1, 1, 1, 4, 3}, true), new Code128Digit(92, "[FS]", "|", "92"));
         digc128.put(new BarcodePattern(new int[] {1, 1, 1, 3, 4, 1}, true), new Code128Digit(93, "[GS]", "}", "93"));
         digc128.put(new BarcodePattern(new int[] {1, 3, 1, 1, 4, 1}, true), new Code128Digit(94, "[RS]", "~", "94"));
-        digc128.put(new BarcodePattern(new int[] {1, 1, 4, 1, 1, 3}, true), new Code128Digit(95, "[US]", "DEL", "95"));
-        digc128.put(new BarcodePattern(new int[] {1, 1, 4, 3, 1, 1}, true), new Code128Digit(96, "[FNC3]", "FNC 3", "96"));
-        digc128.put(new BarcodePattern(new int[] {4, 1, 1, 1, 1, 3}, true), new Code128Digit(97, "[FNC2]", "FNC 2", "97"));
-        digc128.put(new BarcodePattern(new int[] {4, 1, 1, 3, 1, 1}, true), new Code128Digit(98, "[ShiftB]", "Shift A", "98"));
-        digc128.put(new BarcodePattern(new int[] {1, 1, 3, 1, 4, 1}, true), new Code128Digit(99, "[Code C]", "Code C", "99"));
-        digc128.put(new BarcodePattern(new int[] {1, 1, 4, 1, 3, 1}, true), new Code128Digit(100, "[Code B]", "FNC 4", "100"));
-        digc128.put(new BarcodePattern(new int[] {3, 1, 1, 1, 4, 1}, true), new Code128Digit(101, "[FNC4]", "Code A", "101"));
-        digc128.put(new BarcodePattern(new int[] {4, 1, 1, 1, 3, 1}, true), new Code128Digit(102, "[FNC1]", "FNC 1", "102"));
+        digc128.put(new BarcodePattern(new int[] {1, 1, 4, 1, 1, 3}, true), new Code128Digit(95, "[US]", "[DEL]", "95"));
+        digc128.put(new BarcodePattern(new int[] {1, 1, 4, 3, 1, 1}, true), new Code128Digit(96, "[FNC3]", "[FNC3]", "96"));
+        digc128.put(new BarcodePattern(new int[] {4, 1, 1, 1, 1, 3}, true), new Code128Digit(97, "[FNC2]", "[FNC2]", "97"));
+        digc128.put(new BarcodePattern(new int[] {4, 1, 1, 3, 1, 1}, true), new Code128Digit(98, "[ShiftB]", "[ShiftA]", "98"));
+        digc128.put(new BarcodePattern(new int[] {1, 1, 3, 1, 4, 1}, true), new Code128Digit(99, "[CodeC]", "[CodeC]", "99"));
+        digc128.put(new BarcodePattern(new int[] {1, 1, 4, 1, 3, 1}, true), new Code128Digit(100, "[CodeB]", "[FNC4]", "[CodeB]"));
+        digc128.put(new BarcodePattern(new int[] {3, 1, 1, 1, 4, 1}, true), new Code128Digit(101, "[FNC4]", "[CodeA]", "[CodeA]"));
+        digc128.put(new BarcodePattern(new int[] {4, 1, 1, 1, 3, 1}, true), new Code128Digit(102, "[FNC1]", "[FNC1]", "[FNC1]"));
         digc128.put(new BarcodePattern(new int[] {2, 1, 1, 4, 1, 2}, true), new Code128Digit(103, "[StartA]", "[StartA]", "[StartA]"));
         digc128.put(new BarcodePattern(new int[] {2, 1, 1, 2, 1, 4}, true), new Code128Digit(104, "[StartB]", "[StartA]", "[StartA]"));
         digc128.put(new BarcodePattern(new int[] {2, 1, 1, 2, 3, 2}, true), new Code128Digit(105, "[StartC]", "[StartA]", "[StartA]"));

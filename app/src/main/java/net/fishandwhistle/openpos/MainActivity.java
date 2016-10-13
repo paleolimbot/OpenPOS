@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.CodabarSpec;
+import net.fishandwhistle.openpos.barcode.Code128Spec;
 import net.fishandwhistle.openpos.barcode.Code25Spec;
 import net.fishandwhistle.openpos.barcode.Code39Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
@@ -42,8 +43,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     @Override
     protected BarcodeSpec[] getBarcodeSpecs() {
         //TODO get this based on preferences
-        return new BarcodeSpec[] {new EAN13Spec(), new EAN8Spec(),
-                new ITFSpec(), new CodabarSpec(), new Code25Spec(), new Code39Spec()};
+        return new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
+                new ITFSpec(), new CodabarSpec(), new Code25Spec(), new Code39Spec(), new EAN8Spec()};
     }
 
     @Override

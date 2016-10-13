@@ -74,9 +74,9 @@ for(i in 1:(nrow(c128)-1)) {
              '}, true), new Code128Digit(',
              c128$value[i],
              ', "',
-             c128$charA,
+             c128$charA[i],
              '", "',
-             c128$charB,
+             c128$charB[i],
              '", "',
              c128$value[i],
              '"));\n'))
