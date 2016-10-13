@@ -1,7 +1,13 @@
 package net.fishandwhistle.openpos.items;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
+
+import net.fishandwhistle.openpos.R;
 
 import java.util.ArrayList;
 
@@ -13,11 +19,45 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
 
     private ArrayList<ScannedItem> allItems ;
     private int maxLength;
+    private boolean enableQtyUpdate;
 
-    public ScannedItemAdapter(Context context) {
-        super(context, android.R.layout.simple_list_item_1);
+    public ScannedItemAdapter(Context context, boolean enableQtyUpdate) {
+        super(context, R.layout.item_scanner, R.id.item_text);
         allItems = new ArrayList<>();
         this.maxLength = 0;
+        this.enableQtyUpdate = enableQtyUpdate;
+    }
+
+    @NonNull
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View v = super.getView(position, convertView, parent);
+        final ScannedItem i = this.getItem(position);
+        assert i != null;
+        ((TextView)v.findViewById(R.id.item_qty)).setText(String.valueOf(i.nScans));
+        if(enableQtyUpdate) {
+            v.findViewById(R.id.item_button_minus).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    i.nScans--;
+                    i.updateTime = System.currentTimeMillis();
+                    ScannedItemAdapter.this.notifyDataSetInvalidated();
+                }
+            });
+            v.findViewById(R.id.item_button_plus).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    i.nScans++;
+                    i.updateTime = System.currentTimeMillis();
+                    ScannedItemAdapter.this.notifyDataSetInvalidated();
+                }
+            });
+        }
+        v.findViewById(R.id.item_button_minus).setEnabled(enableQtyUpdate);
+        v.findViewById(R.id.item_button_plus).setEnabled(enableQtyUpdate);
+
+
+        return v;
     }
 
     @Override

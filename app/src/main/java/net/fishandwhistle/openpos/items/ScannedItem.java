@@ -12,6 +12,7 @@ import java.util.Locale;
 public class ScannedItem implements Serializable {
 
     public long scanTime = 0;
+    public long updateTime = 0;
     public String productCode = null;
     public String barcodeType = null;
     public String description = null;
@@ -22,6 +23,7 @@ public class ScannedItem implements Serializable {
 
     public ScannedItem(String barcodeType, String productCode) {
         this.scanTime = System.currentTimeMillis();
+        updateTime = scanTime;
         this.barcodeType = barcodeType;
         this.productCode = productCode;
     }
@@ -34,12 +36,7 @@ public class ScannedItem implements Serializable {
         } else {
             d = description;
         }
-
-        String qty = "";
-        if(nScans > 1) {
-            qty = " (" + nScans + ")";
-        }
-        return d + qty;
+        return d;
     }
 
     @Override
