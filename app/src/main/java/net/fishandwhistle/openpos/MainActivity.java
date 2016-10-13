@@ -1,10 +1,12 @@
 package net.fishandwhistle.openpos;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -70,7 +72,12 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         navigationView.setNavigationItemSelectedListener(this);
 
         scannedItemsText = (TextView)findViewById(R.id.bcreader_scannedtitle);
-        items = new ScannedItemAdapter(this, true);
+        items = new ScannedItemAdapter(this, true, new ScannedItemAdapter.OnDeleteCallback() {
+            @Override
+            public void onScanerItemDelete(ScannedItem item) {
+                confirmItemDelete(item);
+            }
+        });
         list = ((ListView)findViewById(R.id.bcreader_itemlist));
         showHideButton = (Button)findViewById(R.id.bcreader_showhide);
 
@@ -203,6 +210,22 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 }
             });
         }
+    }
+
+    private void confirmItemDelete(final ScannedItem item) {
+        AlertDialog.Builder b = new AlertDialog.Builder(this);
+        b.setTitle("Confirm Delete");
+        b.setMessage("Delete item " + item.toString() + "?");
+        b.setCancelable(true);
+        b.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                items.remove(item);
+                refreshItems(false);
+            }
+        });
+        b.setNegativeButton("Cancel", null);
+        b.create().show();
     }
 
 }

@@ -23,13 +23,16 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
     private int maxLength;
     private boolean enableQtyUpdate;
     private Context context;
+    private OnDeleteCallback deleteCallback;
 
-    public ScannedItemAdapter(Context context, boolean enableQtyUpdate) {
+
+    public ScannedItemAdapter(Context context, boolean enableQtyUpdate, OnDeleteCallback callback) {
         super(context, R.layout.item_scanner, R.id.item_text);
         allItems = new ArrayList<>();
         this.maxLength = 0;
         this.enableQtyUpdate = enableQtyUpdate;
         this.context = context;
+        this.deleteCallback = callback;
     }
 
     @NonNull
@@ -43,9 +46,8 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
             v.findViewById(R.id.item_button_minus).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if((i.nScans - 1) == 0) {
-                        //trigger delete
-                        confirmDelete(i);
+                    if((deleteCallback != null) && ((i.nScans - 1) == 0)) {
+                        deleteCallback.onScanerItemDelete(i);
                     } else {
                         i.nScans--;
                         i.updateTime = System.currentTimeMillis();
@@ -84,6 +86,12 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
     }
 
     @Override
+    public void remove(ScannedItem object) {
+        allItems.remove(object);
+        syncLists();
+    }
+
+    @Override
     public void clear() {
         allItems.clear();
         this.syncLists();
@@ -105,20 +113,8 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
         }
     }
 
-    private void confirmDelete(final ScannedItem item) {
-        AlertDialog.Builder b = new AlertDialog.Builder(context);
-        b.setTitle("Confirm Delete");
-        b.setMessage("Delete item " + item.toString() + "?");
-        b.setCancelable(true);
-        b.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                allItems.remove(item);
-                syncLists();
-            }
-        });
-        b.setNegativeButton("Cancel", null);
-        b.create().show();
+    public interface OnDeleteCallback {
+        void onScanerItemDelete(ScannedItem item);
     }
 
 }

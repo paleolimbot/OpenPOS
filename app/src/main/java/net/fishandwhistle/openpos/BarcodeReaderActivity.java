@@ -298,10 +298,11 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     }
 
     private void onBarcodeRead(long request, BarcodeSpec.Barcode b, int format) {
-        boolean highres = format == mCamera.getParameters().getPictureFormat(); //TODO mCamera is null sometimes?
         if(request != currentReadRequest) {
             return;
         }
+        boolean highres = format == mCamera.getParameters().getPictureFormat();
+
 
         if(scanMode == ScanModes.CONTINUOUS) {
             if(b.isValid && ((lastValidBarcode == null) || (b.timeread - lastValidBarcode.timeread) > READ_DELAY)) {
