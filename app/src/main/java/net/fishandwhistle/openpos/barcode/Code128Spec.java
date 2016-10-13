@@ -70,8 +70,11 @@ public class Code128Spec extends DualWidthSpec {
                     endIndex = starti;
                     break;
                 } else {
-                    if(d != null)
+                    if(!partial && (d == null)) {
+                        throw new BarcodeException("Undecodable digit", b);
+                    } else if(d != null) {
                         checksumTotal += d.value * b.digits.size();
+                    }
                     b.digits.add(d);
                 }
 

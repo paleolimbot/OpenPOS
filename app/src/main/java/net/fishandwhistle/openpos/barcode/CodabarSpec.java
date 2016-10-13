@@ -64,7 +64,9 @@ public class CodabarSpec extends DualWidthSpec {
                     startIndex = i;
                 }
             } else {
-                if((d != null) && endChars.contains(d.digit)) {
+                if(!partial && (d == null)) {
+                    throw new BarcodeException("Undecodable digit", b);
+                } else if((d != null) && endChars.contains(d.digit)) {
                     endIndex = i;
                     newdigs.add(d);
                     break;

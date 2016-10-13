@@ -74,7 +74,9 @@ public class Code25Spec extends DualWidthSpec {
                 } else {
                     d2 = null;
                 }
-                if(end && ((d2 == null) || (!d2.digit.equals("5")))) {
+                if(!partial && !end && (d2 == null)) {
+                    throw new BarcodeException("Undecodable digit", b);
+                } else if(end && ((d2 == null) || (!d2.digit.equals("5")))) {
                     endIndex = starti;
                     break;
                 } else {

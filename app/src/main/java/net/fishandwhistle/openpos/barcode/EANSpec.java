@@ -23,6 +23,7 @@ public abstract class EANSpec extends BarcodeSpec {
     private int begGuardLength ;
     private int endGuardLength ;
     private int middleGuardLength ;
+    private boolean partial;
 
     public EANSpec(String type, Map<BarcodePattern, BarcodeDigit> digits,
                    int begGuardLength, int middleGuardLength, int endGuardLength,
@@ -33,6 +34,7 @@ public abstract class EANSpec extends BarcodeSpec {
         this.middleGuardLength = middleGuardLength;
         this.nbars = nbars;
         this.nbarsSide = (nbars - begGuardLength - endGuardLength - middleGuardLength) / 2;
+        partial = false; //used for decoding
     }
 
     protected BarcodePattern getBarcodePattern(int[] bars, boolean start) {
@@ -69,7 +71,9 @@ public abstract class EANSpec extends BarcodeSpec {
         int[] decodable = concatenate(leftside, rightside);
         boolean[] vdecodable = concatenate(vleftside, vrightside);
         for(int i=0; i<decodable.length; i+= 4) {
-            b.digits.add(this.getDigit(subset(decodable, i, 4), vdecodable[i]));
+            BarcodeDigit d = this.getDigit(subset(decodable, i, 4), vdecodable[i]);
+            if(d == null && !partial) throw new BarcodeException("Undecodable digit found", b);
+            b.digits.add(d);
         }
 
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);

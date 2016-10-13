@@ -12,11 +12,13 @@ public abstract class DualWidthSpec extends BarcodeSpec {
 
     protected int minLength;
     protected boolean fixedLength;
+    protected boolean partial;
 
     public DualWidthSpec(String type, Map<BarcodePattern, BarcodeDigit> digits, int minLength, boolean fixedLength) {
         super(type, digits);
         this.minLength = minLength;
         this.fixedLength = fixedLength;
+        this.partial = false;
     }
 
     protected void checkLength(Barcode b) throws BarcodeException {

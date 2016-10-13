@@ -13,8 +13,7 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
  * Created by dewey on 2016-10-11.
  */
 
-public class ITFSpec extends Code25Spec {
-
+public class ITFSpec extends DualWidthSpec {
 
     public ITFSpec() {
         this(5, false);
@@ -71,7 +70,9 @@ public class ITFSpec extends Code25Spec {
                     d1 = null;
                     d2 = null;
                 }
-                if(end && (d1 == null) && (d2 == null)) {
+                if(!partial && !end && (d1 == null) && (d2 == null)) {
+                    throw new BarcodeException("Undecodable digit found", b);
+                } else if(end && (d1 == null) && (d2 == null)) {
                     endIndex = starti;
                     break;
                 } else {

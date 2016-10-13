@@ -33,7 +33,7 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
  Camera.PictureCallback {
 
     private static final String TAG = "BarcodeReader";
-    private static final int READ_DELAY = 1000;
+    private static final int READ_DELAY = 1500;
 
     enum ScanModes {TAP, CONTINUOUS}
 
@@ -105,7 +105,7 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
 
         extractor = null;
         cameraDisplayOrientation = -1;
-        setScanMode(ScanModes.CONTINUOUS);
+        setScanMode(ScanModes.TAP);
         lastBarcode = null;
         lastValidBarcode = null;
         currentReadRequest = 0;
@@ -161,7 +161,9 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
         }
         extractor = null;
         currentReadRequest = 0;
-        lastValidBarcode = b;
+        if(b != null) {
+            lastValidBarcode = b;
+        }
         if(scanMode == ScanModes.TAP) {
             enableScanning = false;
             try {
