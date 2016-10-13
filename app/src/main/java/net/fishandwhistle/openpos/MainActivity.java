@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
@@ -24,7 +25,6 @@ import net.fishandwhistle.openpos.barcode.Code39Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EAN13Spec;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
-import net.fishandwhistle.openpos.barcode.UPCESpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
@@ -34,11 +34,9 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
     private static final String TAG = "MainActivity";
     private static final String INSTANCE_ITEMS = "instance_items";
-    private static final String INSTANCE_ITEMLIST_STATE = "itemlist_state";
 
     private ScannedItemAdapter items ;
     private ListView list;
-    private Button showHideButton ;
     private TextView scannedItemsText ;
 
 
@@ -78,8 +76,15 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 confirmItemDelete(item);
             }
         });
+
         list = ((ListView)findViewById(R.id.bcreader_itemlist));
-        showHideButton = (Button)findViewById(R.id.bcreader_showhide);
+
+        findViewById(R.id.bcreader_showall).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "Show all", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         // get items from saved instance, if exists, and set visibility
         if(savedInstanceState != null) {
@@ -90,33 +95,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                     items.add(s);
                 }
             }
-            if (savedInstanceState.containsKey(INSTANCE_ITEMLIST_STATE)) {
-                //noinspection WrongConstant
-                int vis = savedInstanceState.getInt(INSTANCE_ITEMLIST_STATE, View.VISIBLE);
-                if(vis != View.VISIBLE) {
-                    list.setVisibility(View.GONE);
-                    showHideButton.setText(R.string.bcreader_show);
-                } else {
-                    list.setVisibility(View.VISIBLE);
-                    showHideButton.setText(R.string.bcreader_hide);
-                }
-            }
         }
         list.setAdapter(items);
-        showHideButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(list.getVisibility() == View.VISIBLE) {
-                    list.setVisibility(View.GONE);
-                    showHideButton.setText(R.string.bcreader_show);
-                } else {
-                    list.setVisibility(View.VISIBLE);
-                    showHideButton.setText(R.string.bcreader_hide);
-                }
-            }
-        });
-
-
         refreshItems(true);
     }
 
@@ -130,7 +110,6 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         if(scanned.size() > 0) {
             outState.putSerializable(INSTANCE_ITEMS, scanned);
         }
-        outState.putInt(INSTANCE_ITEMLIST_STATE, list.getVisibility());
     }
 
     @Override

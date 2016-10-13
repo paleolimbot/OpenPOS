@@ -49,10 +49,10 @@
                 android:layout_gravity="start|center_vertical" />
 
             <Button
-                android:id="@+id/bcreader_showhide"
+                android:id="@+id/bcreader_showall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/bcreader_hide"
+                android:text="@string/bcreader_showall"
                 android:layout_weight="1"
                 android:layout_gravity="start|center_vertical" />
 
