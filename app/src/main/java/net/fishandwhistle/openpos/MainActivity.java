@@ -11,7 +11,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -70,10 +73,15 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         navigationView.setNavigationItemSelectedListener(this);
 
         scannedItemsText = (TextView)findViewById(R.id.bcreader_scannedtitle);
-        items = new ScannedItemAdapter(this, true, new ScannedItemAdapter.OnDeleteCallback() {
+        items = new ScannedItemAdapter(this, true, new ScannedItemAdapter.OnItemEditCallback() {
             @Override
             public void onScanerItemDelete(ScannedItem item) {
                 confirmItemDelete(item);
+            }
+
+            @Override
+            public void onScannerItemQuantity(ScannedItem item) {
+                editItemQuantity(item);
             }
         });
 
@@ -205,6 +213,48 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         });
         b.setNegativeButton("Cancel", null);
         b.create().show();
+    }
+
+    private void editItemQuantity(final ScannedItem item) {
+        AlertDialog.Builder b = new AlertDialog.Builder(this);
+        b.setTitle("Edit Quantity");
+        final EditText t = new EditText(this);
+        t.setInputType(EditorInfo.TYPE_CLASS_NUMBER);
+        t.setText(String.valueOf(item.nScans));
+        t.setSelectAllOnFocus(true);
+
+        b.setView(t);
+        b.setCancelable(true);
+        b.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    item.nScans = Integer.valueOf(t.getText().toString());
+                    refreshItems(false);
+                } catch(NumberFormatException e) {
+                    Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
+                }
+                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(t.getWindowToken(),0);
+            }
+        });
+        b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(t.getWindowToken(),0);
+            }
+        });
+        b.create().show();
+        t.requestFocus();
+        t.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+            }
+        }, 100);
+
     }
 
 }

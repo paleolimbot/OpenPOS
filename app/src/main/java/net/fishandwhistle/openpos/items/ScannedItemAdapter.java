@@ -1,13 +1,19 @@
 package net.fishandwhistle.openpos.items;
 
 import android.content.Context;
-import android.content.DialogInterface;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AlertDialog;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import net.fishandwhistle.openpos.R;
 
@@ -23,16 +29,16 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
     private int maxLength;
     private boolean enableQtyUpdate;
     private Context context;
-    private OnDeleteCallback deleteCallback;
+    private OnItemEditCallback activityCallback;
 
 
-    public ScannedItemAdapter(Context context, boolean enableQtyUpdate, OnDeleteCallback callback) {
-        super(context, R.layout.item_scanner, R.id.item_text);
+    public ScannedItemAdapter(Context context, boolean enableQtyUpdate, OnItemEditCallback callback) {
+        super(context, R.layout.item_scanner, R.id.item_desc);
         allItems = new ArrayList<>();
         this.maxLength = 0;
         this.enableQtyUpdate = enableQtyUpdate;
         this.context = context;
-        this.deleteCallback = callback;
+        this.activityCallback = callback;
     }
 
     @NonNull
@@ -41,14 +47,29 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
         View v = super.getView(position, convertView, parent);
         final ScannedItem i = this.getItem(position);
         assert i != null;
-        ((TextView)v.findViewById(R.id.item_qty)).setText(String.valueOf(i.nScans));
+        Button qty = (Button)v.findViewById(R.id.item_qty);
+        TextView name = (TextView)v.findViewById(R.id.item_name);
+        TextView desc = (TextView)v.findViewById(R.id.item_desc);
+        name.setText(String.format("Unknown %s", i.barcodeType));
+        desc.setText(i.productCode);
+        qty.setText(String.valueOf(i.nScans));
+
+        ImageView minus = (ImageView)v.findViewById(R.id.item_button_minus);
+        ImageView plus = (ImageView)v.findViewById(R.id.item_button_plus);
+        if(i.nScans > 1) {
+            minus.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_item_remove));
+        } else {
+            minus.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_item_delete));
+
+        }
         if(enableQtyUpdate) {
-            v.findViewById(R.id.item_button_minus).setOnClickListener(new View.OnClickListener() {
+            minus.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if((deleteCallback != null) && ((i.nScans - 1) == 0)) {
-                        deleteCallback.onScanerItemDelete(i);
+                    if((activityCallback != null) && ((i.nScans - 1) == 0)) {
+                        activityCallback.onScanerItemDelete(i);
                     } else {
+                        ((Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
                         i.nScans--;
                         i.updateTime = System.currentTimeMillis();
                         ScannedItemAdapter.this.notifyDataSetInvalidated();
@@ -56,18 +77,28 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
 
                 }
             });
-            v.findViewById(R.id.item_button_plus).setOnClickListener(new View.OnClickListener() {
+            plus.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     i.nScans++;
                     i.updateTime = System.currentTimeMillis();
+                    ((Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
                     ScannedItemAdapter.this.notifyDataSetInvalidated();
                 }
             });
-        }
-        v.findViewById(R.id.item_button_minus).setEnabled(enableQtyUpdate);
-        v.findViewById(R.id.item_button_plus).setEnabled(enableQtyUpdate);
+            qty.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(activityCallback != null) {
+                        activityCallback.onScannerItemQuantity(i);
+                    }
+                }
+            });
 
+        }
+
+        minus.setEnabled(enableQtyUpdate);
+        plus.setEnabled(enableQtyUpdate);
 
         return v;
     }
@@ -113,8 +144,9 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
         }
     }
 
-    public interface OnDeleteCallback {
+    public interface OnItemEditCallback {
         void onScanerItemDelete(ScannedItem item);
+        void onScannerItemQuantity(ScannedItem item);
     }
 
 }
