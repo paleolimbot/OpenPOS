@@ -67,7 +67,7 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
                 @Override
                 public void onClick(View v) {
                     if((activityCallback != null) && ((i.nScans - 1) == 0)) {
-                        activityCallback.onScanerItemDelete(i);
+                        activityCallback.onScannerItemDelete(i);
                     } else {
                         ((Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(50);
                         i.nScans--;
@@ -99,6 +99,14 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
 
         minus.setEnabled(enableQtyUpdate);
         plus.setEnabled(enableQtyUpdate);
+        v.findViewById(R.id.item_textwrap).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(activityCallback!= null) {
+                    activityCallback.onScannerItemClick(i);
+                }
+            }
+        });
 
         return v;
     }
@@ -145,8 +153,9 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
     }
 
     public interface OnItemEditCallback {
-        void onScanerItemDelete(ScannedItem item);
+        void onScannerItemDelete(ScannedItem item);
         void onScannerItemQuantity(ScannedItem item);
+        void onScannerItemClick(ScannedItem item);
     }
 
 }

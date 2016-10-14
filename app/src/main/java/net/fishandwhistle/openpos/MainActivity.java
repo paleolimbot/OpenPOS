@@ -1,5 +1,6 @@
 package net.fishandwhistle.openpos;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
@@ -8,6 +9,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -75,13 +77,17 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         scannedItemsText = (TextView)findViewById(R.id.bcreader_scannedtitle);
         items = new ScannedItemAdapter(this, true, new ScannedItemAdapter.OnItemEditCallback() {
             @Override
-            public void onScanerItemDelete(ScannedItem item) {
+            public void onScannerItemDelete(ScannedItem item) {
                 confirmItemDelete(item);
             }
 
             @Override
             public void onScannerItemQuantity(ScannedItem item) {
                 editItemQuantity(item);
+            }
+            @Override
+            public void onScannerItemClick(ScannedItem item) {
+                Toast.makeText(MainActivity.this, "Item click: " + item.productCode, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -234,6 +240,9 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                     public void onTextSaved(String oldText, String newText) {
                         try {
                             item.nScans = Integer.valueOf(newText);
+                            if(item.nScans == 0) {
+                                confirmItemDelete(item);
+                            }
                             refreshItems(false);
                         } catch(NumberFormatException e) {
                             Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
@@ -247,9 +256,13 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 new OnTextSavedListener() {
                     @Override
                     public void onTextSaved(String oldText, String newText) {
-                        ScannedItem i = new ScannedItem("KeyIn", newText);
-                        items.add(i);
-                        refreshItems(true);
+                        if(newText.trim().length() > 0) {
+                            ScannedItem i = new ScannedItem("KeyIn", newText.trim());
+                            items.add(i);
+                            refreshItems(true);
+                        } else {
+                            Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, "Cancel", null);
     }
@@ -259,9 +272,13 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 new OnTextSavedListener() {
                     @Override
                     public void onTextSaved(String oldText, String newText) {
-                        ScannedItem i = new ScannedItem("KeyIn", newText);
-                        items.add(i);
-                        refreshItems(true);
+                        if(newText.trim().length() > 0) {
+                            ScannedItem i = new ScannedItem("KeyIn", newText.trim());
+                            items.add(i);
+                            refreshItems(true);
+                        } else {
+                            Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, "Cancel", null);
     }
@@ -295,7 +312,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 imm.hideSoftInputFromWindow(t.getWindowToken(),0);
             }
         });
-        b.create().show();
+        final AlertDialog d = b.create();
+        d.show();
         t.requestFocus();
         t.postDelayed(new Runnable() {
             @Override
@@ -303,8 +321,19 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
                 imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
             }
-        }, 100);
-
+        }, 50);
+        t.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    d.getButton(Dialog.BUTTON_POSITIVE).performClick();
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        });
     }
 
     private interface OnTextSavedListener {

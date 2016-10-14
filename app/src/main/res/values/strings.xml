@@ -8,6 +8,5 @@
 
     <string name="bcreader_showall">Show All</string>
     <string name="bcreader_scanneditems" formatted="false">Scanned Items (%d)</string>
-    <string name="bcreader_enablescan">Tap to enable scanning</string>
-    <string name="bcreader_disablescan">Tap to disable scanning</string>
+    <string name="bcreader_scantext">Tap to scan</string>
 </resources>

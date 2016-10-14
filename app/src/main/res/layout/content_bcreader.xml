@@ -12,7 +12,7 @@
     android:paddingTop="0dp"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="net.fishandwhistle.openpos.BarcodeReaderActivity"
-    tools:showIn="@layout/app_bar_bcreader">
+    tools:showIn="@layout/app_bar_main">
 
     <FrameLayout
         android:id="@+id/bcreader_imageframe"
@@ -21,11 +21,12 @@
 
         <TextView
             android:id="@+id/bcreader_disablescantext"
+            android:padding="5dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top|left"
+            android:layout_gravity="top|start"
             android:textColor="#7F00"
-            android:text="@string/bcreader_disablescan"/>
+            android:text="@string/bcreader_scantext"/>
 
         <LinearLayout
             android:orientation="vertical"

@@ -40,26 +40,6 @@
             android:background="?attr/colorPrimary"
             android:weightSum="1">
 
-            <ImageButton
-                android:padding="5dp"
-                android:src="@drawable/ic_action_keynumselector"
-                android:id="@+id/bcreader_keynum"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/bcreader_showall"
-                android:layout_gravity="start|center_vertical"
-                android:background="@android:color/transparent"/>
-
-            <ImageButton
-                android:padding="5dp"
-                android:src="@drawable/ic_action_keytextselector"
-                android:id="@+id/bcreader_keytext"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/bcreader_showall"
-                android:layout_gravity="start|center_vertical"
-                android:background="@android:color/transparent"/>
-
             <TextView
                 android:id="@+id/bcreader_scannedtitle"
                 android:layout_width="wrap_content"
@@ -72,6 +52,26 @@
                 android:text="@string/bcreader_scanneditems"
                 android:layout_weight="1"
                 android:layout_gravity="start|center_vertical" />
+
+            <ImageButton
+                android:padding="5dp"
+                android:src="@drawable/ic_action_keynumselector"
+                android:id="@+id/bcreader_keynum"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/bcreader_showall"
+                android:layout_gravity="end|center_vertical"
+                android:background="@android:color/transparent"/>
+
+            <ImageButton
+                android:padding="5dp"
+                android:src="@drawable/ic_action_keytextselector"
+                android:id="@+id/bcreader_keytext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/bcreader_showall"
+                android:layout_gravity="end|center_vertical"
+                android:background="@android:color/transparent"/>
 
             <Button
                 android:id="@+id/bcreader_showall"
@@ -88,8 +88,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#FFFFFF"
-            android:visibility="visible"
-            android:focusableInTouchMode="true"/>
+            android:visibility="visible"/>
 
 
     </LinearLayout>
