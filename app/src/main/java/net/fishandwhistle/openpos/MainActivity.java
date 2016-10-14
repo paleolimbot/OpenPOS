@@ -93,6 +93,18 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 Toast.makeText(MainActivity.this, "Show all", Toast.LENGTH_SHORT).show();
             }
         });
+        findViewById(R.id.bcreader_keynum).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                keyInNumber();
+            }
+        });
+        findViewById(R.id.bcreader_keytext).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                keyInText();
+            }
+        });
 
         // get items from saved instance, if exists, and set visibility
         if(savedInstanceState != null) {
@@ -216,31 +228,69 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     }
 
     private void editItemQuantity(final ScannedItem item) {
+        getText("Edit Quantity", String.valueOf(item.nScans), "", EditorInfo.TYPE_CLASS_NUMBER, "Save",
+                new OnTextSavedListener() {
+                    @Override
+                    public void onTextSaved(String oldText, String newText) {
+                        try {
+                            item.nScans = Integer.valueOf(newText);
+                            refreshItems(false);
+                        } catch(NumberFormatException e) {
+                            Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, "Cancel", null);
+    }
+
+    private void keyInNumber() {
+        getText("Key In Number", "", "0123456789", EditorInfo.TYPE_CLASS_NUMBER, "Enter",
+                new OnTextSavedListener() {
+                    @Override
+                    public void onTextSaved(String oldText, String newText) {
+                        ScannedItem i = new ScannedItem("KeyIn", newText);
+                        items.add(i);
+                        refreshItems(true);
+                    }
+                }, "Cancel", null);
+    }
+
+    private void keyInText() {
+        getText("Key In Text", "", "abcd1234", EditorInfo.TYPE_CLASS_TEXT, "Enter",
+                new OnTextSavedListener() {
+                    @Override
+                    public void onTextSaved(String oldText, String newText) {
+                        ScannedItem i = new ScannedItem("KeyIn", newText);
+                        items.add(i);
+                        refreshItems(true);
+                    }
+                }, "Cancel", null);
+    }
+
+    private void getText(String title, final String itemText, String itemHint, int inputType,
+                         String okText, final OnTextSavedListener ok,
+                         String cancelText, final DialogInterface.OnClickListener cancel) {
         AlertDialog.Builder b = new AlertDialog.Builder(this);
-        b.setTitle("Edit Quantity");
+        b.setTitle(title);
         final EditText t = new EditText(this);
-        t.setInputType(EditorInfo.TYPE_CLASS_NUMBER);
-        t.setText(String.valueOf(item.nScans));
+        t.setInputType(inputType);
+        t.setText(itemText);
+        t.setHint(itemHint);
         t.setSelectAllOnFocus(true);
 
         b.setView(t);
         b.setCancelable(true);
-        b.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+        b.setPositiveButton(okText, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                try {
-                    item.nScans = Integer.valueOf(t.getText().toString());
-                    refreshItems(false);
-                } catch(NumberFormatException e) {
-                    Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
-                }
+                if(ok != null) ok.onTextSaved(itemText, t.getText().toString());
                 InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(t.getWindowToken(),0);
             }
         });
-        b.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        b.setNegativeButton(cancelText, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                if(cancel != null) cancel.onClick(dialog, which);
                 InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(t.getWindowToken(),0);
             }
@@ -255,6 +305,10 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             }
         }, 100);
 
+    }
+
+    private interface OnTextSavedListener {
+        void onTextSaved(String oldText, String newText);
     }
 
 }
