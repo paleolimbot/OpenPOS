@@ -12,9 +12,76 @@
     tools:context="net.fishandwhistle.openpos.ScannedItemDetailFragment"
     tools:showIn="@layout/activity_scanned_item_detail">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="500kg whatever"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/detail_description"
+            android:layout_weight="1"
+            android:layout_gravity="start|center_vertical"
+            android:textColor="#000"/>
+
+        <TextView
+            android:text="@string/detail_qty"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:gravity="end"
+            android:id="@+id/detail_quantity"
+            android:layout_weight="1"
+            android:textColor="#000"/>
+
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="start|center_vertical"
+            android:id="@+id/detail_code" />
+
+        <TextView
+            android:id="@+id/detail_codetype"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:layout_gravity="end|center_vertical"
+            android:text="@string/detail_codetype"/>
+
+    </LinearLayout>
+
+
+
+
+    <TextView
+        android:text="@string/detail_scantime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/detail_scantime" />
+
+    <TextView
+        android:text="JSON: %s"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/detail_json" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/details_text"/>
+        android:text="@string/details_jsonsource"
+        android:id="@+id/detail_jsonsource"/>
 
 </LinearLayout>

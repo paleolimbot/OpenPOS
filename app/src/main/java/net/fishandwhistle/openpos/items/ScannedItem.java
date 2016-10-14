@@ -20,6 +20,8 @@ public class ScannedItem implements Serializable {
     public double price = 0;
 
     public String json = null;
+    public String jsonSource = null;
+    public long jsonTime = 0;
 
     public ScannedItem(String barcodeType, String productCode) {
         this.scanTime = System.currentTimeMillis();

@@ -1,8 +1,9 @@
 package net.fishandwhistle.openpos;
 
 import android.app.Dialog;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -14,7 +15,6 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -243,9 +243,19 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
     @Override
     public void onScannerItemClick(ScannedItem item) {
-        Intent i = new Intent(this, ScannedItemDetailActivity.class);
-        i.putExtra(ScannedItemDetailFragment.ARG_ITEM, item);
-        startActivity(i);
+        // DialogFragment.show() will take care of adding the fragment
+        // in a transaction.  We also want to remove any currently showing
+        // dialog, so make our own transaction and take care of that here.
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+
+        // Create and show the dialog.
+        ScannedItemDetailFragment newFragment = ScannedItemDetailFragment.newInstance(item);
+        newFragment.show(ft, "dialog");
     }
 
     private interface OnTextSavedListener {
