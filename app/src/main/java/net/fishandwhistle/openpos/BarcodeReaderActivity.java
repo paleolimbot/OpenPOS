@@ -35,13 +35,14 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     private static final String TAG = "BarcodeReader";
     private static final int READ_DELAY = 1500;
 
-    enum ScanModes {TAP, CONTINUOUS}
+    enum ScanModes {TAP, CONTINUOUS, NONE}
 
     private Camera mCamera;
     private CameraPreview mPreview;
 
     private int cameraDisplayOrientation ;
     private ScanModes scanMode;
+    private ScanModes userScanMode;
     private boolean enableScanning ;
     private ProgressDialog highResDecodeProgress;
     private BarcodeSpec.Barcode lastBarcode;
@@ -100,13 +101,17 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
                             }
                         }
                     });
+                } else if(scanMode == ScanModes.NONE) {
+                    Log.i(TAG, "onClick: ignoring click when scanMode=ScanModes.NONE");
                 }
             }
         });
 
         extractor = null;
         cameraDisplayOrientation = -1;
-        setScanMode(ScanModes.TAP);
+        scanMode = null;
+        userScanMode = ScanModes.TAP;
+        enableScanning = false;
         lastBarcode = null;
         lastValidBarcode = null;
         currentReadRequest = 0;
@@ -121,17 +126,19 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        finishReadRequest(null);
-        mPreview.releaseCamera();
-        mCamera.release();
-        mCamera = null;
+        stopCamera();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        resetCamera(false);
-        setScanMode(scanMode);
+        // do post so that UI loads before camera starts
+        mPreview.post(new Runnable() {
+            @Override
+            public void run() {
+                startCameraAsync();
+            }
+        });
     }
 
     private void setScanMode(ScanModes scanMode) {
@@ -140,6 +147,8 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
             this.enableScanning = true;
             startReadRequest();
         } else if(scanMode == ScanModes.TAP) {
+            this.enableScanning = false;
+        } else if(scanMode == ScanModes.NONE) {
             this.enableScanning = false;
         }
         this.scanMode = scanMode;
@@ -173,86 +182,112 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
         }
     }
 
-    private void resetCamera(boolean reset) {
-        if(reset) {
-            mPreview.releaseCamera();
-            mCamera.release();
-        }
-        mCamera = getCameraInstance();
-        int orientation = this.getScreenOrientation();
-        Log.i(TAG, "resetCamera: Orientation: " + orientation);
-        if(orientation == 0) {
-            cameraDisplayOrientation = 90;
-        } else if(orientation == 1) {
-            cameraDisplayOrientation = 0;
-        } else if(orientation == 2) {
-            cameraDisplayOrientation = 270;
-        } else if(orientation == 3) {
-            cameraDisplayOrientation = 180;
-        } else {
-            throw new RuntimeException("Unsupported orientation selected");
-        }
-        mCamera.setDisplayOrientation(cameraDisplayOrientation);
+    private void startCameraAsync() {
+        new AsyncTask<Void, Void, Camera>() {
+            @Override
+            protected Camera doInBackground(Void... v) {
+                mCamera = getCameraInstance();
+                if(mCamera == null) {
+                    return null;
+                }
+                int orientation = getScreenOrientation();
+                Log.i(TAG, "resetCamera: Orientation: " + orientation);
+                if(orientation == 0) {
+                    cameraDisplayOrientation = 90;
+                } else if(orientation == 1) {
+                    cameraDisplayOrientation = 0;
+                } else if(orientation == 2) {
+                    cameraDisplayOrientation = 270;
+                } else if(orientation == 3) {
+                    cameraDisplayOrientation = 180;
+                } else {
+                    throw new RuntimeException("Unsupported orientation selected");
+                }
+                mCamera.setDisplayOrientation(cameraDisplayOrientation);
 
-        // get Camera parameters
-        Camera.Parameters params = mCamera.getParameters();
-        // set the focus mode
-        params.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
-        List<Camera.Area> focusareas = new ArrayList<>();
-        focusareas.add(new Camera.Area(new Rect(-850, -800, -750, 800), 1000));
-        if (params.getMaxNumFocusAreas() > 0){ // set to 9/10 up the screen
-            params.setFocusAreas(focusareas);
-        }
-        if(params.getMaxNumMeteringAreas() > 0) {
-            params.setMeteringAreas(focusareas);
-        }
-        // set Camera parameters
-        List<Camera.Size> sizes = params.getSupportedPictureSizes() ;
-        Camera.Size best = sizes.get(0);
-        for(int i=1; i<sizes.size(); i++) {
-            Camera.Size s = sizes.get(i);
-            if(orientation == 0 || orientation == 2) {
-                //pick 'tallest' option
-                if (s.height > best.height) {
-                    best = s;
-                } else if (s.height == best.height && s.width < best.width) {
-                    best = s;
+                // get Camera parameters
+                Camera.Parameters params = mCamera.getParameters();
+                // set the focus mode
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_MACRO);
+                List<Camera.Area> focusareas = new ArrayList<>();
+                focusareas.add(new Camera.Area(new Rect(-850, -800, -750, 800), 1000));
+                if (params.getMaxNumFocusAreas() > 0){ // set to 9/10 up the screen
+                    params.setFocusAreas(focusareas);
                 }
-            } else {
-                //pick 'widest' option
-                if (s.width > best.width) {
-                    best = s;
-                } else if (s.width == best.width && s.height < best.height) {
-                    best = s;
+                if(params.getMaxNumMeteringAreas() > 0) {
+                    params.setMeteringAreas(focusareas);
+                }
+                // set Camera parameters
+                List<Camera.Size> sizes = params.getSupportedPictureSizes() ;
+                Camera.Size best = sizes.get(0);
+                for(int i=1; i<sizes.size(); i++) {
+                    Camera.Size s = sizes.get(i);
+                    if(orientation == 0 || orientation == 2) {
+                        //pick 'tallest' option
+                        if (s.height > best.height) {
+                            best = s;
+                        } else if (s.height == best.height && s.width < best.width) {
+                            best = s;
+                        }
+                    } else {
+                        //pick 'widest' option
+                        if (s.width > best.width) {
+                            best = s;
+                        } else if (s.width == best.width && s.height < best.height) {
+                            best = s;
+                        }
+                    }
+                }
+                params.setPictureSize(best.width, best.height);
+                Log.i(TAG, "resetCamera: Setting picture size to " + best.width + "x" + best.height);
+                sizes = params.getSupportedPreviewSizes() ;
+                best = sizes.get(0);
+                for(int i=1; i<sizes.size(); i++) {
+                    Camera.Size s = sizes.get(i);
+                    if(orientation == 0 || orientation == 2) {
+                        //pick 'tallest' option
+                        if (s.height > best.height) {
+                            best = s;
+                        } else if (s.height == best.height && s.width < best.width) {
+                            best = s;
+                        }
+                    } else {
+                        //pick 'widest' option
+                        if (s.width > best.width) {
+                            best = s;
+                        } else if (s.width == best.width && s.height < best.height) {
+                            best = s;
+                        }
+                    }
+                }
+                params.setPreviewSize(best.width, best.height);
+                Log.i(TAG, "resetCamera: Setting preview size to " + best.width + "x" + best.height);
+                mCamera.setParameters(params);
+                return mCamera;
+            }
+
+            @Override
+            protected void onPostExecute(Camera camera) {
+                if(camera != null) {
+                    mPreview.setCamera(mCamera);
+                    if(userScanMode == null) {
+                        scanMode = ScanModes.TAP;
+                    }
+                    setScanMode(userScanMode);
+                } else {
+                    Toast.makeText(BarcodeReaderActivity.this, "Could not open camera", Toast.LENGTH_SHORT).show();
                 }
             }
-        }
-        params.setPictureSize(best.width, best.height);
-        Log.i(TAG, "resetCamera: Setting picture size to " + best.width + "x" + best.height);
-        sizes = params.getSupportedPreviewSizes() ;
-        best = sizes.get(0);
-        for(int i=1; i<sizes.size(); i++) {
-            Camera.Size s = sizes.get(i);
-            if(orientation == 0 || orientation == 2) {
-                //pick 'tallest' option
-                if (s.height > best.height) {
-                    best = s;
-                } else if (s.height == best.height && s.width < best.width) {
-                    best = s;
-                }
-            } else {
-                //pick 'widest' option
-                if (s.width > best.width) {
-                    best = s;
-                } else if (s.width == best.width && s.height < best.height) {
-                    best = s;
-                }
-            }
-        }
-        params.setPreviewSize(best.width, best.height);
-        Log.i(TAG, "resetCamera: Setting preview size to " + best.width + "x" + best.height);
-        mCamera.setParameters(params);
-        mPreview.setCamera(mCamera);
+        }.execute();
+
+
+    }
+
+    public void stopCamera() {
+        setScanMode(ScanModes.NONE);
+        mPreview.releaseCamera();
+        mCamera.release();
+        mCamera = null;
     }
 
     public int getScreenOrientation() {
