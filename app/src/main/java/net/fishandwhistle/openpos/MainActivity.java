@@ -2,6 +2,7 @@ package net.fishandwhistle.openpos;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -35,7 +36,8 @@ import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
 import java.util.ArrayList;
 
-public class MainActivity extends BarcodeReaderActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends BarcodeReaderActivity implements NavigationView.OnNavigationItemSelectedListener,
+    ScannedItemAdapter.OnItemEditCallback {
 
     private static final String TAG = "MainActivity";
     private static final String INSTANCE_ITEMS = "instance_items";
@@ -75,21 +77,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         navigationView.setNavigationItemSelectedListener(this);
 
         scannedItemsText = (TextView)findViewById(R.id.bcreader_scannedtitle);
-        items = new ScannedItemAdapter(this, true, new ScannedItemAdapter.OnItemEditCallback() {
-            @Override
-            public void onScannerItemDelete(ScannedItem item) {
-                confirmItemDelete(item);
-            }
-
-            @Override
-            public void onScannerItemQuantity(ScannedItem item) {
-                editItemQuantity(item);
-            }
-            @Override
-            public void onScannerItemClick(ScannedItem item) {
-                Toast.makeText(MainActivity.this, "Item click: " + item.productCode, Toast.LENGTH_SHORT).show();
-            }
-        });
+        items = new ScannedItemAdapter(this, true, this);
 
         list = ((ListView)findViewById(R.id.bcreader_itemlist));
 
@@ -217,7 +205,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         }
     }
 
-    private void confirmItemDelete(final ScannedItem item) {
+    @Override
+    public void onScannerItemDelete(final ScannedItem item) {
         AlertDialog.Builder b = new AlertDialog.Builder(this);
         b.setTitle("Confirm Delete");
         b.setMessage("Delete item " + item.toString() + "?");
@@ -233,7 +222,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         b.create().show();
     }
 
-    private void editItemQuantity(final ScannedItem item) {
+    @Override
+    public void onScannerItemQuantity(final ScannedItem item) {
         getText("Edit Quantity", String.valueOf(item.nScans), "", EditorInfo.TYPE_CLASS_NUMBER, "Save",
                 new OnTextSavedListener() {
                     @Override
@@ -241,7 +231,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                         try {
                             item.nScans = Integer.valueOf(newText);
                             if(item.nScans == 0) {
-                                confirmItemDelete(item);
+                                onScannerItemDelete(item);
                             }
                             refreshItems(false);
                         } catch(NumberFormatException e) {
@@ -249,6 +239,17 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                         }
                     }
                 }, "Cancel", null);
+    }
+
+    @Override
+    public void onScannerItemClick(ScannedItem item) {
+        Intent i = new Intent(this, ScannedItemDetailActivity.class);
+        i.putExtra(ScannedItemDetailFragment.ARG_ITEM, item);
+        startActivity(i);
+    }
+
+    private interface OnTextSavedListener {
+        void onTextSaved(String oldText, String newText);
     }
 
     private void keyInNumber() {
@@ -334,10 +335,6 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 }
             }
         });
-    }
-
-    private interface OnTextSavedListener {
-        void onTextSaved(String oldText, String newText);
     }
 
 }
