@@ -27,7 +27,7 @@ public class GS1Parser {
     }
 
     public ScannedItem parse() throws GS1Exception {
-        if(!b.digits.get(0).digit.equals("[FNC1]")) return null;
+        if(!b.digits.get(0).digit.equals("[FNC1]")) throw new GS1Exception("No [FNC1] at start of code");
 
         List<String> strings = new ArrayList<>(); //one string per [FNC1]
         int i = 1;
