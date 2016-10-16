@@ -106,7 +106,7 @@ public class ScannedItemDetailFragment extends DialogFragment {
             }
 
         } else {
-            ((TextView)v.findViewById(R.id.detail_description)).setText(formatText("no item to show"));
+            ((TextView)v.findViewById(R.id.detail_description)).setText(getString(R.string.detail_noitem));
         }
     }
 
@@ -117,14 +117,6 @@ public class ScannedItemDetailFragment extends DialogFragment {
         ScannedItemDetailFragment fragment = new ScannedItemDetailFragment();
         fragment.setArguments(args);
         return fragment;
-    }
-
-    private static String formatText(String text) {
-        if(text == null) {
-            return "None";
-        } else {
-            return text;
-        }
     }
 
     private String formatTime(long time) {

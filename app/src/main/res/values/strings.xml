@@ -6,8 +6,21 @@
 
     <string name="action_settings">Settings</string>
 
+
+    <string name="main_keynum_title">"Key In Number"</string>
+    <string name="main_keytext_title">Key In Text</string>
+    <string name="main_keyin_enter">Enter</string>
+    <string name="main_keyin_invalid">Invalid number</string>
+    <string name="main_dialog_cancel">Cancel</string>
+    <string name="main_quantity_title">Edit Quantity</string>
+    <string name="main_quantity_enter">Save</string>
+    <string name="main_confirmdelete_delete">Delete</string>
+    <string name="main_confirmdelete_title">Confirm Delete</string>
+    <string name="main_confirmdelete_message" formatted="false">Delete item %s?</string>
+
     <string name="bcreader_showall">Show All</string>
     <string name="bcreader_scanneditems" formatted="false">Scanned Items (%d)</string>
+
     <string name="bcreader_scantext">Tap to scan</string>
 
     <string name="title_activity_scanned_item_detail">Scan Details</string>
@@ -18,6 +31,7 @@
     <string name="details_jsonsupdate">JSON Updated</string>
     <string name="detail_qty" formatted="false">Qty: %d</string>
     <string name="detail_close">Close</string>
+    <string name="detail_noitem">No item to show</string>
 
 
 </resources>

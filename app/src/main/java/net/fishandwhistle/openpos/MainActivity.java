@@ -53,10 +53,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     private TextView scannedItemsText ;
 
 
-
     @Override
     protected BarcodeSpec[] getBarcodeSpecs() {
-        //TODO get this based on preferences
         return new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
                 new ITFSpec(), new CodabarSpec(), new Code25Spec(), new Code39Spec(), new EAN8Spec()};
 //        return new BarcodeSpec[] {new EAN13Spec(), new EAN8Spec(), new ITFSpec(14, true), new UPCESpec()};
@@ -244,23 +242,24 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     @Override
     public void onScannerItemDelete(final ScannedItem item) {
         AlertDialog.Builder b = new AlertDialog.Builder(this);
-        b.setTitle("Confirm Delete");
-        b.setMessage("Delete item " + item.toString() + "?");
+        b.setTitle(R.string.main_confirmdelete_title);
+        b.setMessage(String.format(getString(R.string.main_confirmdelete_message), item.toString()));
         b.setCancelable(true);
-        b.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+        b.setPositiveButton(R.string.main_confirmdelete_delete, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 items.remove(item);
                 refreshItems(false);
             }
         });
-        b.setNegativeButton("Cancel", null);
+        b.setNegativeButton(R.string.main_dialog_cancel, null);
         b.create().show();
     }
 
     @Override
     public void onScannerItemQuantity(final ScannedItem item) {
-        getText("Edit Quantity", String.valueOf(item.nScans), "", EditorInfo.TYPE_CLASS_NUMBER, "Save",
+        getText(getString(R.string.main_quantity_title), String.valueOf(item.nScans), "", EditorInfo.TYPE_CLASS_NUMBER,
+                getString(R.string.main_quantity_enter),
                 new OnTextSavedListener() {
                     @Override
                     public void onTextSaved(String oldText, String newText) {
@@ -271,10 +270,10 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                             }
                             refreshItems(false);
                         } catch(NumberFormatException e) {
-                            Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, R.string.main_keyin_invalid, Toast.LENGTH_SHORT).show();
                         }
                     }
-                }, "Cancel", null);
+                }, getString(R.string.main_dialog_cancel), null);
     }
 
     @Override
@@ -299,7 +298,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     }
 
     private void keyInNumber() {
-        getText("Key In Number", "", "0123456789", EditorInfo.TYPE_CLASS_NUMBER, "Enter",
+        getText(getString(R.string.main_keynum_title), "", "0123456789", EditorInfo.TYPE_CLASS_NUMBER, "Enter",
                 new OnTextSavedListener() {
                     @Override
                     public void onTextSaved(String oldText, String newText) {
@@ -308,14 +307,15 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                             items.add(i);
                             refreshItems(true);
                         } else {
-                            Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, R.string.main_keyin_invalid, Toast.LENGTH_SHORT).show();
                         }
                     }
-                }, "Cancel", null);
+                }, getString(R.string.main_dialog_cancel), null);
     }
 
     private void keyInText() {
-        getText("Key In Text", "", "abcd1234", EditorInfo.TYPE_CLASS_TEXT, "Enter",
+        getText(getString(R.string.main_keytext_title), "", "abcd1234", EditorInfo.TYPE_CLASS_TEXT,
+                getString(R.string.main_keyin_enter),
                 new OnTextSavedListener() {
                     @Override
                     public void onTextSaved(String oldText, String newText) {
@@ -324,10 +324,10 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                             items.add(i);
                             refreshItems(true);
                         } else {
-                            Toast.makeText(MainActivity.this, "Invalid number", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, R.string.main_keyin_invalid, Toast.LENGTH_SHORT).show();
                         }
                     }
-                }, "Cancel", null);
+                }, getString(R.string.main_dialog_cancel), null);
     }
 
     private void getText(String title, final String itemText, String itemHint, int inputType,
