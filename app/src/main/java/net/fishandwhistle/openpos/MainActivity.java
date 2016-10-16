@@ -30,6 +30,7 @@ import net.fishandwhistle.openpos.barcode.Code25Spec;
 import net.fishandwhistle.openpos.barcode.Code39Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EAN13Spec;
+import net.fishandwhistle.openpos.barcode.GS1Parser;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
@@ -184,7 +185,13 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     }
 
     protected boolean onNewBarcode(BarcodeSpec.Barcode b) {
-        ScannedItem item = new ScannedItem(b.type, b.toString());
+        ScannedItem item;
+        try {
+            GS1Parser parser = new GS1Parser(b);
+            item = parser.parse();
+        } catch(GS1Parser.GS1Exception e) {
+            item = new ScannedItem(b.type, b.toString());
+        }
         item.scanTime = b.timeread;
         items.add(item);
         this.refreshItems(true);

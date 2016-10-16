@@ -81,3 +81,15 @@ for(i in 1:(nrow(c128)-1)) {
              c128$value[i],
              '"));\n'))
 }
+
+
+gs1 <- read.csv("R/GS1Spec.csv", colClasses = "character")[-3]
+gs1$AI_has_div <- FALSE
+gs1$AI_has_div[grep("y", gs1$Code)] <- TRUE
+
+cat(paste0(sprintf('gs1.put("%s", new AI("%s", "%s", %s, "%s", %s, %s, %s, "%s"));',
+                   gs1$AI_start, gs1$Code, gs1$Description, gs1$AI_len, gs1$AI_start, 
+                   gs1$mindatalen, gs1$maxdatalen, 
+                   ifelse(gs1$AI_has_div, 'true', 'false'),
+                   gs1$short_name), collapse="\n"))
+
