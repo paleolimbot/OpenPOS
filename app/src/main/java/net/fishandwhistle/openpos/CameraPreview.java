@@ -47,14 +47,16 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     }
 
     public void releaseCamera() {
-        try {
-            mCamera.stopPreview();
-        } catch(Exception e) {
-            Log.e(TAG, "Exception releasing camera", e);
+        if(mCamera != null) {
+            try {
+                mCamera.stopPreview();
+            } catch (Exception e) {
+                Log.e(TAG, "Exception releasing camera", e);
+            }
+            mCamera.setPreviewCallback(null);
+            mHolder = null;
+            mCamera = null;
         }
-        mCamera.setPreviewCallback(null);
-        mHolder = null;
-        mCamera = null;
     }
 
     public void surfaceCreated(SurfaceHolder holder) {

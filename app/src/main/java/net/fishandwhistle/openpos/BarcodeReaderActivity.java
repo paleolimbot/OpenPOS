@@ -109,7 +109,7 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
 
         extractor = null;
         cameraDisplayOrientation = -1;
-        scanMode = null;
+        scanMode = ScanModes.NONE;
         userScanMode = ScanModes.TAP;
         enableScanning = false;
         lastBarcode = null;
@@ -132,13 +132,7 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        // do post so that UI loads before camera starts
-        mPreview.post(new Runnable() {
-            @Override
-            public void run() {
-                startCameraAsync();
-            }
-        });
+        startCameraAsync();
     }
 
     private void setScanMode(ScanModes scanMode) {
@@ -183,10 +177,15 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     }
 
     private void startCameraAsync() {
+        if(mCamera != null) {
+            Log.i(TAG, "startCameraAsync: camera instance exists, cancelling asyncrhonous load");
+            return;
+        }
+        Log.i(TAG, "startCameraAsync: starting asynchronous load of mCamera");
         new AsyncTask<Void, Void, Camera>() {
             @Override
             protected Camera doInBackground(Void... v) {
-                mCamera = getCameraInstance();
+                Camera mCamera = getCameraInstance();
                 if(mCamera == null) {
                     return null;
                 }
@@ -268,7 +267,9 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
 
             @Override
             protected void onPostExecute(Camera camera) {
+                Log.i(TAG, "onPostExecute: Camera loader returned with " + camera);
                 if(camera != null) {
+                    mCamera = camera;
                     mPreview.setCamera(mCamera);
                     if(userScanMode == null) {
                         scanMode = ScanModes.TAP;
@@ -276,6 +277,7 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
                     setScanMode(userScanMode);
                 } else {
                     Toast.makeText(BarcodeReaderActivity.this, "Could not open camera", Toast.LENGTH_SHORT).show();
+                    setScanMode(ScanModes.NONE);
                 }
             }
         }.execute();
@@ -286,8 +288,10 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     public void stopCamera() {
         setScanMode(ScanModes.NONE);
         mPreview.releaseCamera();
-        mCamera.release();
-        mCamera = null;
+        if(mCamera != null) {
+            mCamera.release();
+            mCamera = null;
+        }
     }
 
     public int getScreenOrientation() {
