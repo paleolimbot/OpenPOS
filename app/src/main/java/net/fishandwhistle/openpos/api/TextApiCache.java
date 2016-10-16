@@ -24,7 +24,7 @@ import java.security.NoSuchAlgorithmException;
 public class TextApiCache {
 
     private static final String TAG = "TextApiCache";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
     private static final String DB_NAME = "net.fishandwhistle.TextApiCache";
 
     private CacheDB db;
@@ -37,7 +37,7 @@ public class TextApiCache {
         return this.get(url) != null;
     }
 
-    public String get(String url) {
+    public CachedItem get(String url) {
         return db.getEntry(url);
     }
 
@@ -60,6 +60,7 @@ public class TextApiCache {
                 ContentValues cv = new ContentValues();
                 cv.put("theurl", url);
                 cv.put("response", response);
+                cv.put("querytime", System.currentTimeMillis());
                 Cursor c = db.query("cached_responses", null, "theurl=?", new String[]{url}, null, null, null, "1");
                 if (c.getCount() == 0) {
                     long id = db.insert("cached_responses", null, cv);
@@ -78,13 +79,15 @@ public class TextApiCache {
             return success;
         }
 
-        public String getEntry(String url) {
+        public CachedItem getEntry(String url) {
             SQLiteDatabase db = this.getReadableDatabase();
             Cursor c = db.query("cached_responses", null, "theurl=?", new String[] {url}, null, null, null, "1");
-            String out = null;
+            CachedItem out = null;
             if(c.getCount() > 0) {
+                out = new CachedItem();
                 c.moveToFirst();
-                out = c.getString(1);
+                out.data = c.getString(1);
+                out.queryTime = c.getLong(2);
             }
             c.close();
             return out;
@@ -94,13 +97,20 @@ public class TextApiCache {
         public void onCreate(SQLiteDatabase db) {
             db.execSQL("CREATE TABLE cached_responses (theurl TEXT PRIMARY KEY, "
                     + "response TEXT, "
+                    + "querytime INTEGER, "
                     + "extra TEXT)");
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            //only one db version
+            db.execSQL("DROP TABLE cached_responses");
+            this.onCreate(db);
         }
+    }
+
+    public static class CachedItem {
+        public String data = null;
+        public long queryTime = 0;
     }
 
 }

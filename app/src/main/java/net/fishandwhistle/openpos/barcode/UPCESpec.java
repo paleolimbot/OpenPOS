@@ -54,12 +54,14 @@ public class UPCESpec extends EANSpec {
         newdig.add(new BarcodeDigit(String.valueOf(numSysCheckDig[1]), "PARITY-PATTERN"));
 
         //reassign barcode digits
+        List<BarcodeDigit> oldDig = b.digits;
         b.digits = newdig;
 
         //try checksum
         if(!Checksums.checksum(b, 1, 3)) throw new BarcodeException("Checksum failed for barcode", b);
         //checksum isn't part of the code, remove it
-        b.digits.remove(b.digits.size()-1);
+        //reassign old digits
+        b.digits = oldDig;
         b.isValid = true;
 
         return b;

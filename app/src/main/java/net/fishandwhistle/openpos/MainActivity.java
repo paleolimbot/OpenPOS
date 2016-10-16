@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 
 import net.fishandwhistle.openpos.api.APIQuery;
+import net.fishandwhistle.openpos.api.GTINQuery;
 import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
@@ -197,19 +198,19 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 item = parser.parse();
                 List<String> itemKeys = item.getKeys();
                 if(itemKeys.contains("GTIN")) {
-                    UPCQuery q = new UPCQuery(this, item.getValue("GTIN").substring(1, 13), item, this);
+                    GTINQuery q = new GTINQuery(this, item.getValue("GTIN"), item, this);
                     q.query();
                 }
             } catch(GS1Parser.GS1Exception e) {
                 //do nothing
             }
         } else if(b.type.equals("ITF-14")) {
-            UPCQuery q = new UPCQuery(this, item.productCode.substring(1, 13), item, this);
+            GTINQuery q = new GTINQuery(this, item.productCode, item, this);
             q.query();
         } else if(b.type.equals("ISBN-13")) {
             ISBNQuery q = new ISBNQuery(this, item.productCode, item, this);
             q.query();
-        } else if(b.type.equals("UPC-A") || b.type.equals("UPC-E") || b.type.equals("EAN-13")) {
+        } else if(b.type.equals("UPC-E") || b.type.equals("EAN-13")) {
             UPCQuery q = new UPCQuery(this, item.productCode, item, this);
             q.query();
         }
@@ -217,6 +218,13 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         items.add(item);
         this.refreshItems(true);
         return true;
+    }
+
+    @Override
+    public void onQueryResult(String input, boolean error, ScannedItem item) {
+        if(!error) {
+            refreshItems(false);
+        }
     }
 
     private void refreshItems(boolean scrollToEnd) {
@@ -284,13 +292,6 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         // Create and show the dialog.
         ScannedItemDetailFragment newFragment = ScannedItemDetailFragment.newInstance(item);
         newFragment.show(ft, "dialog");
-    }
-
-    @Override
-    public void onQueryResult(String input, boolean error, ScannedItem item) {
-        if(!error) {
-            refreshItems(false);
-        }
     }
 
     private interface OnTextSavedListener {

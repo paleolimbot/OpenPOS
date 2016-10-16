@@ -48,7 +48,8 @@ public class UPCQuery extends APIQuery {
                 Iterator<String> keyIter = o.keys();
                 while(keyIter.hasNext()) {
                     String key = keyIter.next();
-                    if(key.equals("rate_up") || key.equals("rate_down")) {
+                    if(key.equals("rate_up") || key.equals("rate_down") || key.equals("number")
+                            || key.equals("valid")) {
                         continue;
                     }
                     String val = o.getString(key);

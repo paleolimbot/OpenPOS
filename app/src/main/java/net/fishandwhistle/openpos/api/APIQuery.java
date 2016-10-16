@@ -52,11 +52,11 @@ public abstract class APIQuery {
             Log.i(TAG, "Disregarding redundant request: " + input);
             return false;
         } else {
-            String output = cache.get(url);
-            if(output != null) {
+            TextApiCache.CachedItem cached = cache.get(url);
+            if(cached != null) {
                 Log.i(TAG, "Using cached data for input " + input);
-                boolean result = this.parseJSON(output, item);
-                item.jsonTime = System.currentTimeMillis();
+                boolean result = this.parseJSON(cached.data, item);
+                item.jsonTime = cached.queryTime;
 
                 callback.onQueryResult(this.input, result, item);
                 return false;
@@ -154,6 +154,7 @@ public abstract class APIQuery {
             // do parsing
             cache.put(sUrl[0], out);
             currentRequests.remove(sUrl[0]);
+            item.jsonTime = System.currentTimeMillis();
             return parseJSON(out, item);
 
         }
