@@ -457,17 +457,17 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
             Bitmap b;
             try {
                 if((format != ImageFormat.NV21 && format != ImageFormat.YUY2)) {
-                    Bitmap bigBitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    //Bitmap bigBitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
                     BitmapRegionDecoder regionDecoder = BitmapRegionDecoder.newInstance(data, 0, data.length, true);
                     b = regionDecoder.decodeRegion(decodeRegion, new BitmapFactory.Options());
                     //b = Bitmap.createBitmap(bigBitmap, decodeRegion.left, decodeRegion.top,
                     //        decodeRegion.width(), decodeRegion.height());
                     //test to see what image we are analyzing
-                    f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
-                    FileOutputStream fos = new FileOutputStream(f);
-                    b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
-                    fos.close();
-                    bigBitmap.recycle();
+                    //f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
+                    //FileOutputStream fos = new FileOutputStream(f);
+                    //b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
+                    //fos.close();
+                    //bigBitmap.recycle();
                 } else {
                     YuvImage y = new YuvImage(data, format, width, height, null);
                     FileOutputStream fos = new FileOutputStream(f);
