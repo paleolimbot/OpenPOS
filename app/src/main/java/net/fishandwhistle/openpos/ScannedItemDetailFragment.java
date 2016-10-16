@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -41,23 +42,13 @@ public class ScannedItemDetailFragment extends DialogFragment {
     public ScannedItemDetailFragment() {
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-
-    }
-
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(R.string.title_activity_scanned_item_detail);
-        builder.setPositiveButton(R.string.detail_close, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        Log.i(TAG, "onClick: close!");
-                    }
-                });
+        builder.setIcon(R.mipmap.ic_launcher);
+        builder.setPositiveButton(R.string.detail_close, null);
         View v = getActivity().getLayoutInflater().inflate(R.layout.fragment_scanned_item_detail, null);
 
         Serializable s ;
@@ -90,23 +81,20 @@ public class ScannedItemDetailFragment extends DialogFragment {
             } else {
                 ((TextView) v.findViewById(R.id.detail_description)).setText(String.format(getString(R.string.detail_nodescription), item.barcodeType));
             }
+            ((TextView)v.findViewById(R.id.detail_code)).setText(item.productCode);
             ((TextView)v.findViewById(R.id.detail_quantity)).setText(String.format(getString(R.string.detail_qty), item.nScans));
 
             ArrayList<String[]> vals = new ArrayList<>();
             vals.add(new String[] {getString(R.string.detail_codetype), item.barcodeType});
             vals.add(new String[] {getString(R.string.detail_scantime), formatTime(item.updateTime)});
 
-            if(item.json != null) {
-                try {
-                    JSONObject o = new JSONObject(item.json);
-                    Iterator<String> keys = o.keys();
-                    while(keys.hasNext()) {
-                        String key = keys.next();
-                        vals.add(new String[] {key, o.getString(key)});
-                    }
-                } catch(JSONException e) {
-                    vals.add(new String[] {"json_error", e.getMessage()});
-                }
+            List<String> jsonKeys = item.getKeys();
+            for(String key: jsonKeys) {
+                vals.add(new String[] {key, item.getValue(key)});
+            }
+            if(jsonKeys.size() > 0) {
+                vals.add(new String[]{getString(R.string.details_jsonsource), item.jsonSource});
+                vals.add(new String[]{getString(R.string.details_jsonsupdate), formatTime(item.jsonTime)});
             }
 
             LayoutInflater inflater = getActivity().getLayoutInflater();
@@ -140,6 +128,6 @@ public class ScannedItemDetailFragment extends DialogFragment {
     }
 
     private String formatTime(long time) {
-        return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault()).format(new Date(time));
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date(time));
     }
 }

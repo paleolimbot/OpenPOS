@@ -9,6 +9,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Iterator;
+
 /**
  * Created by dewey on 2016-10-03.
  */
@@ -28,26 +30,37 @@ public class UPCQuery extends APIQuery {
     }
 
     @Override
-    protected JSONObject parseJSON(String json, ScannedItem item) {
+    protected boolean parseJSON(String json, ScannedItem item) {
         try {
             Log.i(TAG, "Parsing JSON data");
             JSONObject o = new JSONObject(json);
             if(!o.getBoolean("valid")) {
                 Log.e(TAG, "Error from database: " + o.getString("reason"));
-                return null;
+                return false;
             } else {
-                if(item != null) {
-                    String description = o.getString("description");
-                    if((description != null) && (description.trim().length() > 0)) {
-                        item.description = description.trim();
-                    }
+                String description = o.getString("description");
+                String name = o.getString("itemname");
+                if((description != null) && (description.trim().length() > 0)) {
+                    item.description = description.trim();
+                } else if((name != null) && name.trim().length() > 0) {
+                    item.description = name.trim();
                 }
-
-                return o;
+                Iterator<String> keyIter = o.keys();
+                while(keyIter.hasNext()) {
+                    String key = keyIter.next();
+                    if(key.equals("rate_up") || key.equals("rate_down")) {
+                        continue;
+                    }
+                    String val = o.getString(key);
+                    if(val != null && val.trim().length() > 0)
+                        item.putValue(key, val.trim());
+                }
+                item.jsonSource = "api.upcdatabase.org";
+                return true;
             }
         } catch(JSONException e) {
             Log.e(TAG, "Error parsing JSON", e);
-            return null;
+            return false;
         }
     }
 }

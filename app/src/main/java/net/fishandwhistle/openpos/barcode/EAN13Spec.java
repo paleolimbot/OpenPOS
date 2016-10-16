@@ -42,11 +42,7 @@ public class EAN13Spec extends EANSpec {
         if(!Checksums.checksum(b, 3, 1)) throw new BarcodeException("Checksum failed for barcode", b);
 
         String bstr = b.toString();
-        if(bstr.startsWith("0")) {
-            b.type = "UPC-A";
-            b.digits.remove(0);
-            b.digits.remove(b.digits.size()-1);
-        } else if(bstr.startsWith("978") || bstr.startsWith("979")) {
+        if(bstr.startsWith("978") || bstr.startsWith("979")) {
             b.type = "ISBN-13";
         }
         b.isValid = true;

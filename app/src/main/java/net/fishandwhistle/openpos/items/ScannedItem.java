@@ -2,7 +2,13 @@ package net.fishandwhistle.openpos.items;
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -17,28 +23,50 @@ public class ScannedItem implements Serializable {
     public String barcodeType = null;
     public String description = null;
     public int nScans = 1;
-    public double price = 0;
 
-    public String json = null;
     public String jsonSource = null;
     public long jsonTime = 0;
+
+    private JSONObject jsonObject;
 
     public ScannedItem(String barcodeType, String productCode) {
         this.scanTime = System.currentTimeMillis();
         updateTime = scanTime;
         this.barcodeType = barcodeType;
         this.productCode = productCode;
+        jsonObject = new JSONObject();
     }
 
-    public String toString() {
+    public List<String> getKeys() {
+        List<String> out = new ArrayList<>();
+        Iterator<String> jsonKeys = jsonObject.keys();
+        while(jsonKeys.hasNext())
+            out.add(jsonKeys.next());
+        return out;
+    }
 
-        String d ;
-        if(description == null) {
-            d = barcodeType + ":" + productCode;
-        } else {
-            d = description;
+    public String getValue(String key) {
+        try {
+            return jsonObject.getString(key);
+        } catch(JSONException e) {
+            return null;
         }
-        return d;
+    }
+
+    public void putValue(String key, String value) {
+        try {
+            jsonObject.put(key, value);
+        } catch(JSONException e) {
+            throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
+        }
+    }
+
+    public void setJSON(String json) {
+        try {
+            jsonObject = new JSONObject(json);
+        } catch(JSONException e) {
+            throw new IllegalArgumentException("Illegal JSON " + json + "(" + e.getMessage() + ")");
+        }
     }
 
     @Override

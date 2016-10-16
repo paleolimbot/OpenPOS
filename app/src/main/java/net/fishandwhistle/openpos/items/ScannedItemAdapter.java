@@ -50,7 +50,11 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
         Button qty = (Button)v.findViewById(R.id.item_qty);
         TextView name = (TextView)v.findViewById(R.id.item_name);
         TextView desc = (TextView)v.findViewById(R.id.item_desc);
-        name.setText(String.format("Unknown %s", i.barcodeType));
+        if(i.description != null) {
+            name.setText(i.description);
+        } else {
+            name.setText(String.format(context.getString(R.string.detail_nodescription), i.barcodeType));
+        }
         desc.setText(i.productCode);
         qty.setText(String.valueOf(i.nScans));
 

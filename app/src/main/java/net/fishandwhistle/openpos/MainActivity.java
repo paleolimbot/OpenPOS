@@ -23,6 +23,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import net.fishandwhistle.openpos.api.APIQuery;
+import net.fishandwhistle.openpos.api.ISBNQuery;
+import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.Code128Spec;
@@ -36,9 +39,10 @@ import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends BarcodeReaderActivity implements NavigationView.OnNavigationItemSelectedListener,
-    ScannedItemAdapter.OnItemEditCallback {
+    ScannedItemAdapter.OnItemEditCallback, APIQuery.APICallback {
 
     private static final String TAG = "MainActivity";
     private static final String INSTANCE_ITEMS = "instance_items";
@@ -185,14 +189,31 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     }
 
     protected boolean onNewBarcode(BarcodeSpec.Barcode b) {
-        ScannedItem item;
-        try {
-            GS1Parser parser = new GS1Parser(b);
-            item = parser.parse();
-        } catch(GS1Parser.GS1Exception e) {
-            item = new ScannedItem(b.type, b.toString());
+        ScannedItem item = new ScannedItem(b.type, b.toString());
+
+        if(b.type.equals("Code128")) {
+            try {
+                GS1Parser parser = new GS1Parser(b);
+                item = parser.parse();
+                List<String> itemKeys = item.getKeys();
+                if(itemKeys.contains("GTIN")) {
+                    UPCQuery q = new UPCQuery(this, item.getValue("GTIN").substring(1, 13), item, this);
+                    q.query();
+                }
+            } catch(GS1Parser.GS1Exception e) {
+                //do nothing
+            }
+        } else if(b.type.equals("ITF-14")) {
+            UPCQuery q = new UPCQuery(this, item.productCode.substring(1, 13), item, this);
+            q.query();
+        } else if(b.type.equals("ISBN-13")) {
+            ISBNQuery q = new ISBNQuery(this, item.productCode, item, this);
+            q.query();
+        } else if(b.type.equals("UPC-A") || b.type.equals("UPC-E") || b.type.equals("EAN-13")) {
+            UPCQuery q = new UPCQuery(this, item.productCode, item, this);
+            q.query();
         }
-        item.scanTime = b.timeread;
+
         items.add(item);
         this.refreshItems(true);
         return true;
@@ -263,6 +284,13 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         // Create and show the dialog.
         ScannedItemDetailFragment newFragment = ScannedItemDetailFragment.newInstance(item);
         newFragment.show(ft, "dialog");
+    }
+
+    @Override
+    public void onQueryResult(String input, boolean error, ScannedItem item) {
+        if(!error) {
+            refreshItems(false);
+        }
     }
 
     private interface OnTextSavedListener {

@@ -9,6 +9,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Iterator;
+
 /**
  * Created by dewey on 2016-10-02.
  */
@@ -27,14 +29,13 @@ public class ISBNQuery extends APIQuery {
     }
 
     @Override
-    protected JSONObject parseJSON(String json, ScannedItem item) {
+    protected boolean parseJSON(String json, ScannedItem item) {
         try {
             Log.i(TAG, "Parsing JSON data");
             JSONObject o = new JSONObject(json);
             if(o.has("error")) {
                 Log.e(TAG, "Error from database: " + o.getString("error"));
-
-                return null;
+                return false;
             } else {
                 JSONArray a = o.getJSONArray("data");
                 JSONObject book = a.getJSONObject(0);
@@ -51,14 +52,37 @@ public class ISBNQuery extends APIQuery {
                 }
                 if(authorlist.equals("")) {
                     authorlist = "No author";
+                } else {
+                    item.putValue("authors", authorlist);
                 }
-                if(item != null)
-                    item.description = String.format("%s (%s)", book.getString("title"), authorlist);
-                return book;
+
+                item.description = String.format("%s (%s)", book.getString("title"), authorlist);
+                Iterator<String> keyIter = book.keys();
+                String[] skipKeys = new String[] {"author_data", "physical_description_text",
+                                                    "subject_ids", "book_id", "dewey_decimal",
+                                                    "publisher_id"};
+                while(keyIter.hasNext()) {
+                    String key = keyIter.next();
+                    boolean good = true;
+                    for(String badKey: skipKeys) {
+                        if(badKey.equals(key)) {
+                            good = false;
+                            break;
+                        }
+                    }
+                    if(good) {
+                        String val = book.getString(key);
+                        if(val != null && val.trim().length() > 1) {
+                            item.putValue(key, val.trim());
+                        }
+                    }
+                }
+                item.jsonSource = "isbndb.com";
+                return true;
             }
         } catch(JSONException e) {
             Log.e(TAG, "Error parsing JSON", e);
-            return null;
+            return false;
         }
     }
 }

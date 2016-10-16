@@ -49,29 +49,22 @@ public class GS1Parser {
             }
         }
 
-        String barcodeText = "";
-        JSONObject json = new JSONObject();
+        ScannedItem item = new ScannedItem("GS1-128", "");
 
         for(String s: strings) {
             AI ai;
             int starti = 0;
             while(starti < s.length()) {
                 ai = extractAI(s.substring(starti));
-                try {
-                    json.put(ai.shortName, ai.dataVal);
-                } catch(JSONException e) {
-                    Log.e(TAG, "parse: JSON exception for key val " + ai.shortName + ";" + ai.dataVal, e);
-                }
-                barcodeText += ai.toString();
+                item.putValue(ai.shortName, ai.dataVal);
+                item.productCode += ai.toString();
 
                 starti += ai.aiCode.length() + ai.data.length();
             }
         }
 
-        ScannedItem item = new ScannedItem("GS1", barcodeText);
         item.jsonSource = "GS1 Parser";
         item.jsonTime = System.currentTimeMillis();
-        item.json = json.toString();
 
         return item;
     }

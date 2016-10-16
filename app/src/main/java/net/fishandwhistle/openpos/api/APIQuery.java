@@ -44,7 +44,7 @@ public abstract class APIQuery {
 
     protected abstract String getUrl(String input) ;
     
-    protected abstract JSONObject parseJSON(String json, ScannedItem item);
+    protected abstract boolean parseJSON(String json, ScannedItem item);
     
     public boolean query() {
         String url = this.getUrl(this.input);
@@ -55,7 +55,10 @@ public abstract class APIQuery {
             String output = cache.get(url);
             if(output != null) {
                 Log.i(TAG, "Using cached data for input " + input);
-                callback.onQueryResult(this.input, this.parseJSON(output, item));
+                boolean result = this.parseJSON(output, item);
+                item.jsonTime = System.currentTimeMillis();
+
+                callback.onQueryResult(this.input, result, item);
                 return false;
             } else {
                 currentRequests.add(url);
@@ -67,10 +70,10 @@ public abstract class APIQuery {
     }
 
     public interface APICallback {
-        void onQueryResult(String input, JSONObject object);
+        void onQueryResult(String input, boolean error, ScannedItem item);
     }
 
-    protected class DownloadTask extends AsyncTask<String, Integer, JSONObject> {
+    protected class DownloadTask extends AsyncTask<String, Integer, Boolean> {
 
         private Context context;
 
@@ -79,7 +82,7 @@ public abstract class APIQuery {
         }
 
         @Override
-        protected JSONObject doInBackground(String... sUrl) {
+        protected Boolean doInBackground(String... sUrl) {
             String out = null;
             InputStream input = null;
             ByteArrayOutputStream output = null;
@@ -96,7 +99,7 @@ public abstract class APIQuery {
                     currentRequests.remove(sUrl[0]);
                     Log.e(TAG, "Server returned HTTP " + connection.getResponseCode()
                             + " " + connection.getResponseMessage());
-                    return null;
+                    return false;
                 }
 
                 // this will be useful to display download percentage
@@ -115,7 +118,7 @@ public abstract class APIQuery {
                     if (isCancelled()) {
                         input.close();
                         currentRequests.remove(sUrl[0]);
-                        return null;
+                        return false;
                     }
                     total += count;
                     // publishing the progress....
@@ -127,7 +130,7 @@ public abstract class APIQuery {
             } catch (Exception e) {
                 Log.e(TAG, "Exception in download", e);
                 currentRequests.remove(sUrl[0]);
-                return null;
+                return false;
             } finally {
                 try {
                     if (output != null) {
@@ -145,7 +148,7 @@ public abstract class APIQuery {
 
             if(out == null) {
                 currentRequests.remove(sUrl[0]);
-                return null;
+                return false;
             }
 
             // do parsing
@@ -156,14 +159,8 @@ public abstract class APIQuery {
         }
 
         @Override
-        protected void onPostExecute(JSONObject o) {
-            if(o==null) {
-                Log.e(TAG, "onPostExecute: null object");
-            } else {
-                if(item != null)
-                    item.json = o.toString();
-            }
-            callback.onQueryResult(input, o);
+        protected void onPostExecute(Boolean result) {
+            callback.onQueryResult(input, result, item);
         }
     }
 
