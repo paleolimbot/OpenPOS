@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapRegionDecoder;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
@@ -11,6 +12,7 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Vibrator;
 import android.util.Log;
 import android.support.v7.app.AppCompatActivity;
@@ -456,13 +458,15 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
             try {
                 if((format != ImageFormat.NV21 && format != ImageFormat.YUY2)) {
                     Bitmap bigBitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                    b = Bitmap.createBitmap(bigBitmap, decodeRegion.left, decodeRegion.top,
-                            decodeRegion.width(), decodeRegion.height());
+                    BitmapRegionDecoder regionDecoder = BitmapRegionDecoder.newInstance(data, 0, data.length, true);
+                    b = regionDecoder.decodeRegion(decodeRegion, new BitmapFactory.Options());
+                    //b = Bitmap.createBitmap(bigBitmap, decodeRegion.left, decodeRegion.top,
+                    //        decodeRegion.width(), decodeRegion.height());
                     //test to see what image we are analyzing
-                    //f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
-                    //FileOutputStream fos = new FileOutputStream(f);
-                    //b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
-                    //fos.close();
+                    f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
+                    FileOutputStream fos = new FileOutputStream(f);
+                    b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
+                    fos.close();
                     bigBitmap.recycle();
                 } else {
                     YuvImage y = new YuvImage(data, format, width, height, null);

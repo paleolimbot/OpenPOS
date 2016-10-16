@@ -6,6 +6,14 @@ package net.fishandwhistle.openpos.barcode;
 
 public class ArrayMath {
 
+    public static int[] reverse(int[] in) {
+        int[] out = new int[in.length];
+        for(int i=0; i<in.length; i++) {
+            out[i] = in[in.length-1-i];
+        }
+        return out;
+    }
+
     public static int[] subset(int[] in, int start, int length) {
         int[] out = new int[length];
         System.arraycopy(in, start, out, 0, length);

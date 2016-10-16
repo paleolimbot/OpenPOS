@@ -8,6 +8,7 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.filter;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.lt;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.range;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.rescale;
+import static net.fishandwhistle.openpos.barcode.ArrayMath.reverse;
 import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
 
 /**
@@ -47,6 +48,7 @@ public class BarcodeExtractor {
             double[] localrange = range(rescaled, i, windowlength);
             if((localrange[1] - localrange[0]) < minrange) {
                 localrange[0] = 0;
+                localrange[1] = 1;
             }
             for(int j=0; j<windowlength; j++) {
                 transformed[i+j] = rescale(rescaled[i+j], localrange[0], localrange[1]-localrange[0]);
