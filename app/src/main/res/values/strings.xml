@@ -12,10 +12,12 @@
 
     <string name="title_activity_scanned_item_detail">Scan Details</string>
     <string name="detail_nodescription" formatted="false">Unknown (%s)</string>
-    <string name="detail_scantime" formatted="false">Updated %s</string>
-    <string name="detail_codetype" formatted="false">Type %s</string>
-    <string name="details_jsonsource" formatted="false">JSON Source: %s (%s)</string>
+    <string name="detail_scantime">Updated</string>
+    <string name="detail_codetype">Type</string>
+    <string name="details_jsonsource">JSON Source</string>
+    <string name="details_jsonsupdate">JSON Updated</string>
     <string name="detail_qty" formatted="false">Qty: %d</string>
+    <string name="detail_close">Close</string>
 
 
 </resources>
