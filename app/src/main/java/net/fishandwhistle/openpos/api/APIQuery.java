@@ -70,7 +70,7 @@ public abstract class APIQuery {
     }
 
     public interface APICallback {
-        void onQueryResult(String input, boolean error, ScannedItem item);
+        void onQueryResult(String input, boolean success, ScannedItem item);
     }
 
     protected class DownloadTask extends AsyncTask<String, Integer, Boolean> {

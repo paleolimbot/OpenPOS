@@ -219,8 +219,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     }
 
     @Override
-    public void onQueryResult(String input, boolean error, ScannedItem item) {
-        if(!error) {
+    public void onQueryResult(String input, boolean success, ScannedItem item) {
+        if(success) {
             refreshItems(false);
         }
     }
