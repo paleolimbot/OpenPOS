@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/spinner_black" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_30" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_60" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_90" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_120" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_150" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_180" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_210" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_240" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_270" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_300" android:duration="80" />
+    <item android:drawable="@drawable/spinner_black_330" android:duration="80" />
+</animation-list>

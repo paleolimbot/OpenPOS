@@ -3,6 +3,7 @@ package net.fishandwhistle.openpos.api;
 import android.content.Context;
 import android.util.Log;
 
+import net.fishandwhistle.openpos.R;
 import net.fishandwhistle.openpos.items.ScannedItem;
 
 import org.json.JSONArray;
@@ -35,6 +36,7 @@ public class ISBNQuery extends APIQuery {
             JSONObject o = new JSONObject(json);
             if(o.has("error")) {
                 Log.e(TAG, "Error from database: " + o.getString("error"));
+                item.putValue("lookup_error", o.getString("error"));
                 return false;
             } else {
                 JSONArray a = o.getJSONArray("data");
@@ -77,11 +79,11 @@ public class ISBNQuery extends APIQuery {
                         }
                     }
                 }
-                item.jsonSource = "isbndb.com";
                 return true;
             }
         } catch(JSONException e) {
             Log.e(TAG, "Error parsing JSON", e);
+            item.putValue("lookup_error", String.format(context.getString(R.string.api_errorjson), e.getMessage()));
             return false;
         }
     }

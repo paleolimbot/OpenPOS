@@ -33,5 +33,8 @@
     <string name="detail_close">Close</string>
     <string name="detail_noitem">No item to show</string>
 
+    <string name="api_errorjson" formatted="false">JSON parse error (%s)</string>
+    <string name="api_errorio" formatted="false">IO error (%s)</string>
+    <string name="api_errorredrequest">Redundant request (ignored)</string>
 
 </resources>

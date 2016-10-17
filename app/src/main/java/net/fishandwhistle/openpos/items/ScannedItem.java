@@ -1,5 +1,7 @@
 package net.fishandwhistle.openpos.items;
 
+import android.util.Log;
+
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 
 import org.json.JSONException;
@@ -16,6 +18,7 @@ import java.util.Locale;
  */
 
 public class ScannedItem implements Serializable {
+    private static final String TAG = "ScannedItem";
 
     public long scanTime = 0;
     public long updateTime = 0;
@@ -23,18 +26,24 @@ public class ScannedItem implements Serializable {
     public String barcodeType = null;
     public String description = null;
     public int nScans = 1;
+    public boolean isLoading = false;
 
     public String jsonSource = null;
     public long jsonTime = 0;
 
-    private JSONObject jsonObject;
+    private transient JSONObject jsonObject;
+    private String json = "{}";
 
     public ScannedItem(String barcodeType, String productCode) {
         this.scanTime = System.currentTimeMillis();
         updateTime = scanTime;
         this.barcodeType = barcodeType;
         this.productCode = productCode;
-        jsonObject = new JSONObject();
+        try {
+            jsonObject = new JSONObject(this.json);
+        } catch(JSONException e) {
+            Log.e(TAG, "ScannedItem: JSON exception on constructor", e);
+        }
     }
 
     public List<String> getKeys() {
@@ -56,6 +65,7 @@ public class ScannedItem implements Serializable {
     public void putValue(String key, String value) {
         try {
             jsonObject.put(key, value);
+            json = jsonObject.toString();
         } catch(JSONException e) {
             throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
         }
@@ -64,6 +74,7 @@ public class ScannedItem implements Serializable {
     public void setJSON(String json) {
         try {
             jsonObject = new JSONObject(json);
+            json = json;
         } catch(JSONException e) {
             throw new IllegalArgumentException("Illegal JSON " + json + "(" + e.getMessage() + ")");
         }
@@ -75,4 +86,5 @@ public class ScannedItem implements Serializable {
                 ((ScannedItem) othero).barcodeType.equals(this.barcodeType) &&
                 ((ScannedItem) othero).productCode.equals(this.productCode);
     }
+
 }

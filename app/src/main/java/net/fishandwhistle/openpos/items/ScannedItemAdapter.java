@@ -50,6 +50,16 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
         Button qty = (Button)v.findViewById(R.id.item_qty);
         TextView name = (TextView)v.findViewById(R.id.item_name);
         TextView desc = (TextView)v.findViewById(R.id.item_desc);
+        ImageView minus = (ImageView)v.findViewById(R.id.item_button_minus);
+        ImageView plus = (ImageView)v.findViewById(R.id.item_button_plus);
+        ImageView loading = (ImageView)v.findViewById(R.id.item_loading);
+
+        if(i.isLoading) {
+            loading.setVisibility(View.VISIBLE);
+        } else {
+            loading.setVisibility(View.GONE);
+        }
+
         if(i.description != null) {
             name.setText(i.description);
         } else {
@@ -58,8 +68,6 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
         desc.setText(i.productCode);
         qty.setText(String.valueOf(i.nScans));
 
-        ImageView minus = (ImageView)v.findViewById(R.id.item_button_minus);
-        ImageView plus = (ImageView)v.findViewById(R.id.item_button_plus);
         if(i.nScans > 1) {
             minus.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_item_remove));
         } else {

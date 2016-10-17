@@ -220,9 +220,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
     @Override
     public void onQueryResult(String input, boolean success, ScannedItem item) {
-        if(success) {
-            refreshItems(false);
-        }
+        refreshItems(success);
     }
 
     private void refreshItems(boolean scrollToEnd) {

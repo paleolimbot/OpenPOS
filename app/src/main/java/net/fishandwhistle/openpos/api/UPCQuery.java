@@ -3,6 +3,7 @@ package net.fishandwhistle.openpos.api;
 import android.content.Context;
 import android.util.Log;
 
+import net.fishandwhistle.openpos.R;
 import net.fishandwhistle.openpos.items.ScannedItem;
 
 import org.json.JSONArray;
@@ -36,6 +37,7 @@ public class UPCQuery extends APIQuery {
             JSONObject o = new JSONObject(json);
             if(!o.getBoolean("valid")) {
                 Log.e(TAG, "Error from database: " + o.getString("reason"));
+                item.putValue("lookup_error", o.getString("reason"));
                 return false;
             } else {
                 String description = o.getString("description");
@@ -56,11 +58,11 @@ public class UPCQuery extends APIQuery {
                     if(val != null && val.trim().length() > 0)
                         item.putValue(key, val.trim());
                 }
-                item.jsonSource = "api.upcdatabase.org";
                 return true;
             }
         } catch(JSONException e) {
             Log.e(TAG, "Error parsing JSON", e);
+            item.putValue("lookup_error", String.format(context.getString(R.string.api_errorjson), e.getMessage()));
             return false;
         }
     }

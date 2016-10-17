@@ -1,9 +1,11 @@
 package net.fishandwhistle.openpos.api;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import net.fishandwhistle.openpos.R;
 import net.fishandwhistle.openpos.items.ScannedItem;
 
 import org.json.JSONArray;
@@ -29,7 +31,7 @@ public abstract class APIQuery {
 
     private String input;
     private APICallback callback ;
-    private Context context ;
+    protected Context context ;
     private DownloadTask task;
     private TextApiCache cache;
     private ScannedItem item;
@@ -48,8 +50,12 @@ public abstract class APIQuery {
     
     public boolean query() {
         String url = this.getUrl(this.input);
+        item.jsonSource = Uri.parse(url).getHost();
+        item.jsonTime = System.currentTimeMillis();
+
         if(currentRequests.contains(url)) {
             Log.i(TAG, "Disregarding redundant request: " + input);
+            item.putValue("lookup_error", context.getString(R.string.api_errorredrequest));
             return false;
         } else {
             TextApiCache.CachedItem cached = cache.get(url);
@@ -57,15 +63,23 @@ public abstract class APIQuery {
                 Log.i(TAG, "Using cached data for input " + input);
                 boolean result = this.parseJSON(cached.data, item);
                 item.jsonTime = cached.queryTime;
-
+                item.isLoading = false;
                 callback.onQueryResult(this.input, result, item);
                 return false;
             } else {
                 currentRequests.add(url);
+                item.isLoading = true;
                 task = new DownloadTask(context);
                 task.execute(url);
                 return true;
             }
+        }
+    }
+
+    public void cancel() {
+        item.isLoading = false;
+        if(task != null) {
+            task.cancel(true);
         }
     }
 
@@ -99,6 +113,8 @@ public abstract class APIQuery {
                     currentRequests.remove(sUrl[0]);
                     Log.e(TAG, "Server returned HTTP " + connection.getResponseCode()
                             + " " + connection.getResponseMessage());
+                    item.putValue("lookup_error", String.format(context.getString(R.string.api_errorio),
+                            "HTTP " + connection.getResponseCode() + " " + connection.getResponseMessage()));
                     return false;
                 }
 
@@ -129,6 +145,7 @@ public abstract class APIQuery {
                 Log.i(TAG, "Download complete");
             } catch (Exception e) {
                 Log.e(TAG, "Exception in download", e);
+                item.putValue("lookup_error", String.format(context.getString(R.string.api_errorio), e.getMessage()));
                 currentRequests.remove(sUrl[0]);
                 return false;
             } finally {
@@ -161,6 +178,7 @@ public abstract class APIQuery {
 
         @Override
         protected void onPostExecute(Boolean result) {
+            item.isLoading = false;
             callback.onQueryResult(input, result, item);
         }
     }
