@@ -41,10 +41,6 @@ public class EAN13Spec extends EANSpec {
         //try checksum
         if(!Checksums.checksum(b, 3, 1)) throw new BarcodeException("Checksum failed for barcode", b);
 
-        String bstr = b.toString();
-        if(bstr.startsWith("978") || bstr.startsWith("979")) {
-            b.type = "ISBN-13";
-        }
         b.isValid = true;
 
         return b;

@@ -211,31 +211,15 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     }
 
     protected boolean onNewBarcode(BarcodeSpec.Barcode b) {
-        ScannedItem item = new ScannedItem(b.type, b.toString());
-
-        if(b.type.equals("Code128")) {
-            try {
-                GS1Parser parser = new GS1Parser(b);
-                item = parser.parse();
-                List<String> itemKeys = item.getKeys();
-                if(itemKeys.contains("GTIN")) {
-                    GTINQuery q = new GTINQuery(this, item.getValue("GTIN"), item, this);
-                    q.query();
-                }
-            } catch(GS1Parser.GS1Exception e) {
-                //do nothing
-            }
-        } else if(b.type.equals("ITF-14")) {
-            GTINQuery q = new GTINQuery(this, item.productCode, item, this);
+        ScannedItem item = new ItemFormatter().format(b);
+        List<String> keys = item.getKeys();
+        if(keys.contains("isbn13")) {
+            ISBNQuery q = new ISBNQuery(this, item.getValue("isbn13"), item, this);
             q.query();
-        } else if(b.type.equals("ISBN-13")) {
-            ISBNQuery q = new ISBNQuery(this, item.productCode, item, this);
-            q.query();
-        } else if(b.type.equals("UPC-E") || b.type.equals("EAN-13")) {
-            UPCQuery q = new UPCQuery(this, item.productCode, item, this);
+        } else if(keys.contains("gtin13")) {
+            UPCQuery q = new UPCQuery(this, item.getValue("gtin13"), item, this);
             q.query();
         }
-
         items.add(item);
         this.refreshItems(true);
         return true;

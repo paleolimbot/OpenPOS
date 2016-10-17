@@ -30,4 +30,17 @@ public class Checksums {
         return checksum;
     }
 
+    public static int ISBNISSNDigit(int[] numbers) {
+        int mod = 11;
+        int cumsum = 0;
+        for(int i=0; i < (numbers.length-1); i++) {
+            cumsum += (numbers.length-i)*numbers[i];
+        }
+        int checksum = mod*(cumsum/mod+1) - cumsum;
+        if(checksum == mod) {
+            checksum = 0 ;
+        }
+        return checksum;
+    }
+
 }
