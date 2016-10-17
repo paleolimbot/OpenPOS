@@ -95,6 +95,10 @@ public class Code25Spec extends DualWidthSpec {
         return b;
     }
 
+    @Override
+    public void initialize() {
+        digc25.containsValue(new BarcodeDigit("0"));
+    }
 
     private static Map<BarcodePattern, BarcodeDigit> digc25 = new HashMap<>();
     static {

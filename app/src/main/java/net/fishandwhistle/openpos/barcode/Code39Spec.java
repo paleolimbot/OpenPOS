@@ -17,6 +17,11 @@ public class Code39Spec extends CodabarSpec {
         super("Code39", digc39, 9, minLength, fixedLength, "*", "*");
     }
 
+    @Override
+    public void initialize() {
+        digc39.containsValue(new BarcodeDigit("0"));
+    }
+
     private static Map<BarcodePattern, BarcodeDigit> digc39 = new HashMap<>();
     static {
         digc39.put(new BarcodePattern(new int[] {1, 2, 1, 1, 2, 1, 2, 1, 1}, true), new BarcodeDigit("*", "0"));

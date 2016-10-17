@@ -86,6 +86,11 @@ public class CodabarSpec extends DualWidthSpec {
         return b;
     }
 
+    @Override
+    public void initialize() {
+        digcodabar.containsValue(new BarcodeDigit("0"));
+    }
+
     private static Map<BarcodePattern, BarcodeDigit> digcodabar = new HashMap<>();
     static {
         digcodabar.put(new BarcodePattern(new int[]{1, 1, 1, 1, 1, 2, 2}, true), new BarcodeDigit("0"));

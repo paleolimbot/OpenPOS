@@ -146,6 +146,10 @@ public class GS1Parser {
         }
     }
 
+    public static void initialize() {
+        gs1.containsKey("00");
+    }
+
     private static Map<String, AI> gs1 = new HashMap<>();
     static {
         gs1.put("00", new AI("00", "Serial Shipping Container Code (SSCC)", 2, "00", 18, 18, false, "SCCC"));

@@ -30,6 +30,8 @@ public abstract class BarcodeSpec {
 
     protected abstract BarcodePattern getBarcodePattern(int[] bars, boolean start) throws BarWidthException ;
 
+    public abstract void initialize();
+
     protected BarcodeDigit getDigit(int[] bars, boolean start) {
         try {
             BarcodePattern pattern = this.getBarcodePattern(bars, start);

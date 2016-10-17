@@ -1,6 +1,7 @@
 package net.fishandwhistle.openpos;
 
 import android.app.Dialog;
+import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.content.DialogInterface;
@@ -36,6 +37,9 @@ import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EAN13Spec;
 import net.fishandwhistle.openpos.barcode.GS1Parser;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
+import net.fishandwhistle.openpos.barcode.MSISpec;
+import net.fishandwhistle.openpos.barcode.PharmacodeSpec;
+import net.fishandwhistle.openpos.barcode.UPCESpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
@@ -116,6 +120,25 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         }
         list.setAdapter(items);
         refreshItems(true);
+
+        //initialize the data for all barcode specs (to avoid the first scan problem)
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                new CodabarSpec().initialize();
+                new Code25Spec().initialize();
+                new Code39Spec().initialize();
+                new Code128Spec().initialize();
+                new EAN8Spec().initialize();
+                new EAN13Spec().initialize();
+                new ITFSpec().initialize();
+                new MSISpec().initialize();
+                new PharmacodeSpec().initialize();
+                new UPCESpec().initialize();
+                GS1Parser.initialize();
+                return null;
+            }
+        }.execute();
     }
 
     @Override

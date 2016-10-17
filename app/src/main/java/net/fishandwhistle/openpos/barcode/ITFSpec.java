@@ -96,6 +96,11 @@ public class ITFSpec extends DualWidthSpec {
         return b;
     }
 
+    @Override
+    public void initialize() {
+        digITF.containsValue(new BarcodeDigit("0"));
+    }
+
     private static Map<BarcodePattern, BarcodeDigit> digITF = new HashMap<>();
     static {
         digITF.put(new BarcodePattern(new int[] {1, 1, 2, 2, 1}, true), new BarcodeDigit("0"));

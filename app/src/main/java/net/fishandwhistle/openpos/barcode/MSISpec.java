@@ -92,6 +92,11 @@ public class MSISpec extends DualWidthSpec {
         return new BarcodePattern(widths, start);
     }
 
+    @Override
+    public void initialize() {
+        digMSI.containsValue(new BarcodeDigit("0"));
+    }
+
     private static Map<BarcodePattern, BarcodeDigit> digMSI = new HashMap<>();
     static {
         digMSI.put(new BarcodePattern(new int[] {1, 1, 1, 1}, true), new BarcodeDigit("0"));

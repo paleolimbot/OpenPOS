@@ -51,6 +51,12 @@ public class EAN13Spec extends EANSpec {
     }
 
 
+    @Override
+    public void initialize() {
+        digean.containsValue(new BarcodeDigit("0"));
+        dig1ean.containsValue(new BarcodeDigit("1"));
+    }
+
     protected static Map<BarcodePattern, BarcodeDigit> digean = new HashMap<>();
     protected static Map<String, BarcodeDigit> dig1ean = new HashMap<>();
     static {

@@ -65,6 +65,11 @@ public class PharmacodeSpec extends BarcodeSpec {
         return new BarcodePattern(bars, start);
     }
 
+    @Override
+    public void initialize() {
+        //do nothing
+    }
+
     private static long pow2(int n) {
         long result = 1;
         for(int i=0; i<n; i++) {

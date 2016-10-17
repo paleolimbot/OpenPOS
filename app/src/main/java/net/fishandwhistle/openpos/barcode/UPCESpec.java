@@ -67,6 +67,12 @@ public class UPCESpec extends EANSpec {
         return b;
     }
 
+    @Override
+    public void initialize() {
+        digupce.containsValue(new BarcodeDigit("0"));
+        upceParities.containsValue(upceZeroPatterns[0]);
+    }
+
     private static final int[][] upceZeroPatterns = new int[][] {
             new int[] {2, 0, 4, 3},
             new int[] {2, 1, 4, 3},

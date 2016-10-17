@@ -195,6 +195,11 @@ public class Code128Spec extends DualWidthSpec {
         }
     }
 
+    @Override
+    public void initialize() {
+        digc128.containsValue(new BarcodeDigit("0"));
+    }
+
     private static Map<BarcodePattern, BarcodeDigit> digc128 = new HashMap<>();
     static {
         digc128.put(new BarcodePattern(new int[] {2, 1, 2, 2, 2, 2}, true), new Code128Digit(0, " ", " ", "00"));
