@@ -7,6 +7,8 @@ import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -65,7 +67,6 @@ public class ScannedItem implements Serializable {
     public void putValue(String key, String value) {
         try {
             jsonObject.put(key, value);
-            json = jsonObject.toString();
         } catch(JSONException e) {
             throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
         }
@@ -74,10 +75,15 @@ public class ScannedItem implements Serializable {
     public void setJSON(String json) {
         try {
             jsonObject = new JSONObject(json);
-            json = json;
+            this.json = json;
         } catch(JSONException e) {
             throw new IllegalArgumentException("Illegal JSON " + json + "(" + e.getMessage() + ")");
         }
+    }
+
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+        this.json = jsonObject.toString();
+        stream.defaultWriteObject();
     }
 
     @Override
