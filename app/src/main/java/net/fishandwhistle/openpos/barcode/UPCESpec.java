@@ -59,7 +59,8 @@ public class UPCESpec extends EANSpec {
 
         //try checksum
         if(!Checksums.checksum(b, 1, 3)) throw new BarcodeException("Checksum failed for barcode", b);
-        //checksum isn't part of the code, remove it
+        //assign gtin13
+        b.tag = "0" + b.toString();
         //reassign old digits
         b.digits = oldDig;
         b.isValid = true;

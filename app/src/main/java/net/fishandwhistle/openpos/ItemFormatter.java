@@ -37,6 +37,11 @@ public class ItemFormatter {
                 addISBNData(item, bstr);
                 item.putValue("gtin8", bstr);
                 break;
+            case "UPC-E":
+                if(b.tag != null) {
+                    item.putValue("gtin13", b.tag);
+                }
+                break;
             case "Code128":
                 try {
                     GS1Parser parser = new GS1Parser(b);
