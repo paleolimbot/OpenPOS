@@ -38,7 +38,11 @@ public abstract class EANSpec extends BarcodeSpec {
     }
 
     protected BarcodePattern getBarcodePattern(int[] bars, boolean start) {
-        return new BarcodePattern(round(div(bars, sum(bars)/7.0)), start);
+        return getBarcodePattern(bars, start, 7.0);
+    }
+
+    protected BarcodePattern getBarcodePattern(int[] bars, boolean start, double totalLength) {
+        return new BarcodePattern(round(div(bars, sum(bars)/totalLength)), start);
     }
 
     protected Barcode parse_common(int[] bars) throws BarcodeException {
@@ -77,8 +81,78 @@ public abstract class EANSpec extends BarcodeSpec {
         }
 
         if(!b.isComplete()) throw new BarcodeException("Not all digits could be decoded", b);
+        addSupplement(bars, b);
 
         return b;
+    }
+
+    protected void addSupplement(int[] bars, Barcode b) {
+        //try extra barcode addition
+        if(bars.length >= (this.nbars + 1 + 13)) {
+            EANExtraSpec extraSpec = new EANExtraSpec();
+            //allow for 1 interruption
+            for(int i=0; i<5; i+=2) {
+                try {
+                    Barcode extra = extraSpec.parse(subset(bars, this.nbars + 1 + i, (bars.length - nbars - 1 - i)));
+                    b.extra = extra.toString();
+                    return;
+                } catch (BarcodeException e) {
+                    //do nothing
+                }
+            }
+        }
+    }
+
+    @Override
+    public void initialize() {
+        digean.containsValue(new BarcodeDigit("0"));
+        dig1ean.containsValue(new BarcodeDigit("1"));
+    }
+
+    protected static Map<BarcodePattern, BarcodeDigit> digean = new HashMap<>();
+    protected static Map<String, BarcodeDigit> dig1ean = new HashMap<>();
+    static {
+        digean.put(new BarcodePattern(new int[] {3, 2, 1, 1}, false), new BarcodeDigit("0", "A")) ;
+        digean.put(new BarcodePattern(new int[] {2, 2, 2, 1}, false), new BarcodeDigit("1", "A")) ;
+        digean.put(new BarcodePattern(new int[] {2, 1, 2, 2}, false), new BarcodeDigit("2", "A")) ;
+        digean.put(new BarcodePattern(new int[] {1, 4, 1, 1}, false), new BarcodeDigit("3", "A")) ;
+        digean.put(new BarcodePattern(new int[] {1, 1, 3, 2}, false), new BarcodeDigit("4", "A")) ;
+        digean.put(new BarcodePattern(new int[] {1, 2, 3, 1}, false), new BarcodeDigit("5", "A")) ;
+        digean.put(new BarcodePattern(new int[] {1, 1, 1, 4}, false), new BarcodeDigit("6", "A")) ;
+        digean.put(new BarcodePattern(new int[] {1, 3, 1, 2}, false), new BarcodeDigit("7", "A")) ;
+        digean.put(new BarcodePattern(new int[] {1, 2, 1, 3}, false), new BarcodeDigit("8", "A")) ;
+        digean.put(new BarcodePattern(new int[] {3, 1, 1, 2}, false), new BarcodeDigit("9", "A")) ;
+        digean.put(new BarcodePattern(new int[] {1, 1, 2, 3}, false), new BarcodeDigit("0", "B")) ;
+        digean.put(new BarcodePattern(new int[] {1, 2, 2, 2}, false), new BarcodeDigit("1", "B")) ;
+        digean.put(new BarcodePattern(new int[] {2, 2, 1, 2}, false), new BarcodeDigit("2", "B")) ;
+        digean.put(new BarcodePattern(new int[] {1, 1, 4, 1}, false), new BarcodeDigit("3", "B")) ;
+        digean.put(new BarcodePattern(new int[] {2, 3, 1, 1}, false), new BarcodeDigit("4", "B")) ;
+        digean.put(new BarcodePattern(new int[] {1, 3, 2, 1}, false), new BarcodeDigit("5", "B")) ;
+        digean.put(new BarcodePattern(new int[] {4, 1, 1, 1}, false), new BarcodeDigit("6", "B")) ;
+        digean.put(new BarcodePattern(new int[] {2, 1, 3, 1}, false), new BarcodeDigit("7", "B")) ;
+        digean.put(new BarcodePattern(new int[] {3, 1, 2, 1}, false), new BarcodeDigit("8", "B")) ;
+        digean.put(new BarcodePattern(new int[] {2, 1, 1, 3}, false), new BarcodeDigit("9", "B")) ;
+        digean.put(new BarcodePattern(new int[] {3, 2, 1, 1}, true), new BarcodeDigit("0", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {2, 2, 2, 1}, true), new BarcodeDigit("1", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {2, 1, 2, 2}, true), new BarcodeDigit("2", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {1, 4, 1, 1}, true), new BarcodeDigit("3", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {1, 1, 3, 2}, true), new BarcodeDigit("4", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {1, 2, 3, 1}, true), new BarcodeDigit("5", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {1, 1, 1, 4}, true), new BarcodeDigit("6", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {1, 3, 1, 2}, true), new BarcodeDigit("7", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {1, 2, 1, 3}, true), new BarcodeDigit("8", "RIGHT")) ;
+        digean.put(new BarcodePattern(new int[] {3, 1, 1, 2}, true), new BarcodeDigit("9", "RIGHT")) ;
+
+        dig1ean.put("AAAAAA", new BarcodeDigit("0", "FIRSTDIGIT")) ;
+        dig1ean.put("AABABB", new BarcodeDigit("1", "FIRSTDIGIT")) ;
+        dig1ean.put("AABBAB", new BarcodeDigit("2", "FIRSTDIGIT")) ;
+        dig1ean.put("AABBBA", new BarcodeDigit("3", "FIRSTDIGIT")) ;
+        dig1ean.put("ABAABB", new BarcodeDigit("4", "FIRSTDIGIT")) ;
+        dig1ean.put("ABBAAB", new BarcodeDigit("5", "FIRSTDIGIT")) ;
+        dig1ean.put("ABBBAA", new BarcodeDigit("6", "FIRSTDIGIT")) ;
+        dig1ean.put("ABABAB", new BarcodeDigit("7", "FIRSTDIGIT")) ;
+        dig1ean.put("ABABBA", new BarcodeDigit("8", "FIRSTDIGIT")) ;
+        dig1ean.put("ABBABA", new BarcodeDigit("9", "FIRSTDIGIT")) ;
     }
 
 }

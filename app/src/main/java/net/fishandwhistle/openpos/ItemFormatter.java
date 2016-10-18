@@ -20,6 +20,9 @@ public class ItemFormatter {
     public ScannedItem format(BarcodeSpec.Barcode b) {
         String bstr = b.toString();
         ScannedItem item = new ScannedItem(b.type, bstr);
+        if(b.extra != null) {
+            item.putValue("supplement", b.extra);
+        }
 
         switch (b.type) {
             case "ITF-14":
@@ -34,7 +37,6 @@ public class ItemFormatter {
                 addISBNData(item, bstr);
                 break;
             case "EAN-8":
-                addISBNData(item, bstr);
                 item.putValue("gtin8", bstr);
                 break;
             case "UPC-E":
@@ -81,11 +83,18 @@ public class ItemFormatter {
             }
             item.putValue("isbn10", ean13.substring(3, 12) + checkDigit);
             item.putValue("isbn13", ean13);
-            if(!item.barcodeType.equals("ISBN-13")) {
+            if(item.barcodeType.equals("EAN-13")) {
+                addPriceInfo(item, item.getValue("supplement"));
+            }
+        } else if(ean13.startsWith("979")) {
+            if(ean13.startsWith("9790")) {
+                item.putValue("imsn", ean13);
+            } else {
                 item.putValue("isbn13", ean13);
             }
-        } else if(ean13.startsWith("979") && !item.barcodeType.equals("ISBN-13")) {
-            item.putValue("isbn13", ean13);
+            if(item.barcodeType.equals("EAN-13")) {
+                addPriceInfo(item, item.getValue("supplement"));
+            }
         } else if (ean13.startsWith("977")) {
             //ISSN
             int[] numbers = new int[8];
@@ -101,6 +110,44 @@ public class ItemFormatter {
             }
             item.putValue("issn", ean13.substring(3, 10) + checkDigit);
             item.putValue("issn_variant", ean13.substring(10, 12));
+            if(item.barcodeType.equals("EAN-13")) {
+                addIssueNumber(item, item.getValue("supplement"));
+            }
+        }
+    }
+
+    private void addPriceInfo(ScannedItem item, String extra) {
+        if(extra != null) {
+            if(extra.length() == 5 && !extra.startsWith("9")) {
+                item.putValue("retail_price", String.valueOf(Double.valueOf(extra.substring(1, 5))/100.0));
+                switch(extra.substring(0, 1)) {
+                    case "0":
+                         item.putValue("price_curency", "GBP");
+                         break;
+                    case "1":
+                        item.putValue("price_curency", "GBP");
+                        break;
+                    case "3":
+                        item.putValue("price_curency", "AUD");
+                        break;
+                    case "4":
+                        item.putValue("price_curency", "NZD");
+                        break;
+                    case "5":
+                        item.putValue("price_curency", "USD");
+                        break;
+                    case "6":
+                        item.putValue("price_curency", "CND");
+                        break;
+                }
+            }
+        }
+    }
+
+    private void addIssueNumber(ScannedItem item, String extra) {
+        if(extra != null && extra.length() == 2) {
+            item.putValue("issue_code", extra);
+            item.productCode += "-" + extra;
         }
     }
 

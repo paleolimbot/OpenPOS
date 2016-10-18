@@ -49,6 +49,7 @@ public abstract class BarcodeSpec {
         public String type;
         public List<BarcodeDigit> digits;
         public String tag;
+        public String extra;
         public boolean isValid;
         public long timeread ;
 
@@ -56,6 +57,7 @@ public abstract class BarcodeSpec {
             this.type = type;
             digits = new ArrayList<>();
             tag = null;
+            extra = null;
             isValid = false;
             timeread = System.currentTimeMillis();
         }

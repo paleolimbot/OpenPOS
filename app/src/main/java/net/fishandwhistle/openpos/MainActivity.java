@@ -34,6 +34,7 @@ import net.fishandwhistle.openpos.barcode.Code25Spec;
 import net.fishandwhistle.openpos.barcode.Code39Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EAN13Spec;
+import net.fishandwhistle.openpos.barcode.EANExtraSpec;
 import net.fishandwhistle.openpos.barcode.GS1Parser;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
 import net.fishandwhistle.openpos.barcode.MSISpec;
@@ -60,7 +61,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     protected BarcodeSpec[] getBarcodeSpecs() {
         return new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
                 new ITFSpec(), new CodabarSpec(), new Code25Spec(), new Code39Spec(), new EAN8Spec()};
-//        return new BarcodeSpec[] {new EAN13Spec(), new EAN8Spec(), new ITFSpec(14, true), new UPCESpec()};
+//        return new BarcodeSpec[] {new EAN13Spec(), new EAN8Spec(), new ITFSpec(14, true)};
     }
 
     @Override

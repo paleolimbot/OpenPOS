@@ -61,6 +61,10 @@ public class UPCESpec extends EANSpec {
         if(!Checksums.checksum(b, 1, 3)) throw new BarcodeException("Checksum failed for barcode", b);
         //assign gtin13
         b.tag = "0" + b.toString();
+
+        //add supplement, if exists
+        addSupplement(bars, b);
+
         //reassign old digits
         b.digits = oldDig;
         b.isValid = true;

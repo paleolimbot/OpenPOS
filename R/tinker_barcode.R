@@ -93,3 +93,13 @@ cat(paste0(sprintf('gs1.put("%s", new AI("%s", "%s", %s, "%s", %s, %s, %s, "%s")
                    ifelse(gs1$AI_has_div, 'true', 'false'),
                    gs1$short_name), collapse="\n"))
 
+
+eane <- read.csv("R/eanextraParities.csv", colClasses = "character", header=F)
+eane$code <- paste0(eane$V2, eane$V3, eane$V4, eane$V5, eane$V6)
+eane$code <- gsub("Odd", "A", eane$code)
+eane$code <- gsub("Even", "B", eane$code)
+
+  
+cat(paste0(sprintf('digCheckEANExtra.put("%s", new BarcodeDigit("%s", "EXTRACHECK"));',
+           eane$code, eane$V1),
+    collapse="\n"))
