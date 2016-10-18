@@ -1,9 +1,8 @@
-package net.fishandwhistle.openpos;
+package net.fishandwhistle.openpos.items;
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.Checksums;
 import net.fishandwhistle.openpos.barcode.GS1Parser;
-import net.fishandwhistle.openpos.items.ScannedItem;
 
 import java.util.List;
 

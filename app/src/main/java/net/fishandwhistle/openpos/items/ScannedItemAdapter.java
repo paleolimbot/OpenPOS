@@ -25,8 +25,6 @@ import java.util.ArrayList;
 
 public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
 
-    private ArrayList<ScannedItem> allItems ;
-    private int maxLength;
     private boolean enableQtyUpdate;
     private Context context;
     private OnItemEditCallback activityCallback;
@@ -34,8 +32,6 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
 
     public ScannedItemAdapter(Context context, boolean enableQtyUpdate, OnItemEditCallback callback) {
         super(context, R.layout.item_scanner, R.id.item_desc);
-        allItems = new ArrayList<>();
-        this.maxLength = 0;
         this.enableQtyUpdate = enableQtyUpdate;
         this.context = context;
         this.activityCallback = callback;
@@ -123,45 +119,13 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
         return v;
     }
 
-    @Override
-    public void add(ScannedItem object) {
-        if(allItems.contains(object)) {
-            int ind = allItems.indexOf(object);
-            ScannedItem i = allItems.remove(ind);
-            i.nScans += 1;
-            allItems.add(i);
-        } else {
-            allItems.add(object);
-        }
-        this.syncLists();
-    }
-
-    @Override
-    public void remove(ScannedItem object) {
-        allItems.remove(object);
-        syncLists();
-    }
-
-    @Override
-    public void clear() {
-        allItems.clear();
-        this.syncLists();
-    }
-
-    private void syncLists() {
-        super.clear();
-        int sizelimit;
-        if(maxLength == 0) {
-            sizelimit = allItems.size();
-        } else {
-            sizelimit = maxLength;
-        }
-        for(int i=0; i<sizelimit; i++) {
-            int ind = allItems.size() - sizelimit + i;
-            if(ind >= 0) {
-                super.add(allItems.get(ind));
+    public int indexOf(ScannedItem item) {
+        for(int i=0; i<this.getCount(); i++) {
+            if(item.equals(this.getItem(i))) {
+                return i;
             }
         }
+        return -1;
     }
 
     public interface OnItemEditCallback {

@@ -34,12 +34,12 @@ import net.fishandwhistle.openpos.barcode.Code25Spec;
 import net.fishandwhistle.openpos.barcode.Code39Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.EAN13Spec;
-import net.fishandwhistle.openpos.barcode.EANExtraSpec;
 import net.fishandwhistle.openpos.barcode.GS1Parser;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
 import net.fishandwhistle.openpos.barcode.MSISpec;
 import net.fishandwhistle.openpos.barcode.PharmacodeSpec;
 import net.fishandwhistle.openpos.barcode.UPCESpec;
+import net.fishandwhistle.openpos.items.ItemFormatter;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
@@ -213,14 +213,30 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     protected boolean onNewBarcode(BarcodeSpec.Barcode b) {
         ScannedItem item = new ItemFormatter().format(b);
         List<String> keys = item.getKeys();
-        if(keys.contains("isbn13")) {
-            ISBNQuery q = new ISBNQuery(this, item.getValue("isbn13"), item, this);
-            q.query();
-        } else if(keys.contains("gtin13")) {
-            UPCQuery q = new UPCQuery(this, item.getValue("gtin13"), item, this);
-            q.query();
+
+        int index = items.indexOf(item);
+        if(index == -1) {
+            //item is not currently in the index
+            if (keys.contains("isbn13")) {
+                ISBNQuery q = new ISBNQuery(this, item.getValue("isbn13"), item, this);
+                q.query();
+            } else if (keys.contains("gtin13")) {
+                UPCQuery q = new UPCQuery(this, item.getValue("gtin13"), item, this);
+                q.query();
+            }
+            items.add(item);
+        } else {
+            ScannedItem current = items.getItem(index);
+            assert current != null;
+            //copy metadata from new item to current
+            for(String key: keys) {
+                current.putValue(key, item.getValue(key));
+            }
+            //move current to end of the list and increment nScans
+            current.nScans++;
+            items.remove(current);
+            items.add(current);
         }
-        items.add(item);
         this.refreshItems(true);
         return true;
     }
