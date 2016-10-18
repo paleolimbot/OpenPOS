@@ -79,7 +79,7 @@ public class ScannedItemDetailFragment extends DialogFragment {
             if(item.description != null) {
                 ((TextView) v.findViewById(R.id.detail_description)).setText(item.description);
             } else {
-                ((TextView) v.findViewById(R.id.detail_description)).setText(String.format(getString(R.string.detail_nodescription), item.barcodeType));
+                ((TextView) v.findViewById(R.id.detail_description)).setText(item.toString());
             }
             ((TextView)v.findViewById(R.id.detail_code)).setText(item.productCode);
             ((TextView)v.findViewById(R.id.detail_quantity)).setText(String.format(getString(R.string.detail_qty), item.nScans));

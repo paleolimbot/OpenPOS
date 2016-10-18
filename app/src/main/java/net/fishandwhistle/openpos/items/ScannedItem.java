@@ -45,6 +45,11 @@ public class ScannedItem implements Serializable {
         }
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s XX%s", this.barcodeType, this.productCode.substring(Math.max(0, productCode.length()-4)));
+    }
+
     public List<String> getKeys() {
         List<String> out = new ArrayList<>();
         Iterator<String> jsonKeys = jsonObject.keys();

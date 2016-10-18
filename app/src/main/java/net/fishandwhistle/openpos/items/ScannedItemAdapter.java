@@ -31,7 +31,7 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
 
 
     public ScannedItemAdapter(Context context, boolean enableQtyUpdate, OnItemEditCallback callback) {
-        super(context, R.layout.item_scanner, R.id.item_desc);
+        super(context, R.layout.item_scanner, R.id.item_name);
         this.enableQtyUpdate = enableQtyUpdate;
         this.context = context;
         this.activityCallback = callback;
@@ -58,9 +58,8 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
 
         if(i.description != null) {
             name.setText(i.description);
-        } else {
-            name.setText(String.format(context.getString(R.string.detail_nodescription), i.barcodeType));
         }
+
         desc.setText(i.productCode);
         qty.setText(String.valueOf(i.nScans));
 
