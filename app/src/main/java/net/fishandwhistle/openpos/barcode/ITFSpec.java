@@ -70,9 +70,9 @@ public class ITFSpec extends DualWidthSpec {
                     d1 = null;
                     d2 = null;
                 }
-                if(!partial && !end && (d1 == null) && (d2 == null)) {
+                if(!partial && !end && ((d1 == null) || (d2 == null))) {
                     throw new BarcodeException("Undecodable digit found", b);
-                } else if(end && (d1 == null) && (d2 == null)) {
+                } else if(end && ((d1 == null) || (d2 == null))) {
                     endIndex = starti;
                     break;
                 } else {
@@ -90,6 +90,22 @@ public class ITFSpec extends DualWidthSpec {
 
         if(b.digits.size() == 14 && Checksums.checksum(b, 1, 3)) {
             b.type = "ITF-14";
+            // look for supplement at endIndex+3
+            if(bars.length > endIndex + 4) {
+                for (int i = 0; i < 9; i += 2) {
+                    try {
+                        int start = endIndex + 4 + i;
+                        Barcode extra = new ITFSpec(6, true).parse(subset(bars, start, bars.length - start - 1));
+                        if (Checksums.checksum(extra, 1, 3)) {
+                            extra.digits.remove(extra.digits.size() - 1);
+                            b.extra = extra.toString();
+                            break;
+                        }
+                    } catch (BarcodeException e) {
+                        // do nothing
+                    }
+                }
+            }
         }
 
         b.isValid = true;
