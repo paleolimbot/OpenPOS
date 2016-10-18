@@ -30,6 +30,11 @@ public class ISBNQuery extends APIQuery {
     }
 
     @Override
+    protected String getSourceText() {
+        return "isbndb.com";
+    }
+
+    @Override
     protected boolean parseJSON(String json, ScannedItem item) {
         try {
             Log.i(TAG, "Parsing JSON data");

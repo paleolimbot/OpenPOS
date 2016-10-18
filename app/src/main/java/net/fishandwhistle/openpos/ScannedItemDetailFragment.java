@@ -35,7 +35,7 @@ import java.util.Locale;
  * A placeholder fragment containing a simple view.
  */
 public class ScannedItemDetailFragment extends DialogFragment {
-    private static final String TAG = "ScannedItemDetailFragment";
+    private static final String TAG = "ScannedItemDetailFragme";
     public static final String ARG_ITEM = "arg_item";
     private ScannedItem item;
 
@@ -90,11 +90,11 @@ public class ScannedItemDetailFragment extends DialogFragment {
 
             List<String> jsonKeys = item.getKeys();
             for(String key: jsonKeys) {
-                vals.add(new String[] {key, item.getValue(key)});
-            }
-            if(jsonKeys.size() > 0) {
-                vals.add(new String[]{getString(R.string.details_jsonsource), item.jsonSource});
-                vals.add(new String[]{getString(R.string.details_jsonsupdate), formatTime(item.jsonTime)});
+                if(key.equals("json_time")) {
+                    vals.add(new String[] {key, formatTime(item.getValue(key))});
+                } else {
+                    vals.add(new String[]{key, item.getValue(key)});
+                }
             }
 
             LayoutInflater inflater = getActivity().getLayoutInflater();
@@ -119,7 +119,17 @@ public class ScannedItemDetailFragment extends DialogFragment {
         return fragment;
     }
 
+    private String formatTime(String time) {
+        try {
+            return formatTime(Long.valueOf(time));
+        } catch(NumberFormatException e) {
+            Log.e(TAG, "Number format exception in formatTime", e);
+            return time;
+        }
+    }
+
     private String formatTime(long time) {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date(time));
+
     }
 }

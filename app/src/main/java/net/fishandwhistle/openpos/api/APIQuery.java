@@ -1,6 +1,8 @@
 package net.fishandwhistle.openpos.api;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -47,11 +49,11 @@ public abstract class APIQuery {
     protected abstract String getUrl(String input) ;
     
     protected abstract boolean parseJSON(String json, ScannedItem item);
+
+    protected abstract String getSourceText();
     
     public boolean query() {
         String url = this.getUrl(this.input);
-        item.jsonSource = Uri.parse(url).getHost();
-        item.jsonTime = System.currentTimeMillis();
 
         if(currentRequests.contains(url)) {
             Log.i(TAG, "Disregarding redundant request: " + input);
@@ -62,16 +64,22 @@ public abstract class APIQuery {
             if(cached != null) {
                 Log.i(TAG, "Using cached data for input " + input);
                 boolean result = this.parseJSON(cached.data, item);
-                item.jsonTime = cached.queryTime;
+                item.putValue("json_time", String.valueOf(cached.queryTime));
+                item.putValue("json_source", getSourceText());
                 item.isLoading = false;
                 callback.onQueryResult(this.input, result, item);
                 return false;
             } else {
-                currentRequests.add(url);
-                item.isLoading = true;
-                task = new DownloadTask(context);
-                task.execute(url);
-                return true;
+                if(isNetworkAvailable()) {
+                    currentRequests.add(url);
+                    item.isLoading = true;
+                    task = new DownloadTask(context);
+                    task.execute(url);
+                    return true;
+                } else {
+                    item.putValue("lookup_error", context.getString(R.string.api_errornonetwork));
+                    return false;
+                }
             }
         }
     }
@@ -171,7 +179,8 @@ public abstract class APIQuery {
             // do parsing
             cache.put(sUrl[0], out);
             currentRequests.remove(sUrl[0]);
-            item.jsonTime = System.currentTimeMillis();
+            item.putValue("json_time", String.valueOf(System.currentTimeMillis()));
+            item.putValue("json_source", getSourceText());
             return parseJSON(out, item);
 
         }
@@ -181,6 +190,13 @@ public abstract class APIQuery {
             item.isLoading = false;
             callback.onQueryResult(input, result, item);
         }
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
 }

@@ -31,6 +31,11 @@ public class UPCQuery extends APIQuery {
     }
 
     @Override
+    protected String getSourceText() {
+        return "upcdatabase.org";
+    }
+
+    @Override
     protected boolean parseJSON(String json, ScannedItem item) {
         try {
             Log.i(TAG, "Parsing JSON data");
@@ -66,4 +71,5 @@ public class UPCQuery extends APIQuery {
             return false;
         }
     }
+
 }

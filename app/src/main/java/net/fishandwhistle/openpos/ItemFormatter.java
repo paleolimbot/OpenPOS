@@ -53,7 +53,12 @@ public class ItemFormatter {
                         addISBNData(item, eanVal);
                     }
                 } catch(GS1Parser.GS1Exception e) {
-                    //strip [FNC1], [FNC2], [FNC3], [FNC4]?
+                    //strip [FNC1], [FNC2], [FNC3], [FNC4]
+                    item.putValue("raw_code", bstr);
+                    item.productCode = bstr.replace("[FNC1]", "")
+                            .replace("[FNC2]", "")
+                            .replace("[FNC3]", "")
+                            .replace("[FNC4]", "");
                 }
                 break;
         }

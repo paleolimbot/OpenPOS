@@ -30,9 +30,6 @@ public class ScannedItem implements Serializable {
     public int nScans = 1;
     public boolean isLoading = false;
 
-    public String jsonSource = null;
-    public long jsonTime = 0;
-
     private transient JSONObject jsonObject;
     private String json = "{}";
 

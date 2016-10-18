@@ -62,10 +62,6 @@ public class GS1Parser {
                 starti += ai.aiCode.length() + ai.data.length();
             }
         }
-
-        item.jsonSource = "GS1 Parser";
-        item.jsonTime = System.currentTimeMillis();
-
         return item;
     }
 

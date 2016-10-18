@@ -25,7 +25,6 @@ import android.widget.Toast;
 
 
 import net.fishandwhistle.openpos.api.APIQuery;
-import net.fishandwhistle.openpos.api.GTINQuery;
 import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;

@@ -36,5 +36,6 @@
     <string name="api_errorjson" formatted="false">JSON parse error (%s)</string>
     <string name="api_errorio" formatted="false">IO error (%s)</string>
     <string name="api_errorredrequest">Redundant request (ignored)</string>
+    <string name="api_errornonetwork">No network available</string>
 
 </resources>
