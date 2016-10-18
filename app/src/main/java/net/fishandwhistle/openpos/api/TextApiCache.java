@@ -90,6 +90,7 @@ public class TextApiCache {
                 out.queryTime = c.getLong(2);
             }
             c.close();
+            db.close();
             return out;
         }
 
