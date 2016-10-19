@@ -39,6 +39,9 @@ import net.fishandwhistle.openpos.barcode.ITFSpec;
 import net.fishandwhistle.openpos.barcode.MSISpec;
 import net.fishandwhistle.openpos.barcode.PharmacodeSpec;
 import net.fishandwhistle.openpos.barcode.UPCESpec;
+import net.fishandwhistle.openpos.extractors.BarcodeExtractor;
+import net.fishandwhistle.openpos.extractors.JavaExtractor;
+import net.fishandwhistle.openpos.extractors.ZBarExtractor;
 import net.fishandwhistle.openpos.items.ItemFormatter;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
@@ -58,9 +61,9 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
 
     @Override
-    protected BarcodeSpec[] getBarcodeSpecs() {
-        return new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
-                new ITFSpec(), new CodabarSpec(), new Code25Spec(), new Code39Spec(), new EAN8Spec()};
+    protected BarcodeExtractor getExtractor() {
+        return new JavaExtractor(new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
+                new ITFSpec(), new CodabarSpec(), new Code25Spec(), new Code39Spec(), new EAN8Spec()});
 //        return new BarcodeSpec[] {new EAN13Spec(), new EAN8Spec(), new ITFSpec(14, true)};
     }
 

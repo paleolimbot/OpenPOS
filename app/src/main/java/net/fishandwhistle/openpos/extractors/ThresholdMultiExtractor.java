@@ -1,6 +1,8 @@
-package net.fishandwhistle.openpos.barcode;
+package net.fishandwhistle.openpos.extractors;
 
 import android.util.Log;
+
+import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 
 import java.util.ArrayList;
 
@@ -15,14 +17,14 @@ import static net.fishandwhistle.openpos.barcode.ArrayMath.subset;
  * Created by dewey on 2016-09-29.
  */
 
-public class BarcodeExtractor {
+public class ThresholdMultiExtractor {
     private static final String TAG = "BarcodeExtractor";
 
-    private double[] data;
+    private int[] data;
     private double[] transformed;
     private boolean[] thresholded;
 
-    public BarcodeExtractor(double[] data) {
+    public ThresholdMultiExtractor(int[] data) {
         this.data = data;
         this.transformed = null;
         this.thresholded = null;
@@ -35,7 +37,7 @@ public class BarcodeExtractor {
         //double minrange = 0.5;
 
         //rescale and filter data
-        double[] datarange = range(data);
+        int[] datarange = range(data);
         double[] rescaled = rescale(data, datarange[0], datarange[1]-datarange[0]);
         if(dofilter) {
             rescaled = filter(rescaled, new double[] {1, 2, 4, 8, 10, 8, 4, 2, 1});
@@ -60,7 +62,7 @@ public class BarcodeExtractor {
         if(transformed) {
             this.thresholded = lt(this.transformed, value);
         } else {
-            this.thresholded = lt(this.data, value);
+            this.thresholded = lt(this.data, (int)Math.round(value));
         }
     }
 

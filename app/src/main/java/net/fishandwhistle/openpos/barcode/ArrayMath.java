@@ -56,6 +56,14 @@ public class ArrayMath {
         return out;
     }
 
+    public static double[] rescale(int[] in, double frommin, double fromrange) {
+        double[] out = new double[in.length];
+        for(int i=0; i<in.length; i++) {
+            out[i] = rescale(in[i], frommin, fromrange);
+        }
+        return out;
+    }
+
     public static double[] rescale(double[] in, double frommin, double fromrange) {
         double[] out = new double[in.length];
         for(int i=0; i<in.length; i++) {

@@ -12,7 +12,6 @@ import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Vibrator;
 import android.util.Log;
 import android.support.v7.app.AppCompatActivity;
@@ -22,9 +21,11 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import net.fishandwhistle.openpos.barcode.BarcodeExtractor;
+import net.fishandwhistle.openpos.extractors.BarcodeExtractor;
+import net.fishandwhistle.openpos.extractors.ThresholdMultiExtractor;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     private long currentReadRequest ;
     private ImageBarcodeExtractor extractor;
 
-    protected abstract BarcodeSpec[] getBarcodeSpecs() ;
+    protected abstract BarcodeExtractor getExtractor();
 
     protected abstract int getLayoutId();
 
@@ -397,40 +398,6 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
         }
     }
 
-    private static double[] extractLineFromBitmap(Bitmap b, int orientation) {
-        if(orientation == 0) {
-            double[] vals = new double[b.getHeight()];
-            for (int i = 0; i < b.getHeight(); i++) {
-                int col = b.getPixel(0, i);
-                vals[b.getHeight() - 1 - i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
-            }
-            return vals;
-        } else if (orientation == 1){
-            double[] vals = new double[b.getWidth()];
-            for (int i = 0; i < b.getWidth(); i++) {
-                int col = b.getPixel(i, 0);
-                vals[i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
-            }
-            return vals;
-        } else if (orientation == 3) {
-            double[] vals = new double[b.getWidth()];
-            for (int i = 0; i < b.getWidth(); i++) {
-                int col = b.getPixel(i, 0);
-                vals[b.getWidth()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
-            }
-            return vals;
-        } else if (orientation == 2) {
-            double[] vals = new double[b.getHeight()];
-            for (int i = 0; i < b.getHeight(); i++) {
-                int col = b.getPixel(0, i);
-                vals[i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256.0 / 3.0;
-            }
-            return vals;
-        } else {
-            throw new RuntimeException("Unsupported rotation detected: " + orientation);
-        }
-    }
-
     private class ImageBarcodeExtractor extends AsyncTask<String, String, BarcodeSpec.Barcode> {
         private byte[] data;
         private int format;
@@ -456,26 +423,17 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
             Rect decodeRegion = getRegion(orientation, width, height);
             Bitmap b;
             try {
+                ByteArrayOutputStream fos = new ByteArrayOutputStream();
                 if((format != ImageFormat.NV21 && format != ImageFormat.YUY2)) {
-                    //Bitmap bigBitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
                     BitmapRegionDecoder regionDecoder = BitmapRegionDecoder.newInstance(data, 0, data.length, true);
                     b = regionDecoder.decodeRegion(decodeRegion, new BitmapFactory.Options());
-                    //b = Bitmap.createBitmap(bigBitmap, decodeRegion.left, decodeRegion.top,
-                    //        decodeRegion.width(), decodeRegion.height());
-                    //test to see what image we are analyzing
-                    //f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
-                    //FileOutputStream fos = new FileOutputStream(f);
-                    //b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
-                    //fos.close();
-                    //bigBitmap.recycle();
+                    b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
                 } else {
                     YuvImage y = new YuvImage(data, format, width, height, null);
-                    FileOutputStream fos = new FileOutputStream(f);
                     y.compressToJpeg(decodeRegion, 95, fos);
-                    fos.close();
                     b = BitmapFactory.decodeFile(f.getAbsolutePath());
                 }
-                double[] vals = extractLineFromBitmap(b, orientation);
+                fos.flush();
                 b.recycle();
                 data = null;
 
@@ -483,11 +441,10 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
                 Log.i(TAG, "Image read time: " + (decoded - start) + "ms");
                 start = System.currentTimeMillis();
 
-                //do java decoding
-                BarcodeExtractor e = new BarcodeExtractor(vals);
-                boolean dofilter = this.format == ImageFormat.JPEG;
-                barcode = e.multiExtract(getBarcodeSpecs(), dofilter);
-
+                //do decoding
+                BarcodeExtractor extractor = getExtractor();
+                barcode = extractor.extract(fos.toByteArray(), width, height, orientation);
+                fos.close();
             } catch(IOException e) {
                 Log.e(TAG, "IO exception on write image", e);
             }
