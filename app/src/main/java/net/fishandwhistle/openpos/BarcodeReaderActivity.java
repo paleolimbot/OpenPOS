@@ -386,13 +386,13 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
 
     private Rect getRegion(int orientation, int width, int height) {
         if(orientation == 0) {
-            return new Rect(width / 10, 0, width / 10 + 25, height-1);
+            return new Rect(width / 10, 0, width / 10 + 24, height);
         } else if (orientation == 1){
-            return new Rect(0, height / 10, width-1, height / 10 + 25);
+            return new Rect(0, height / 10, width, height / 10 + 24);
         } else if (orientation == 3) {
-            return new Rect(0, 9*height / 10, width-1, 9*height / 10 + 25);
+            return new Rect(0, 9*height / 10, width, 9*height / 10 + 24);
         } else if (orientation == 2) {
-            return new Rect(9*width / 10, 0, 9*width / 10 + 25, height-1);
+            return new Rect(9*width / 10, 0, 9*width / 10 + 24, height);
         } else {
             throw new RuntimeException("Unsupported rotation detected: " + orientation);
         }
@@ -419,36 +419,19 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
         protected BarcodeSpec.Barcode doInBackground(String... params) {
             long start = System.currentTimeMillis();
             BarcodeSpec.Barcode barcode = null;
-            File f = new File(BarcodeReaderActivity.this.getCacheDir(), "temppic.jpg");
             Rect decodeRegion = getRegion(orientation, width, height);
-            Bitmap b;
             try {
-                ByteArrayOutputStream fos = new ByteArrayOutputStream();
-                if((format != ImageFormat.NV21 && format != ImageFormat.YUY2)) {
-                    BitmapRegionDecoder regionDecoder = BitmapRegionDecoder.newInstance(data, 0, data.length, true);
-                    b = regionDecoder.decodeRegion(decodeRegion, new BitmapFactory.Options());
-                    b.compress(Bitmap.CompressFormat.JPEG, 95, fos);
-                } else {
-                    YuvImage y = new YuvImage(data, format, width, height, null);
-                    y.compressToJpeg(decodeRegion, 95, fos);
-                    b = BitmapFactory.decodeFile(f.getAbsolutePath());
-                }
-                fos.flush();
-                b.recycle();
-                data = null;
-
-                long decoded = System.currentTimeMillis();
-                Log.i(TAG, "Image read time: " + (decoded - start) + "ms");
-                start = System.currentTimeMillis();
-
-                //do decoding
                 BarcodeExtractor extractor = getExtractor();
-                barcode = extractor.extract(fos.toByteArray(), width, height, orientation);
-                fos.close();
+                if((format != ImageFormat.NV21 && format != ImageFormat.YUY2)) {
+                    barcode = extractor.extractJPEG(data, width, height, orientation, decodeRegion);
+                } else {
+                    barcode = extractor.extractYUV(data, width, height, orientation, decodeRegion);
+                }
+                data = null;
+                Log.i(TAG, "Extract time: " + (System.currentTimeMillis() - start) + "ms");
             } catch(IOException e) {
                 Log.e(TAG, "IO exception on write image", e);
             }
-            Log.i(TAG, "Barcode read time: " + (System.currentTimeMillis() - start) + "ms");
             return barcode;
         }
 

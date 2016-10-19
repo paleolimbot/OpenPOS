@@ -2,8 +2,11 @@ package net.fishandwhistle.openpos.extractors;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
+
+import java.io.IOException;
 
 /**
  * Created by dewey on 2016-10-19.
@@ -17,8 +20,9 @@ public abstract class BarcodeExtractor {
         this.specs = specs;
     }
 
-    public abstract BarcodeSpec.Barcode extract(byte[] jpegData, int width, int height, int orientation);
+    public abstract BarcodeSpec.Barcode extractYUV(byte[] yuvData, int width, int height, int orientation, Rect decodeRegion) throws IOException;
 
+    public abstract BarcodeSpec.Barcode extractJPEG(byte[] jpegData, int width, int height, int orientation, Rect decodeRegion) throws IOException;
 
     protected static int[] extractLineFromBitmap(Bitmap b, int orientation) {
         if(orientation == 0) {
