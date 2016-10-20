@@ -53,6 +53,7 @@ public class ItemFormatter {
                         item.putValue("gtin13", eanVal);
                         addISBNData(item, eanVal);
                     }
+                    item.putValue("raw_code", bstr);
                 } catch(GS1Parser.GS1Exception e) {
                     //strip [FNC1], [FNC2], [FNC3], [FNC4]
                     item.putValue("raw_code", bstr);

@@ -7,7 +7,7 @@ package net.fishandwhistle.openpos.barcode;
 public class EAN8Spec extends EAN13Spec {
 
     public EAN8Spec() {
-        super("EAN/8", 3, 5, 3, 43);
+        super("EAN-8", 3, 5, 3, 43);
     }
 
     @Override

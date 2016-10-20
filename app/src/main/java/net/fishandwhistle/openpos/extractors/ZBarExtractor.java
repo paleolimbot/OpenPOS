@@ -11,6 +11,17 @@ import android.os.Environment;
 import android.text.TextUtils;
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
+import net.fishandwhistle.openpos.barcode.CodabarSpec;
+import net.fishandwhistle.openpos.barcode.Code128Spec;
+import net.fishandwhistle.openpos.barcode.Code25Spec;
+import net.fishandwhistle.openpos.barcode.Code39Spec;
+import net.fishandwhistle.openpos.barcode.Code93Spec;
+import net.fishandwhistle.openpos.barcode.DataBarExtendedSpec;
+import net.fishandwhistle.openpos.barcode.DataBarSpec;
+import net.fishandwhistle.openpos.barcode.EAN13Spec;
+import net.fishandwhistle.openpos.barcode.EAN8Spec;
+import net.fishandwhistle.openpos.barcode.ITFSpec;
+import net.fishandwhistle.openpos.barcode.UPCESpec;
 import net.sourceforge.zbar.Config;
 import net.sourceforge.zbar.Image;
 import net.sourceforge.zbar.ImageScanner;
@@ -20,6 +31,9 @@ import net.sourceforge.zbar.SymbolSet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+
+import static net.fishandwhistle.openpos.barcode.ArrayMath.filter;
 
 
 /**
@@ -32,7 +46,10 @@ public class ZBarExtractor extends BarcodeExtractor {
 
     public ZBarExtractor(BarcodeSpec[] specs) {
         super(specs);
-        symbols = new int[] {Symbol.CODABAR, Symbol.CODE39, Symbol.EAN13, Symbol.CODE128, Symbol.UPCE, Symbol.EAN8};
+        symbols = new int[specs.length] ;
+        for(int i=0; i<symbols.length; i++) {
+            symbols[i] = getZbarId(specs[i]);
+        }
     }
 
     private ImageScanner getScanner(int width, int height) {
@@ -64,12 +81,11 @@ public class ZBarExtractor extends BarcodeExtractor {
         Bitmap b = regionDecoder.decodeRegion(decodeRegion, new BitmapFactory.Options());
         Image image = new Image(decodeRegion.width(), decodeRegion.height(), "Y800");
         image.setData(getYuv(b));
+        b.recycle();
         return parseImage(image, getScanner(width, height));
     }
 
     private BarcodeSpec.Barcode parseImage(Image image, ImageScanner scanner) {
-        BarcodeSpec.Barcode b = new BarcodeSpec.Barcode("ZBar");
-
         int result = scanner.scanImage(image);
         if(result != 0) {
             SymbolSet syms = scanner.getResults();
@@ -77,17 +93,33 @@ public class ZBarExtractor extends BarcodeExtractor {
                 String symData = sym.getData();
                 int type = sym.getType();
                 if (!TextUtils.isEmpty(symData)) {
-                    b.type = "Zbar" + type;
-                    for(int i=0; i<symData.length(); i++) {
-                        b.digits.add(new BarcodeSpec.BarcodeDigit(symData.substring(i, i+1)));
+                    BarcodeSpec s = getSpec(type);
+                    BarcodeSpec.Barcode b = new BarcodeSpec.Barcode(s.getType());
+                    if(type == Symbol.CODE128 && sym.getModifierMask() == 1) {
+                        b.digits.add(new BarcodeSpec.BarcodeDigit("[FNC1]"));
+                        for (int i = 0; i < symData.length(); i++) {
+                            char c = symData.charAt(i);
+                            if (c == 0x1d) {
+                                b.digits.add(new BarcodeSpec.BarcodeDigit("[FNC1]"));
+                            } else {
+                                b.digits.add(new BarcodeSpec.BarcodeDigit(new String(new char[]{c})));
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < symData.length(); i++) {
+                            b.digits.add(new BarcodeSpec.BarcodeDigit(symData.substring(i, i + 1)));
+                        }
                     }
                     b.isValid = true;
                     return b;
                 }
             }
+            BarcodeSpec.Barcode b = new BarcodeSpec.Barcode("Zbar");
             b.tag = "Results were >0, but there was no value returned";
             return b;
+
         } else {
+            BarcodeSpec.Barcode b = new BarcodeSpec.Barcode("Zbar");
             b.tag = "No result";
             return b;
         }
@@ -105,6 +137,7 @@ public class ZBarExtractor extends BarcodeExtractor {
                 i++;
             }
         }
+        //ignore U and V, probably not used in the zbar library
         return yuvOut;
     }
 
@@ -126,10 +159,105 @@ public class ZBarExtractor extends BarcodeExtractor {
         return yuv;
     }
 
+    private static byte[] getYuvSmooth(Bitmap b) {
+        //gets YUV from a bitmap, ignoring U and V
+        int width = b.getWidth();
+        int height = b.getHeight();
+        int size = width*height;
+
+        if(width > height) {
+            //average by y value
+            double[] vals = new double[width];
+            for(int i=0; i<width; i++) {
+                double cumsum = 0;
+                for(int j=0; j<height; j++) {
+                    int color = b.getPixel(i, j);
+                    cumsum += Color.red(color)*0.299 + Color.green(color)*0.587 + Color.blue(color)*0.114;
+                }
+                vals[i] = cumsum / height;
+            }
+            double[] smoothed = filter(vals, new double[] {1, 2, 4, 8, 10, 8, 4, 2, 1});
+            byte[] yuv = new byte[size + 2*size/4];
+            for(int i=0; i<size; i++) {
+                double y = smoothed[i%width];
+                yuv[i] = (byte)((int)(255-16*Math.pow(255-y, 0.5))); // gamma correction
+            }
+            return yuv;
+        } else {
+            //average by x value
+            double[] vals = new double[height];
+            for(int i=0; i<height; i++) {
+                double cumsum = 0;
+                for(int j=0; j<width; j++) {
+                    int color = b.getPixel(j, i);
+                    cumsum += Color.red(color)*0.299 + Color.green(color)*0.587 + Color.blue(color)*0.114;
+                }
+                vals[i] = cumsum / width;
+            }
+            double[] smoothed = filter(vals, new double[] {1, 2, 4, 8, 10, 8, 4, 2, 1});
+            byte[] yuv = new byte[size + 2*size/4];
+            for(int i=0; i<size; i++) {
+                double y = vals[i/width];
+                yuv[i] = (byte)((int)(255-16*Math.pow(255-y, 0.5))); // gamma correction
+            }
+            return yuv;
+        }
+    }
+
     protected static int[] yuvIndex(int size, int width, int x, int y) {
         return new int[] {y * size + x,
                 (y / 2) * (width / 2) + (x / 2) + size,
                 (y / 2) * (width / 2) + (x / 2) + size + (size / 4)};
+    }
+
+    private static BarcodeSpec getSpec(int zbarId) {
+        switch (zbarId) {
+            case Symbol.CODABAR:
+                return new CodabarSpec();
+            case Symbol.CODE128:
+                return new Code128Spec();
+            case Symbol.EAN8:
+                return new EAN8Spec();
+            case Symbol.EAN13:
+                return new EAN13Spec();
+            case Symbol.CODE39:
+                return new Code39Spec();
+            case Symbol.I25:
+                return new ITFSpec();
+            case Symbol.UPCE:
+                return new UPCESpec();
+            case Symbol.CODE93:
+                return new Code93Spec();
+            case Symbol.DATABAR:
+                return new DataBarSpec();
+            case Symbol.DATABAR_EXP:
+                return new DataBarExtendedSpec();
+            default: throw new RuntimeException("No java spec found for zbar id: " + zbarId);
+        }
+    }
+
+    private static int getZbarId(BarcodeSpec spec) {
+        switch(spec.getType()) {
+            case "Codabar":
+                return Symbol.CODABAR;
+            case "Code128":
+                return Symbol.CODE128;
+            case "EAN-8":
+                return Symbol.EAN8;
+            case "EAN-13":
+                return Symbol.EAN13;
+            case "Code39":
+                return Symbol.CODE39;
+            case "ITF":
+                return Symbol.I25;
+            case "UPC-E":
+                return Symbol.UPCE;
+            case "DataBar":
+                return Symbol.DATABAR;
+            case "DataBarExt":
+                return Symbol.DATABAR_EXP;
+            default: return -1;
+        }
     }
 
 }

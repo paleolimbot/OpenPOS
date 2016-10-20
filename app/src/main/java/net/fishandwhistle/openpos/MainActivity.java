@@ -63,7 +63,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     @Override
     protected BarcodeExtractor getExtractor() {
         return new ZBarExtractor(new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
-                new ITFSpec(), new CodabarSpec(), new Code25Spec(), new Code39Spec(), new EAN8Spec()});
+                new ITFSpec(), new CodabarSpec(), new Code39Spec(), new EAN8Spec()});
 //        return new BarcodeSpec[] {new EAN13Spec(), new EAN8Spec(), new ITFSpec(14, true)};
     }
 
