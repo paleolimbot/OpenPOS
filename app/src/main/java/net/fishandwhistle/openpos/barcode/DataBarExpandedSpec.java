@@ -4,10 +4,10 @@ package net.fishandwhistle.openpos.barcode;
  * Created by dewey on 2016-10-20.
  */
 
-public class DataBarExtendedSpec extends BarcodeSpec {
+public class DataBarExpandedSpec extends BarcodeSpec {
 
-    public DataBarExtendedSpec() {
-        super("DataBarExt", null);
+    public DataBarExpandedSpec() {
+        super("DataBarExp", null);
     }
 
     @Override

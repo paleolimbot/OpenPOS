@@ -18,15 +18,10 @@ import java.util.Map;
 
 public class GS1Parser {
 
-    private static final String TAG = "GS1Parser";
-
-    private BarcodeSpec.Barcode b;
-
-    public GS1Parser(BarcodeSpec.Barcode barcode) {
-        this.b = barcode;
+    public GS1Parser() {
     }
 
-    public ScannedItem parse() throws GS1Exception {
+    public void parse(ScannedItem item, BarcodeSpec.Barcode b) throws GS1Exception {
         if(!b.digits.get(0).digit.equals("[FNC1]")) throw new GS1Exception("No [FNC1] at start of code");
 
         List<String> strings = new ArrayList<>(); //one string per [FNC1]
@@ -49,20 +44,18 @@ public class GS1Parser {
             }
         }
 
-        ScannedItem item = new ScannedItem("GS1-128", "");
-
+        String code = "";
         for(String s: strings) {
             AI ai;
             int starti = 0;
             while(starti < s.length()) {
                 ai = extractAI(s.substring(starti));
                 item.putValue(ai.shortName, ai.dataVal);
-                item.productCode += ai.toString();
-
+                code += ai.toString();
                 starti += ai.aiCode.length() + ai.data.length();
             }
         }
-        return item;
+        item.productCode = code;
     }
 
     private static AI extractAI(String s) throws GS1Exception {

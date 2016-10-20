@@ -30,41 +30,71 @@ public class ItemFormatter {
                 String ean13 = GTINtoEAN(bstr);
                 item.putValue("gtin13", ean13);
                 addISBNData(item, ean13);
+                item.description = "ITF-14 " + bstr.substring(8, 13);
                 break;
             case "EAN-13":
                 item.putValue("gtin13", bstr);
+                if(bstr.startsWith("0")) {
+                    //upc label
+                    item.description = "UPC-A " + bstr.substring(6, 12);
+                } else {
+                    //regular ean
+                    item.description = "EAN-13 " + bstr.substring(7, 13);
+                }
                 addISBNData(item, bstr);
                 break;
             case "EAN-8":
                 item.putValue("gtin8", bstr);
+                item.description = "EAN-8 " + bstr.substring(4, 8);
                 break;
             case "UPC-E":
                 if(b.tag != null) {
                     item.putValue("gtin13", b.tag);
                 }
+                item.description = "UPC-E " + bstr.substring(1, 7);
                 break;
             case "Code128":
-                try {
-                    GS1Parser parser = new GS1Parser(b);
-                    item = parser.parse();
-                    List<String> keys = item.getKeys();
-                    if(keys.contains("gtin14")) {
-                        String eanVal = GTINtoEAN(item.getValue("gtin14"));
-                        item.putValue("gtin13", eanVal);
-                        addISBNData(item, eanVal);
-                    }
-                    item.putValue("raw_code", bstr);
-                } catch(GS1Parser.GS1Exception e) {
-                    //strip [FNC1], [FNC2], [FNC3], [FNC4]
-                    item.putValue("raw_code", bstr);
-                    item.productCode = bstr.replace("[FNC1]", "")
-                            .replace("[FNC2]", "")
-                            .replace("[FNC3]", "")
-                            .replace("[FNC4]", "");
-                }
+                addGS1(item, b);
+                int nchar = item.productCode.length();
+                item.description = "Code128 " + item.productCode.substring(Math.max(0, nchar-5)).replace(")", "");
+                break;
+            case "DataBar":
+                addGS1(item, b);
+                int nchar2 = item.productCode.length();
+                item.description = "DataBar " + item.productCode.substring(Math.max(0, nchar2-5)).replace(")", "");
+                break;
+            case "DataBarExp":
+                addGS1(item, b);
+                int nchar3 = item.productCode.length();
+                item.description = "DataBar " + item.productCode.substring(Math.max(0, nchar3-5)).replace(")", "");
+                break;
+            case "Codabar":
+                item.description = "Codabar " + " " + bstr.substring(Math.max(0, bstr.length()-6), bstr.length()-1);
+                break;
+            default:
+                item.description = item.barcodeType + " " + bstr.substring(Math.max(0, bstr.length()-5));
                 break;
         }
 
+        return item;
+    }
+
+    private ScannedItem addGS1(ScannedItem item, BarcodeSpec.Barcode b) {
+        try {
+            GS1Parser parser = new GS1Parser();
+            parser.parse(item, b);
+            List<String> keys = item.getKeys();
+            if(keys.contains("gtin14")) {
+                String eanVal = GTINtoEAN(item.getValue("gtin14"));
+                item.putValue("gtin13", eanVal);
+                addISBNData(item, eanVal);
+            }
+            //strip [FNC1]
+            item.putValue("raw_code", b.toString().replace("[FNC1]", ""));
+        } catch(GS1Parser.GS1Exception e) {
+            //strip [FNC1]
+            item.productCode = b.toString().replace("[FNC1]", "");
+        }
         return item;
     }
 

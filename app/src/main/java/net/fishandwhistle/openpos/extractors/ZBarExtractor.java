@@ -4,19 +4,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Color;
-import android.graphics.ImageFormat;
 import android.graphics.Rect;
-import android.graphics.YuvImage;
-import android.os.Environment;
 import android.text.TextUtils;
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.Code128Spec;
-import net.fishandwhistle.openpos.barcode.Code25Spec;
 import net.fishandwhistle.openpos.barcode.Code39Spec;
 import net.fishandwhistle.openpos.barcode.Code93Spec;
-import net.fishandwhistle.openpos.barcode.DataBarExtendedSpec;
+import net.fishandwhistle.openpos.barcode.DataBarExpandedSpec;
 import net.fishandwhistle.openpos.barcode.DataBarSpec;
 import net.fishandwhistle.openpos.barcode.EAN13Spec;
 import net.fishandwhistle.openpos.barcode.EAN8Spec;
@@ -28,10 +24,7 @@ import net.sourceforge.zbar.ImageScanner;
 import net.sourceforge.zbar.Symbol;
 import net.sourceforge.zbar.SymbolSet;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import static net.fishandwhistle.openpos.barcode.ArrayMath.filter;
 
@@ -95,7 +88,8 @@ public class ZBarExtractor extends BarcodeExtractor {
                 if (!TextUtils.isEmpty(symData)) {
                     BarcodeSpec s = getSpec(type);
                     BarcodeSpec.Barcode b = new BarcodeSpec.Barcode(s.getType());
-                    if(type == Symbol.CODE128 && sym.getModifierMask() == 1) {
+                    //TODO may want to validate based on digits here
+                    if(sym.getModifierMask() == 1) {
                         b.digits.add(new BarcodeSpec.BarcodeDigit("[FNC1]"));
                         for (int i = 0; i < symData.length(); i++) {
                             char c = symData.charAt(i);
@@ -109,6 +103,9 @@ public class ZBarExtractor extends BarcodeExtractor {
                         for (int i = 0; i < symData.length(); i++) {
                             b.digits.add(new BarcodeSpec.BarcodeDigit(symData.substring(i, i + 1)));
                         }
+                    }
+                    if(type == Symbol.I25 && b.toString().length() == 14) {
+                        b.type = "ITF-14";
                     }
                     b.isValid = true;
                     return b;
@@ -231,7 +228,7 @@ public class ZBarExtractor extends BarcodeExtractor {
             case Symbol.DATABAR:
                 return new DataBarSpec();
             case Symbol.DATABAR_EXP:
-                return new DataBarExtendedSpec();
+                return new DataBarExpandedSpec();
             default: throw new RuntimeException("No java spec found for zbar id: " + zbarId);
         }
     }
