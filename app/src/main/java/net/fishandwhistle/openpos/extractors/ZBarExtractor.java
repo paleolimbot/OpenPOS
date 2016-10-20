@@ -2,7 +2,12 @@ package net.fishandwhistle.openpos.extractors;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapRegionDecoder;
+import android.graphics.Color;
+import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.graphics.YuvImage;
+import android.os.Environment;
 import android.text.TextUtils;
 
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
@@ -11,6 +16,10 @@ import net.sourceforge.zbar.Image;
 import net.sourceforge.zbar.ImageScanner;
 import net.sourceforge.zbar.Symbol;
 import net.sourceforge.zbar.SymbolSet;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 
 /**
@@ -43,8 +52,18 @@ public class ZBarExtractor extends BarcodeExtractor {
     }
 
     @Override
-    public BarcodeSpec.Barcode extractJPEG(byte[] jpegData, int width, int height, int orientation, Rect decodeRegion) {
-        return new BarcodeSpec.Barcode("invalid");
+    public BarcodeSpec.Barcode extractJPEG(byte[] jpegData, int width, int height, int orientation, Rect decodeRegion) throws IOException {
+        BitmapRegionDecoder regionDecoder = BitmapRegionDecoder.newInstance(jpegData, 0, jpegData.length, true);
+        Bitmap b = regionDecoder.decodeRegion(decodeRegion, new BitmapFactory.Options());
+        Image image = new Image(decodeRegion.width(), decodeRegion.height(), "Y800");
+        //temp debug: write YUV image to disk
+        //File f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
+        //FileOutputStream fos = new FileOutputStream(f);
+        byte[] yuv = getYuv(b);
+        //YuvImage y = new YuvImage(yuv, ImageFormat.NV21, b.getWidth(), b.getHeight(), null);
+        //y.compressToJpeg(new Rect(0, 0, b.getWidth(), b.getHeight()), 95, fos);
+        image.setData(yuv);
+        return parseImage(image);
     }
 
     private BarcodeSpec.Barcode parseImage(Image image) {
@@ -73,27 +92,39 @@ public class ZBarExtractor extends BarcodeExtractor {
         }
     }
 
-    protected byte[] cropYuv(byte[] yuvData, int width, int height, int orientation, Rect decodeRegion) {
+    private static byte[] cropYuv(byte[] yuvData, int width, int height, int orientation, Rect decodeRegion) {
+        //crops YUV data without regard for U or V (because we are converting to grayscale anyway)
+        //see https://en.wikipedia.org/wiki/YUV#Y.E2.80.B2UV420p_.28and_Y.E2.80.B2V12_or_YV12.29_to_RGB888_conversion
         int newSize = decodeRegion.width() * decodeRegion.height();
-        int oldSize = width * height;
         byte[] yuvOut = new byte[newSize + 2*newSize/4];
         int i=0;
-//        int j=newSize;
-//        int k=newSize + newSize/4;
         for(int y=decodeRegion.top; y<decodeRegion.bottom; y++) {
             for (int x=decodeRegion.left; x<decodeRegion.right; x++) {
                 yuvOut[i] = yuvData[y * width + x];
                 i++;
-//                if((y%2==0) && (x%2==0)) {
-//                    yuvOut[j] = yuvData[(y / 2) * (width / 2) + (x / 2) + oldSize];
-//                    yuvOut[k] = yuvData[(y / 2) * (width / 2) + (x / 2) + oldSize + (oldSize / 4)];
-//                    j++; k++;
-//                }
             }
         }
-
         return yuvOut;
     }
+
+    private static byte[] getYuv(Bitmap b) {
+        //gets YUV from a bitmap, ignoring U and V
+        int width = b.getWidth();
+        int height = b.getHeight();
+        int size = width*height;
+        byte[] yuv = new byte[size + 2*size/4];
+        for(int i=0; i<size; i++) {
+            int color = b.getPixel(i%width, i/width);
+            double y = Color.red(color)*0.299 + Color.green(color)*0.587 + Color.blue(color)*0.114;
+            yuv[i] = (byte)((int)(255-16*Math.pow(255-y, 0.5))); // gamma correction
+        }
+        //this doesn't seem to matter for the preview images, but helps with interpretation
+        for(int i=size; i<yuv.length; i++) {
+            yuv[i] = (byte)128;
+        }
+        return yuv;
+    }
+
 
     protected static int[] yuvIndex(int size, int width, int x, int y) {
         return new int[] {y * size + x,
