@@ -143,7 +143,7 @@ public class GS1Parser {
     static {
         gs1.put("00", new AI("00", "Serial Shipping Container Code (SSCC)", 2, "00", 18, 18, false, "SCCC"));
         gs1.put("01", new AI("01", "Global Trade Item Number (GTIN)", 2, "01", 14, 14, false, "gtin14"));
-        gs1.put("02", new AI("02", "GTIN of Contained Trade Items", 2, "02", 14, 14, false, "GTIN_CTI"));
+        gs1.put("02", new AI("02", "GTIN of Contained Trade Items", 2, "02", 14, 14, false, "gtin_contained"));
         gs1.put("10", new AI("10", "Batch/Lot Number", 2, "10", 0, 20, false, "batch_num"));
         gs1.put("11", new AI("11", "Production Date", 2, "11", 6, 6, false, "production_date"));
         gs1.put("12", new AI("12", "Due Date", 2, "12", 6, 6, false, "due_date"));

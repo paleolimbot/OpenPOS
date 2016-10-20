@@ -42,6 +42,7 @@ import net.fishandwhistle.openpos.barcode.MSISpec;
 import net.fishandwhistle.openpos.barcode.PharmacodeSpec;
 import net.fishandwhistle.openpos.barcode.UPCESpec;
 import net.fishandwhistle.openpos.extractors.BarcodeExtractor;
+import net.fishandwhistle.openpos.extractors.JavaExtractor;
 import net.fishandwhistle.openpos.extractors.ZBarExtractor;
 import net.fishandwhistle.openpos.items.ItemFormatter;
 import net.fishandwhistle.openpos.items.ScannedItem;
