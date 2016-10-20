@@ -63,13 +63,7 @@ public class ZBarExtractor extends BarcodeExtractor {
         BitmapRegionDecoder regionDecoder = BitmapRegionDecoder.newInstance(jpegData, 0, jpegData.length, true);
         Bitmap b = regionDecoder.decodeRegion(decodeRegion, new BitmapFactory.Options());
         Image image = new Image(decodeRegion.width(), decodeRegion.height(), "Y800");
-        //temp debug: write YUV image to disk
-        //File f = new File(Environment.getExternalStorageDirectory(), "temppic.jpg");
-        //FileOutputStream fos = new FileOutputStream(f);
-        byte[] yuv = getYuv(b);
-        //YuvImage y = new YuvImage(yuv, ImageFormat.NV21, b.getWidth(), b.getHeight(), null);
-        //y.compressToJpeg(new Rect(0, 0, b.getWidth(), b.getHeight()), 95, fos);
-        image.setData(yuv);
+        image.setData(getYuv(b));
         return parseImage(image, getScanner(width, height));
     }
 
@@ -126,12 +120,11 @@ public class ZBarExtractor extends BarcodeExtractor {
             yuv[i] = (byte)((int)(255-16*Math.pow(255-y, 0.5))); // gamma correction
         }
         //this doesn't seem to matter for the preview images, but helps with interpretation
-        for(int i=size; i<yuv.length; i++) {
-            yuv[i] = (byte)128;
-        }
+        //for(int i=size; i<yuv.length; i++) {
+        //    yuv[i] = (byte)128;
+        //}
         return yuv;
     }
-
 
     protected static int[] yuvIndex(int size, int width, int x, int y) {
         return new int[] {y * size + x,
