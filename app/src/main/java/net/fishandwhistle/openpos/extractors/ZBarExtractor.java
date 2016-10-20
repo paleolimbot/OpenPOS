@@ -28,27 +28,34 @@ import java.io.IOException;
 
 public class ZBarExtractor extends BarcodeExtractor {
 
-    private ImageScanner mScanner;
+    private int[] symbols;
 
     public ZBarExtractor(BarcodeSpec[] specs) {
         super(specs);
-        int[] symbols = new int[] {Symbol.CODABAR, Symbol.CODE39, Symbol.EAN13, Symbol.CODE128, Symbol.UPCE, Symbol.EAN8};
+        symbols = new int[] {Symbol.CODABAR, Symbol.CODE39, Symbol.EAN13, Symbol.CODE128, Symbol.UPCE, Symbol.EAN8};
+    }
 
-        mScanner = new ImageScanner();
-        mScanner.setConfig(0, Config.X_DENSITY, 3);
-        mScanner.setConfig(0, Config.Y_DENSITY, 3);
-
+    private ImageScanner getScanner(int width, int height) {
+        ImageScanner mScanner = new ImageScanner();
+        if(width > height) {
+            mScanner.setConfig(0, Config.X_DENSITY, 1);
+            mScanner.setConfig(0, Config.Y_DENSITY, 0);
+        } else {
+            mScanner.setConfig(0, Config.X_DENSITY, 0);
+            mScanner.setConfig(0, Config.Y_DENSITY, 1);
+        }
         mScanner.setConfig(Symbol.NONE, Config.ENABLE, 0);
         for (int symbol : symbols) {
             mScanner.setConfig(symbol, Config.ENABLE, 1);
         }
+        return mScanner;
     }
 
     @Override
     public BarcodeSpec.Barcode extractYUV(byte[] yuvData, int width, int height, int orientation, Rect decodeRegion) {
         Image image = new Image(decodeRegion.width(), decodeRegion.height(), "Y800");
         image.setData(cropYuv(yuvData, width, height, orientation, decodeRegion));
-        return parseImage(image);
+        return parseImage(image, getScanner(width, height));
     }
 
     @Override
@@ -63,15 +70,15 @@ public class ZBarExtractor extends BarcodeExtractor {
         //YuvImage y = new YuvImage(yuv, ImageFormat.NV21, b.getWidth(), b.getHeight(), null);
         //y.compressToJpeg(new Rect(0, 0, b.getWidth(), b.getHeight()), 95, fos);
         image.setData(yuv);
-        return parseImage(image);
+        return parseImage(image, getScanner(width, height));
     }
 
-    private BarcodeSpec.Barcode parseImage(Image image) {
+    private BarcodeSpec.Barcode parseImage(Image image, ImageScanner scanner) {
         BarcodeSpec.Barcode b = new BarcodeSpec.Barcode("ZBar");
 
-        int result = mScanner.scanImage(image);
+        int result = scanner.scanImage(image);
         if(result != 0) {
-            SymbolSet syms = mScanner.getResults();
+            SymbolSet syms = scanner.getResults();
             for (Symbol sym : syms) {
                 String symData = sym.getData();
                 int type = sym.getType();
