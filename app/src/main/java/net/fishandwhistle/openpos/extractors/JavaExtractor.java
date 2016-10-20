@@ -49,34 +49,35 @@ public class JavaExtractor extends BarcodeExtractor {
         if(orientation == 0) {
             int[] vals = new int[b.getHeight()];
             for (int i = 0; i < b.getHeight(); i++) {
-                int col = b.getPixel(0, i);
-                vals[b.getHeight() - 1 - i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256;
+                vals[b.getHeight() - 1 - i] = lum(b.getPixel(0, i));
             }
             return vals;
         } else if (orientation == 1){
             int[] vals = new int[b.getWidth()];
             for (int i = 0; i < b.getWidth(); i++) {
-                int col = b.getPixel(i, 0);
-                vals[i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256;
+                vals[i] = lum(b.getPixel(i, 0));
             }
             return vals;
         } else if (orientation == 3) {
             int[] vals = new int[b.getWidth()];
             for (int i = 0; i < b.getWidth(); i++) {
-                int col = b.getPixel(i, 0);
-                vals[b.getWidth()-1-i] = (Color.red(col) + Color.blue(col) + Color.green(col));
+                vals[b.getWidth()-1-i] = lum(b.getPixel(i, 0));
             }
             return vals;
         } else if (orientation == 2) {
             int[] vals = new int[b.getHeight()];
             for (int i = 0; i < b.getHeight(); i++) {
-                int col = b.getPixel(0, i);
-                vals[i] = (Color.red(col) + Color.blue(col) + Color.green(col)) / 256;
+                vals[i] = lum(b.getPixel(0, i));
             }
             return vals;
         } else {
             throw new RuntimeException("Unsupported rotation detected: " + orientation);
         }
+    }
+
+    private static int lum(int col) {
+        double y = Color.red(col)*0.299 + Color.green(col)*0.587 + Color.blue(col)*0.114;
+        return (int)(255-16*Math.pow(255-y, 0.5));
     }
 
 }
