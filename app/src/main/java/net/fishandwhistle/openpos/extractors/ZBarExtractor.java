@@ -48,11 +48,11 @@ public class ZBarExtractor extends BarcodeExtractor {
     private ImageScanner getScanner(int width, int height) {
         ImageScanner mScanner = new ImageScanner();
         if(width > height) {
-            mScanner.setConfig(0, Config.X_DENSITY, 1);
-            mScanner.setConfig(0, Config.Y_DENSITY, 0);
-        } else {
             mScanner.setConfig(0, Config.X_DENSITY, 0);
             mScanner.setConfig(0, Config.Y_DENSITY, 1);
+        } else {
+            mScanner.setConfig(0, Config.X_DENSITY, 1);
+            mScanner.setConfig(0, Config.Y_DENSITY, 0);
         }
         mScanner.setConfig(Symbol.NONE, Config.ENABLE, 0);
         for (int symbol : symbols) {
@@ -65,7 +65,7 @@ public class ZBarExtractor extends BarcodeExtractor {
     public BarcodeSpec.Barcode extractYUV(byte[] yuvData, int width, int height, int orientation, Rect decodeRegion) {
         Image image = new Image(decodeRegion.width(), decodeRegion.height(), "Y800");
         image.setData(cropYuv(yuvData, width, height, orientation, decodeRegion));
-        return parseImage(image, getScanner(width, height));
+        return parseImage(image, getScanner(decodeRegion.width(), decodeRegion.height()));
     }
 
     @Override
