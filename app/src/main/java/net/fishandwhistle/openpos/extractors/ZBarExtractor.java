@@ -79,6 +79,7 @@ public class ZBarExtractor extends BarcodeExtractor {
     }
 
     private BarcodeSpec.Barcode parseImage(Image image, ImageScanner scanner) {
+        BarcodeSpec.Barcode b =  null;
         int result = scanner.scanImage(image);
         if(result != 0) {
             SymbolSet syms = scanner.getResults();
@@ -87,7 +88,7 @@ public class ZBarExtractor extends BarcodeExtractor {
                 int type = sym.getType();
                 if (!TextUtils.isEmpty(symData)) {
                     BarcodeSpec s = getSpec(type);
-                    BarcodeSpec.Barcode b = new BarcodeSpec.Barcode(s.getType());
+                    b = new BarcodeSpec.Barcode(s.getType());
                     //TODO may want to validate based on digits here
                     if(sym.getModifierMask() == 1) {
                         b.digits.add(new BarcodeSpec.BarcodeDigit("[FNC1]"));
@@ -108,21 +109,29 @@ public class ZBarExtractor extends BarcodeExtractor {
                         b.type = "ITF-14";
                     }
                     b.isValid = true;
-                    return b;
+                    sym.destroy();
+                    break;
                 }
+                sym.destroy();
             }
-            BarcodeSpec.Barcode b = new BarcodeSpec.Barcode("Zbar");
-            b.tag = "Results were >0, but there was no value returned";
-            return b;
+            syms.destroy();
+
+            if(b == null) {
+                b = new BarcodeSpec.Barcode("Zbar");
+                b.tag = "Results were >0, but there was no value returned";
+            }
 
         } else {
-            BarcodeSpec.Barcode b = new BarcodeSpec.Barcode("Zbar");
+            b = new BarcodeSpec.Barcode("Zbar");
             b.tag = "No result";
-            return b;
         }
+        image.destroy();
+        scanner.destroy();
+        return b;
     }
 
     private static byte[] cropYuv(byte[] yuvData, int width, int height, int orientation, Rect decodeRegion) {
+        //TODO scanner does not work in landscape mode (i.e. when width > height)
         //crops YUV data without regard for U or V (because we are converting to grayscale anyway)
         //see https://en.wikipedia.org/wiki/YUV#Y.E2.80.B2UV420p_.28and_Y.E2.80.B2V12_or_YV12.29_to_RGB888_conversion
         int newSize = decodeRegion.width() * decodeRegion.height();
