@@ -32,18 +32,15 @@ public class ScannedItem implements Serializable {
 
     private transient JSONObject jsonObject;
     private String json = "{}";
+    private ArrayList<String> keys;
 
     public ScannedItem(String barcodeType, String productCode) {
         this.scanTime = System.currentTimeMillis();
         updateTime = scanTime;
         this.barcodeType = barcodeType;
         this.productCode = productCode;
-        try {
-            jsonObject = new JSONObject(this.json);
-        } catch(JSONException e) {
-            Log.e(TAG, "ScannedItem: JSON exception on constructor", e);
-            throw new RuntimeException("Invalid JSON passed to constructor: " + json);
-        }
+        keys = new ArrayList<>();
+        setJSON(this.json);
     }
 
     @Override
@@ -53,9 +50,7 @@ public class ScannedItem implements Serializable {
 
     public List<String> getKeys() {
         List<String> out = new ArrayList<>();
-        Iterator<String> jsonKeys = jsonObject.keys();
-        while(jsonKeys.hasNext())
-            out.add(jsonKeys.next());
+        for(String key: keys) out.add(key);
         return out;
     }
 
@@ -70,6 +65,7 @@ public class ScannedItem implements Serializable {
     public void putValue(String key, String value) {
         try {
             jsonObject.put(key, value);
+            keys.add(key);
         } catch(JSONException e) {
             throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
         }
@@ -79,7 +75,12 @@ public class ScannedItem implements Serializable {
         try {
             jsonObject = new JSONObject(json);
             this.json = json;
+            keys = new ArrayList<>();
+            Iterator<String> jsonKeys = jsonObject.keys();
+            while(jsonKeys.hasNext())
+                keys.add(jsonKeys.next());
         } catch(JSONException e) {
+            Log.e(TAG, "ScannedItem: JSON exception on constructor", e);
             throw new IllegalArgumentException("Illegal JSON " + json + "(" + e.getMessage() + ")");
         }
     }
