@@ -10,6 +10,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 /**
  * Created by dewey on 2016-10-21.
  */
@@ -81,6 +85,24 @@ public abstract class ScannedItemAction {
 
     public interface ScannerItemActionCallback {
         void onScannerItemAction(String actionName, ScannedItem item);
+    }
+
+    protected static Map<String, String> extractKeyMap(JSONObject keysJson) {
+        if(keysJson != null) {
+            Map<String, String> keyMap = new HashMap<>();
+            Iterator<String> keys = keysJson.keys();
+            try {
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    keyMap.put(key, keysJson.getString(key));
+                }
+            } catch(JSONException e) {
+                throw new IllegalArgumentException("Invalid JSON encountered in URILookupAction: " + e.getMessage());
+            }
+            return keyMap;
+        } else {
+            return null;
+        }
     }
 
 }

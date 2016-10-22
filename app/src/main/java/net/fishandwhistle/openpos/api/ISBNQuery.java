@@ -24,7 +24,7 @@ public class ISBNQuery extends LookupAction {
             keyMap.put("data[0]/author_data[; ]/name", "authors");
             keyMap.put("data[0]/dewey_normal", "dewey_normal");
             keyMap.put("data[0]/lcc_number", "lcc_number");
-            keyMap.put("data[0]/publisher", "publisher_text");
+            keyMap.put("data[0]/publisher_text", "publisher");
             JSONObject baseOptions = new JSONObject();
             baseOptions.put(OPTION_URI_FORMAT, "http://isbndb.com/api/v2/json/T89SFTZN/book/{{isbn13}}");
             baseOptions.put(OPTION_KEYMAP, keyMap);

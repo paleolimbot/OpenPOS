@@ -315,7 +315,8 @@ public class LookupAction extends ScannedItemAction {
                 }
 
             } catch(JSONException e) {
-                Log.e("JSONLookupItem", "followPath: json exception", e);
+                //Log.e("JSONLookupItem", "followPath: json exception", e);
+                //'string not found' is very common, don't log
                 return null;
             }
         }
@@ -327,24 +328,6 @@ public class LookupAction extends ScannedItemAction {
                 = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-
-    private static Map<String, String> extractKeyMap(JSONObject keysJson) {
-        if(keysJson != null) {
-            Map<String, String> keyMap = new HashMap<>();
-            Iterator<String> keys = keysJson.keys();
-            try {
-                while (keys.hasNext()) {
-                    String key = keys.next();
-                    keyMap.put(key, keysJson.getString(key));
-                }
-            } catch(JSONException e) {
-                throw new IllegalArgumentException("Invalid JSON encountered in URILookupAction: " + e.getMessage());
-            }
-            return keyMap;
-        } else {
-            return null;
-        }
     }
 
 }

@@ -25,7 +25,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import net.fishandwhistle.openpos.actions.ActionChain;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
+import net.fishandwhistle.openpos.api.AmazonURLLookup;
 import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
@@ -61,8 +63,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     private ListView list;
     private TextView scannedItemsText ;
 
-    private ISBNQuery isbnQuery;
-    private UPCQuery upcQuery;
+    private ScannedItemAction isbnQuery;
+    private ScannedItemAction upcQuery;
 
     @Override
     protected BarcodeExtractor getExtractor() {
@@ -148,7 +150,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             }
         }.execute();
 
-        isbnQuery = new ISBNQuery();
+        isbnQuery = new ActionChain("isbnChain", "{}", new ISBNQuery(), new AmazonURLLookup());
         upcQuery = new UPCQuery();
     }
 
