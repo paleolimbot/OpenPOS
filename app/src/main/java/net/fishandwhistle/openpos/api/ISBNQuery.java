@@ -1,36 +1,40 @@
 package net.fishandwhistle.openpos.api;
 
-import android.content.Context;
-import android.util.Log;
+import net.fishandwhistle.openpos.actions.LookupAction;
 
-import net.fishandwhistle.openpos.R;
-import net.fishandwhistle.openpos.actions.JSONLookupItem;
-import net.fishandwhistle.openpos.actions.URILookupAction;
-import net.fishandwhistle.openpos.items.ScannedItem;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Created by dewey on 2016-10-02.
  */
 
-public class ISBNQuery extends JSONLookupItem {
-    private static final String TAG = "ISBNApi";
+public class ISBNQuery extends LookupAction {
 
     public ISBNQuery() {
-        super("ISBN-Lookup", "http://isbndb.com/api/v2/json/T89SFTZN/book/{{isbn13}}", keyMap);
+        super("isbndb", jsonOptions);
     }
 
-    private static Map<String, String> keyMap = new HashMap<>();
+    private static String jsonOptions ;
     static {
-        keyMap.put("data[0]/title", "title");
-        keyMap.put("data[0]/author_data[, ]/name", "authors");
+        try {
+            JSONObject keyMap = new JSONObject();
+            keyMap.put("error", KEY_ERROR);
+            keyMap.put("data[0]/title", "title");
+            keyMap.put("data[0]/author_data[; ]/name", "authors");
+            keyMap.put("data[0]/dewey_normal", "dewey_normal");
+            keyMap.put("data[0]/lcc_number", "lcc_number");
+            keyMap.put("data[0]/publisher", "publisher_text");
+            JSONObject baseOptions = new JSONObject();
+            baseOptions.put(OPTION_URI_FORMAT, "http://isbndb.com/api/v2/json/T89SFTZN/book/{{isbn13}}");
+            baseOptions.put(OPTION_KEYMAP, keyMap);
+            baseOptions.put(OPTION_QUIET, true);
+            baseOptions.put(OPTION_MIMETYPE, "application/json");
+            baseOptions.put(OPTION_ENCODING, "windows-1252");
+            jsonOptions = baseOptions.toString();
+        } catch(JSONException e) {
+            throw new RuntimeException("invalid JSON generated somehow... " + e.getMessage());
+        }
     }
 
 }

@@ -3,7 +3,12 @@ package net.fishandwhistle.openpos.actions;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import net.fishandwhistle.openpos.barcode.PharmacodeSpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by dewey on 2016-10-21.
@@ -12,9 +17,39 @@ import net.fishandwhistle.openpos.items.ScannedItem;
 public abstract class ScannedItemAction {
 
     private String actionName;
+    private JSONObject options;
 
-    public ScannedItemAction(String actionName) {
+    public ScannedItemAction(String actionName, String jsonOptions) {
         this.actionName = actionName;
+        try {
+            options = new JSONObject(jsonOptions);
+        } catch (JSONException e) {
+            throw new RuntimeException("Invalid JSON passed to ScannedItemAction: " + e.getMessage());
+        }
+    }
+
+    public String getOptionString(String key) {
+        try {
+            return options.getString(key);
+        } catch(JSONException e) {
+            return null;
+        }
+    }
+
+    public JSONArray getOptionArray(String key) {
+        try {
+            return options.getJSONArray(key);
+        } catch(JSONException e) {
+            return null;
+        }
+    }
+
+    public JSONObject getOptionObject(String key) {
+        try {
+            return options.getJSONObject(key);
+        } catch(JSONException e) {
+            return null;
+        }
     }
 
     public String getActionName() {

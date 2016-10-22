@@ -90,7 +90,7 @@ public class ScannedItemDetailFragment extends DialogFragment {
 
             List<String> jsonKeys = item.getKeys();
             for(String key: jsonKeys) {
-                if(key.equals("json_time")) {
+                if(key.startsWith("time_")) {
                     vals.add(new String[] {key, formatTime(item.getValue(key))});
                 } else {
                     vals.add(new String[]{key, item.getValue(key)});
