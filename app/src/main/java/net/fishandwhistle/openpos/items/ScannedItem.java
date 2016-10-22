@@ -42,6 +42,7 @@ public class ScannedItem implements Serializable {
             jsonObject = new JSONObject(this.json);
         } catch(JSONException e) {
             Log.e(TAG, "ScannedItem: JSON exception on constructor", e);
+            throw new RuntimeException("Invalid JSON passed to constructor: " + json);
         }
     }
 

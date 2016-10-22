@@ -1,4 +1,4 @@
-package net.fishandwhistle.openpos.api;
+package net.fishandwhistle.openpos.actions;
 
 import android.content.ContentValues;
 import android.content.Context;

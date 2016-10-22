@@ -12,6 +12,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,7 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import net.fishandwhistle.openpos.api.APIQuery;
+import net.fishandwhistle.openpos.actions.ScannedItemAction;
 import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
@@ -42,7 +43,6 @@ import net.fishandwhistle.openpos.barcode.MSISpec;
 import net.fishandwhistle.openpos.barcode.PharmacodeSpec;
 import net.fishandwhistle.openpos.barcode.UPCESpec;
 import net.fishandwhistle.openpos.extractors.BarcodeExtractor;
-import net.fishandwhistle.openpos.extractors.JavaExtractor;
 import net.fishandwhistle.openpos.extractors.ZBarExtractor;
 import net.fishandwhistle.openpos.items.ItemFormatter;
 import net.fishandwhistle.openpos.items.ScannedItem;
@@ -52,7 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends BarcodeReaderActivity implements NavigationView.OnNavigationItemSelectedListener,
-    ScannedItemAdapter.OnItemEditCallback, APIQuery.APICallback {
+    ScannedItemAdapter.OnItemEditCallback, ScannedItemAction.ScannerItemActionCallback {
 
     private static final String TAG = "MainActivity";
     private static final String INSTANCE_ITEMS = "instance_items";
@@ -61,6 +61,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     private ListView list;
     private TextView scannedItemsText ;
 
+    private ISBNQuery isbnQuery;
+    private UPCQuery upcQuery;
 
     @Override
     protected BarcodeExtractor getExtractor() {
@@ -145,6 +147,9 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                 return null;
             }
         }.execute();
+
+        isbnQuery = new ISBNQuery();
+        upcQuery = new UPCQuery();
     }
 
     @Override
@@ -224,11 +229,9 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         if(index == -1) {
             //item is not currently in the index
             if (keys.contains("isbn13")) {
-                ISBNQuery q = new ISBNQuery(this, item.getValue("isbn13"), item, this);
-                q.query();
+                isbnQuery.doActionAsync(this, item, this);
             } else if (keys.contains("gtin13")) {
-                UPCQuery q = new UPCQuery(this, item.getValue("gtin13"), item, this);
-                q.query();
+                upcQuery.doActionAsync(this, item, this);
             }
             items.add(item);
         } else {
@@ -247,10 +250,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         return true;
     }
 
-    @Override
-    public void onQueryResult(String input, boolean success, ScannedItem item) {
-        refreshItems(success);
-    }
+
 
     private void refreshItems(boolean scrollToEnd) {
         scannedItemsText.setText(String.format(getString(R.string.bcreader_scanneditems), items.getCount()));
@@ -318,6 +318,12 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         // Create and show the dialog.
         ScannedItemDetailFragment newFragment = ScannedItemDetailFragment.newInstance(item);
         newFragment.show(ft, "dialog");
+    }
+
+    @Override
+    public void onScannerItemAction(String actionName, ScannedItem item) {
+        Log.i(TAG, "onScannerItemAction: received action " + actionName + " for item " + item);
+        refreshItems(false);
     }
 
     private interface OnTextSavedListener {
