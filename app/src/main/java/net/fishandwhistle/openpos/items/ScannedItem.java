@@ -64,8 +64,9 @@ public class ScannedItem implements Serializable {
 
     public void putValue(String key, String value) {
         try {
+            boolean addkey = !keys.contains(key);
             jsonObject.put(key, value);
-            keys.add(key);
+            if(addkey) keys.add(key);
         } catch(JSONException e) {
             throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
         }
