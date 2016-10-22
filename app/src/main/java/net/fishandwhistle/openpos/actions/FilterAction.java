@@ -1,0 +1,84 @@
+package net.fishandwhistle.openpos.actions;
+
+import android.content.Context;
+
+import net.fishandwhistle.openpos.items.ScannedItem;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+/**
+ * Created by dewey on 2016-10-22.
+ * example: new FilterAction("{\"keys\"=[\"^.*?_isbndb\"], \"action\":\"keep\", \"is_regex\": \"true\"}")
+ */
+
+public class FilterAction extends ScannedItemAction {
+
+    public static final String OPTION_KEYS = "keys";
+    public static final String OPTION_REGEX = "is_regex";
+    public static final String OPTION_ACTION = "action"; //one of 'keep' or 'remove'
+
+    private boolean isRegex;
+    private String action;
+    private String[] keys;
+
+    public FilterAction(String jsonOptions) {
+        super("filterKeys", jsonOptions);
+        action = getOptionString(OPTION_ACTION);
+        if(action == null) throw new IllegalArgumentException("Option 'action' is required");
+        if(!action.equals("keep") && !action.equals("remove"))
+            throw new IllegalArgumentException("Option 'action' must be one of 'keep' or 'remove'");
+        String isRegexS = getOptionString(OPTION_REGEX);
+        if(isRegexS == null) {
+            isRegexS = "false";
+        }
+        isRegex = Boolean.valueOf(isRegexS);
+        JSONArray a = getOptionArray(OPTION_KEYS);
+        if(a == null) throw new IllegalArgumentException("Option 'keys' must be an array");
+        try {
+            keys = new String[a.length()];
+            for(int i=0; i<a.length(); i++) {
+                keys[i] = a.getString(i);
+                if(isRegex) {
+                    //test regex
+                    Pattern.compile(keys[i]);
+                }
+            }
+        } catch(JSONException e) {
+            throw new IllegalArgumentException("Invalid JSON in keys: " + e.getMessage());
+        } catch(PatternSyntaxException e) {
+            throw new IllegalArgumentException("Invalid regex in keys: " + a.toString());
+        }
+
+    }
+
+    @Override
+    public boolean doAction(Context context, ScannedItem item) {
+        List<String> itemKeys = item.getKeys();
+        boolean result = false;
+            for(String itemKey: itemKeys) {
+                boolean match = false;
+                for(String needle: keys) {
+                    if((isRegex && containsRegex(itemKey, needle)) || (!isRegex && itemKey.equals(needle))) {
+                        match = true;
+                        break;
+                    }
+                }
+                if ((action.equals("keep") && !match) || (action.equals("remove") && match)) {
+                    item.putValue(itemKey, null);
+                    result = true;
+                }
+        }
+        return result;
+    }
+
+    private static boolean containsRegex(String haystack, String regex) {
+        Matcher m = Pattern.compile(regex).matcher(haystack);
+        return m.find();
+    }
+}

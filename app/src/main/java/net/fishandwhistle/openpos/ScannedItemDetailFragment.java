@@ -2,32 +2,21 @@ package net.fishandwhistle.openpos;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 
 import net.fishandwhistle.openpos.items.ScannedItem;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -81,7 +70,7 @@ public class ScannedItemDetailFragment extends DialogFragment {
             } else {
                 ((TextView) v.findViewById(R.id.detail_description)).setText(item.toString());
             }
-            ((TextView)v.findViewById(R.id.detail_code)).setText(item.productCode);
+            ((TextView)v.findViewById(R.id.detail_code)).setText(item.barcodeText);
             ((TextView)v.findViewById(R.id.detail_quantity)).setText(String.format(getString(R.string.detail_qty), item.nScans));
 
             ArrayList<String[]> vals = new ArrayList<>();

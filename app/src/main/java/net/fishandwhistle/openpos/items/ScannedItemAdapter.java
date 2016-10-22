@@ -3,21 +3,14 @@ package net.fishandwhistle.openpos.items;
 import android.content.Context;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import net.fishandwhistle.openpos.R;
-
-import java.util.ArrayList;
 
 /**
  * Created by dewey on 2016-10-04.
@@ -60,7 +53,7 @@ public class ScannedItemAdapter extends ArrayAdapter<ScannedItem> {
             name.setText(i.description);
         }
 
-        desc.setText(i.productCode);
+        desc.setText(i.barcodeText);
         qty.setText(String.valueOf(i.nScans));
 
         if(i.nScans > 1) {

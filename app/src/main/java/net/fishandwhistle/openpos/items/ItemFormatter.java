@@ -55,18 +55,18 @@ public class ItemFormatter {
                 break;
             case "Code128":
                 addGS1(item, b);
-                int nchar = item.productCode.length();
-                item.description = "Code128 " + item.productCode.substring(Math.max(0, nchar-5)).replace(")", "");
+                int nchar = item.barcodeText.length();
+                item.description = "Code128 " + item.barcodeText.substring(Math.max(0, nchar-5)).replace(")", "");
                 break;
             case "DataBar":
                 addGS1(item, b);
-                int nchar2 = item.productCode.length();
-                item.description = "DataBar " + item.productCode.substring(Math.max(0, nchar2-5)).replace(")", "");
+                int nchar2 = item.barcodeText.length();
+                item.description = "DataBar " + item.barcodeText.substring(Math.max(0, nchar2-5)).replace(")", "");
                 break;
             case "DataBarExp":
                 addGS1(item, b);
-                int nchar3 = item.productCode.length();
-                item.description = "DataBar " + item.productCode.substring(Math.max(0, nchar3-5)).replace(")", "");
+                int nchar3 = item.barcodeText.length();
+                item.description = "DataBar " + item.barcodeText.substring(Math.max(0, nchar3-5)).replace(")", "");
                 break;
             case "Codabar":
                 item.description = "Codabar " + " " + bstr.substring(Math.max(0, bstr.length()-6), bstr.length()-1);
@@ -93,7 +93,7 @@ public class ItemFormatter {
             item.putValue("raw_code", b.toString().replace("[FNC1]", ""));
         } catch(GS1Parser.GS1Exception e) {
             //strip [FNC1]
-            item.productCode = b.toString().replace("[FNC1]", "");
+            item.barcodeText = b.toString().replace("[FNC1]", "");
         }
         return item;
     }
@@ -177,7 +177,7 @@ public class ItemFormatter {
     private void addIssueNumber(ScannedItem item, String extra) {
         if(extra != null && extra.length() == 2) {
             item.putValue("issue_code", extra);
-            item.productCode += "-" + extra;
+            item.barcodeText += "-" + extra;
         }
     }
 

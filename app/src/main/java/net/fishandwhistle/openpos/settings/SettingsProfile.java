@@ -13,11 +13,13 @@ import net.fishandwhistle.openpos.barcode.EAN8Spec;
 import net.fishandwhistle.openpos.barcode.ITFSpec;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
 
+import java.io.Serializable;
+
 /**
  * Created by dewey on 2016-10-21.
  */
 
-public class SettingsProfile {
+public class SettingsProfile implements Serializable {
 
     public String scanBackend = "ZBar"; //also Java
     public BarcodeSpec[] barcodeSpecs = new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
@@ -25,11 +27,21 @@ public class SettingsProfile {
             new DataBarExpandedSpec()};
     public String scanMode = "Tap to scan"; //also Continuous
     public int[] aperture = new int[] {0, 100, 10, 20}; //like Rect() constructor: left, right, top, bottom according to phone orientation
+
+    public ScannedItemAction[] preDialogActions = new ScannedItemAction[] {};
     public boolean openDialog = true;
-    public ScannedItemAction[] itemActions = new ScannedItemAction[] {};
+    public ScannedItemAction[] postDialogActions = new ScannedItemAction[] {};
 
     public SettingsProfile() {
-
+        scanBackend = "ZBar"; //also Java
+        barcodeSpecs = new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
+                new ITFSpec(), new CodabarSpec(), new Code39Spec(), new EAN8Spec(), new DataBarSpec(),
+                new DataBarExpandedSpec()};
+        scanMode = "Tap to scan";
+        aperture = new int[] {0, 100, 10, 20};
+        preDialogActions = new ScannedItemAction[] {};
+        openDialog = true;
+        postDialogActions = new ScannedItemAction[] {};
     }
 
     public void writeToPreferences(SharedPreferences preferences) {

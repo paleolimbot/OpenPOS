@@ -1,11 +1,6 @@
 package net.fishandwhistle.openpos.barcode;
 
-import android.util.Log;
-
 import net.fishandwhistle.openpos.items.ScannedItem;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,7 +50,7 @@ public class GS1Parser {
                 starti += ai.aiCode.length() + ai.data.length();
             }
         }
-        item.productCode = code;
+        item.barcodeText = code;
     }
 
     private static AI extractAI(String s) throws GS1Exception {

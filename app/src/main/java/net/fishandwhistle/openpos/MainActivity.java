@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 
 import net.fishandwhistle.openpos.actions.ActionChain;
+import net.fishandwhistle.openpos.actions.FilterAction;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
 import net.fishandwhistle.openpos.api.AmazonURLLookup;
 import net.fishandwhistle.openpos.api.ISBNQuery;
@@ -150,7 +151,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             }
         }.execute();
 
-        isbnQuery = new ActionChain("isbnChain", "{}", new ISBNQuery(), new AmazonURLLookup());
+        isbnQuery = new ActionChain("isbnChain", new ISBNQuery(), new AmazonURLLookup());
         upcQuery = new UPCQuery();
     }
 

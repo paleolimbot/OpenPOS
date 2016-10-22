@@ -21,6 +21,14 @@ public class JSONSharedPreferences implements SharedPreferences {
 
     private JSONObject o;
 
+    public JSONSharedPreferences(String json) {
+        try {
+            o = new JSONObject(json);
+        } catch(JSONException e) {
+            throw new IllegalArgumentException("invalid json: " + e.getMessage());
+        }
+    }
+
     public JSONSharedPreferences() {
         o = new JSONObject();
     }

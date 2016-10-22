@@ -2,8 +2,6 @@ package net.fishandwhistle.openpos.items;
 
 import android.util.Log;
 
-import net.fishandwhistle.openpos.barcode.BarcodeSpec;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,7 +11,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by dewey on 2016-10-04.
@@ -24,7 +21,7 @@ public class ScannedItem implements Serializable {
 
     public long scanTime = 0;
     public long updateTime = 0;
-    public String productCode = null;
+    public String barcodeText = null;
     public String barcodeType = null;
     public String description = null;
     public int nScans = 1;
@@ -34,18 +31,18 @@ public class ScannedItem implements Serializable {
     private String json = "{}";
     private ArrayList<String> keys;
 
-    public ScannedItem(String barcodeType, String productCode) {
+    public ScannedItem(String barcodeType, String barcodeText) {
         this.scanTime = System.currentTimeMillis();
         updateTime = scanTime;
         this.barcodeType = barcodeType;
-        this.productCode = productCode;
+        this.barcodeText = barcodeText;
         keys = new ArrayList<>();
         setJSON(this.json);
     }
 
     @Override
     public String toString() {
-        return String.format("%s XX%s", this.barcodeType, this.productCode.substring(Math.max(0, productCode.length()-4)));
+        return String.format("%s XX%s", this.barcodeType, this.barcodeText.substring(Math.max(0, barcodeText.length()-4)));
     }
 
     public List<String> getKeys() {
@@ -64,9 +61,16 @@ public class ScannedItem implements Serializable {
 
     public void putValue(String key, String value) {
         try {
-            boolean addkey = !keys.contains(key);
-            jsonObject.put(key, value);
-            if(addkey) keys.add(key);
+            if(value == null) {
+                if(keys.contains(key)) {
+                    jsonObject.remove(key);
+                    keys.remove(key);
+                }
+            } else {
+                boolean addkey = !keys.contains(key);
+                jsonObject.put(key, value);
+                if (addkey) keys.add(key);
+            }
         } catch(JSONException e) {
             throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
         }
@@ -95,7 +99,7 @@ public class ScannedItem implements Serializable {
     public boolean equals(Object othero) {
         return othero instanceof ScannedItem &&
                 ((ScannedItem) othero).barcodeType.equals(this.barcodeType) &&
-                ((ScannedItem) othero).productCode.equals(this.productCode);
+                ((ScannedItem) othero).barcodeText.equals(this.barcodeText);
     }
 
 }

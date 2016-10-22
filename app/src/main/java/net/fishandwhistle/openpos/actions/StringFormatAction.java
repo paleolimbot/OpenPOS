@@ -16,14 +16,14 @@ import java.util.regex.Pattern;
  * Created by dewey on 2016-10-22.
  */
 
-public class RegexLookupAction extends ScannedItemAction {
+public class StringFormatAction extends ScannedItemAction {
 
     public static final String OPTION_KEYMAP = "key_map";
     public static final String OPTION_QUIET = "quiet";
 
     private boolean quiet;
 
-    public RegexLookupAction(String actionName, String jsonOptions) {
+    public StringFormatAction(String actionName, String jsonOptions) {
         super(actionName, jsonOptions);
         String isQuiet = getOptionString(OPTION_QUIET);
         this.quiet = isQuiet == null || Boolean.valueOf(isQuiet); // quiet by default

@@ -30,6 +30,13 @@ public class ScannedItemManager {
         db = new ScannedItemDB(context);
     }
 
+
+    public boolean putItem(String sessionName, ScannedItem item) {
+        //TODO stub method
+        return false;
+    }
+
+
     private static class ScannedItemDB extends SQLiteOpenHelper {
 
         public ScannedItemDB(Context context) {

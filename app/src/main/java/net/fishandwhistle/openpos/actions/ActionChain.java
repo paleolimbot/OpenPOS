@@ -13,8 +13,8 @@ public class ActionChain extends ScannedItemAction {
 
     private ScannedItemAction[] actions ;
 
-    public ActionChain(String actionName, String jsonOptions, ScannedItemAction... actions) {
-        super(actionName, jsonOptions);
+    public ActionChain(String actionName, ScannedItemAction... actions) {
+        super(actionName, "{}");
         this.actions = actions;
     }
 

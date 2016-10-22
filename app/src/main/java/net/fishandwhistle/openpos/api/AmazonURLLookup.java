@@ -1,6 +1,6 @@
 package net.fishandwhistle.openpos.api;
 
-import net.fishandwhistle.openpos.actions.RegexLookupAction;
+import net.fishandwhistle.openpos.actions.StringFormatAction;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,7 +9,7 @@ import org.json.JSONObject;
  * Created by dewey on 2016-10-22.
  */
 
-public class AmazonURLLookup extends RegexLookupAction {
+public class AmazonURLLookup extends StringFormatAction {
 
     public AmazonURLLookup() {
         super("amazonurl", jsonOptions);
