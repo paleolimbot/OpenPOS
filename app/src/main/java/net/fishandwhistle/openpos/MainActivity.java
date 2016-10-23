@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 
 import net.fishandwhistle.openpos.actions.ActionChain;
+import net.fishandwhistle.openpos.actions.ActionFork;
 import net.fishandwhistle.openpos.actions.KeyFilterAction;
 import net.fishandwhistle.openpos.actions.LogicAction;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
@@ -65,8 +66,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     private ListView list;
     private TextView scannedItemsText ;
 
-    private ScannedItemAction isbnQuery;
-    private ScannedItemAction upcQuery;
+    private ScannedItemAction actions;
 
     @Override
     protected BarcodeExtractor getExtractor() {
@@ -152,10 +152,9 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             }
         }.execute();
 
-        isbnQuery = new ActionChain("isbnChain", "{}", new ISBNQuery(), new AmazonURLLookup(),
-                new LogicAction("Contains isbn13", "{\"key_map\": {\"isbn13\":\"^[0-9]*$\"}, \"is_regex\":\"true\", \"out_key\":\"has_isbn\"}"));
-
-        upcQuery = new ActionChain("upcChain", "{}", new UPCQuery());
+        actions = new ActionFork(new LogicAction("isbn13 is null", "{\"key_map\": {\"isbn13\":\"\"}}"),
+                new ActionFork(new LogicAction("gtin13 is null", "{\"key_map\": {\"gtin13\":\"\"}}"), null, new UPCQuery()),
+                new ActionChain("isbnChain", "{}", new ISBNQuery(), new AmazonURLLookup()));
     }
 
     @Override
@@ -234,11 +233,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         int index = items.indexOf(item);
         if(index == -1) {
             //item is not currently in the index
-            if (keys.contains("isbn13")) {
-                isbnQuery.doActionAsync(this, item, this);
-            } else if (keys.contains("gtin13")) {
-                upcQuery.doActionAsync(this, item, this);
-            }
+            actions.doActionAsync(this, item, this);
             items.add(item);
         } else {
             ScannedItem current = items.getItem(index);
