@@ -26,7 +26,8 @@ import android.widget.Toast;
 
 
 import net.fishandwhistle.openpos.actions.ActionChain;
-import net.fishandwhistle.openpos.actions.FilterAction;
+import net.fishandwhistle.openpos.actions.KeyFilterAction;
+import net.fishandwhistle.openpos.actions.LogicAction;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
 import net.fishandwhistle.openpos.api.AmazonURLLookup;
 import net.fishandwhistle.openpos.api.ISBNQuery;
@@ -151,8 +152,10 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             }
         }.execute();
 
-        isbnQuery = new ActionChain("isbnChain", new ISBNQuery(), new AmazonURLLookup());
-        upcQuery = new UPCQuery();
+        isbnQuery = new ActionChain("isbnChain", "{}", new ISBNQuery(), new AmazonURLLookup(),
+                new LogicAction("Contains isbn13", "{\"key_map\": {\"isbn13\":\"^[0-9]*$\"}, \"is_regex\":\"true\", \"out_key\":\"has_isbn\"}"));
+
+        upcQuery = new ActionChain("upcChain", "{}", new UPCQuery());
     }
 
     @Override
@@ -327,6 +330,12 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     public void onScannerItemAction(String actionName, ScannedItem item) {
         Log.i(TAG, "onScannerItemAction: received action " + actionName + " for item " + item);
         refreshItems(false);
+    }
+
+    @Override
+    public void onActionException(String actionName, ScannedItem item, String error) {
+        Toast.makeText(this, "Error occurred executing " + actionName + " for item " + item + ": " + error,
+                Toast.LENGTH_SHORT).show();
     }
 
     private interface OnTextSavedListener {

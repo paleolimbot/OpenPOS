@@ -37,7 +37,6 @@ public class LookupAction extends ScannedItemAction {
 
     public static final String OPTION_URI_FORMAT = "uri_format";
     public static final String OPTION_KEYMAP = "key_map";
-    public static final String OPTION_QUIET = "quiet";
     public static final String OPTION_MIMETYPE = "mime_type";
     public static final String OPTION_ENCODING = "encoding";
 
@@ -46,7 +45,6 @@ public class LookupAction extends ScannedItemAction {
     private static final String TAG = "LookupAction" ;
     private static Set<String> currentRequests = new HashSet<>();
     private Map<String, String> keyMap;
-    private boolean quiet;
     private String uriFormat;
     private LookupParser parser;
     private String encoding;
@@ -55,8 +53,6 @@ public class LookupAction extends ScannedItemAction {
         super(actionName, jsonOptions);
         this.uriFormat = getOptionString(OPTION_URI_FORMAT);
         this.keyMap = extractKeyMap(getOptionObject(OPTION_KEYMAP));
-        String isQuiet = getOptionString(OPTION_QUIET);
-        this.quiet = isQuiet == null || Boolean.valueOf(isQuiet); // quiet by default
         switch (getOptionString(OPTION_MIMETYPE)) {
             case "application/json":
                 parser = new JSONParser();
@@ -88,10 +84,6 @@ public class LookupAction extends ScannedItemAction {
         return "time_" + getActionName();
     }
 
-    private boolean isQuiet() {
-        return quiet;
-    }
-
     private Map<String, String> getKeyMap() {
         return keyMap;
     }
@@ -110,7 +102,7 @@ public class LookupAction extends ScannedItemAction {
         }
     }
 
-    public boolean doAction(Context context, ScannedItem item) {
+    public boolean doAction(Context context, ScannedItem item) throws ActionException {
         String url = formatUri(uriFormat, item);
         TextApiCache cache = new TextApiCache(context);
 
@@ -128,28 +120,33 @@ public class LookupAction extends ScannedItemAction {
                     item.isLoading = false;
                     return true;
                 } else {
-                    return false;
+                    if(isQuiet()) {
+                        item.putValue(getErrorKey(), "Parse error");
+                        return true;
+                    } else {
+                        throw new ActionException("Parse error");
+                    }
                 }
             } else {
                 if(isNetworkAvailable(context)) {
                     currentRequests.add(url);
                     item.isLoading = true;
-                    if(doDownload(context, url, item)) {
-                        item.isLoading = false;
+                    doDownload(context, url, item);
+                    item.isLoading = false;
+                    return true;
+                } else {
+                    if(isQuiet()) {
+                        item.putValue(getErrorKey(), context.getString(R.string.api_errornonetwork));
                         return true;
                     } else {
-                        item.isLoading = false;
-                        return false;
+                        throw new ActionException(context.getString(R.string.api_errornonetwork));
                     }
-                } else {
-                    item.putValue(getErrorKey(), context.getString(R.string.api_errornonetwork));
-                    return false;
                 }
             }
         }
     }
 
-    private boolean doDownload(Context context, String urlString, ScannedItem item) {
+    private void doDownload(Context context, String urlString, ScannedItem item) throws ActionException {
         String out = null;
         InputStream input = null;
         ByteArrayOutputStream output = null;
@@ -166,9 +163,15 @@ public class LookupAction extends ScannedItemAction {
                 currentRequests.remove(urlString);
                 Log.e(TAG, "Server returned HTTP " + connection.getResponseCode()
                         + " " + connection.getResponseMessage());
-                item.putValue(getErrorKey(), String.format(context.getString(R.string.api_errorio),
-                        "HTTP " + connection.getResponseCode() + " " + connection.getResponseMessage()));
-                return false;
+                String error = String.format(context.getString(R.string.api_errorio),
+                        "HTTP " + connection.getResponseCode() + " " + connection.getResponseMessage());
+                if(isQuiet()) {
+                    item.putValue(getErrorKey(), error);
+                    return;
+                } else {
+                    item.isLoading = false;
+                    throw new ActionException(error);
+                }
             }
 
             // this will be useful to display download percentage
@@ -198,9 +201,15 @@ public class LookupAction extends ScannedItemAction {
             Log.i(TAG, "Download complete");
         } catch (Exception e) {
             Log.e(TAG, "Exception in download", e);
-            item.putValue(getErrorKey(), String.format(context.getString(R.string.api_errorio), e.getMessage()));
+            String error = String.format(context.getString(R.string.api_errorio), e.getMessage());
             currentRequests.remove(urlString);
-            return false;
+            if(isQuiet()) {
+                item.putValue(getErrorKey(), error);
+                return;
+            } else {
+                item.isLoading = false;
+                throw new ActionException(error);
+            }
         } finally {
             try {
                 if (output != null) {
@@ -217,25 +226,27 @@ public class LookupAction extends ScannedItemAction {
         }
 
         if(out == null) {
+            //should not happen?
             currentRequests.remove(urlString);
-            return false;
+            item.isLoading = false;
+            throw new ActionException("Null output from download");
         }
 
         // do parsing
         currentRequests.remove(urlString);
         item.putValue(getTimeKey(), String.valueOf(System.currentTimeMillis()));
         item.putValue(getSourceKey(), urlString);
-        return parser.parse(out, item);
+        parser.parse(out, item);
     }
 
     private interface LookupParser {
-        boolean parse(String data, ScannedItem item);
+        boolean parse(String data, ScannedItem item) throws ActionException;
     }
 
     private class JSONParser implements LookupParser {
 
         @Override
-        public boolean parse(String data, ScannedItem item) {
+        public boolean parse(String data, ScannedItem item) throws ActionException {
             try {
                 JSONObject o = new JSONObject(data);
                 Map<String, String> keyMap = getKeyMap();
@@ -262,8 +273,14 @@ public class LookupAction extends ScannedItemAction {
                 }
                 return true;
             } catch(JSONException e) {
-                item.putValue("lookup_error", "JSON Error: " + e.getMessage());
-                return false;
+                String error = "JSON error in parse: " + e.getMessage();
+                if(isQuiet()) {
+                    item.putValue("lookup_error", error);
+                    return true;
+                } else {
+                    item.isLoading = false;
+                    throw new ActionException(error);
+                }
             }
         }
 

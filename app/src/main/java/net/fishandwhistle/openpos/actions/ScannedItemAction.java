@@ -3,7 +3,6 @@ package net.fishandwhistle.openpos.actions;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import net.fishandwhistle.openpos.barcode.PharmacodeSpec;
 import net.fishandwhistle.openpos.items.ScannedItem;
 
 import org.json.JSONArray;
@@ -20,15 +19,24 @@ import java.util.Map;
 
 public abstract class ScannedItemAction {
 
+    public static final String OPTION_QUIET = "quiet";
+
     private String actionName;
     private JSONObject options;
+    private boolean quiet;
 
     public ScannedItemAction(String actionName, String jsonOptions) {
         this.actionName = actionName;
         try {
             options = new JSONObject(jsonOptions);
         } catch (JSONException e) {
-            throw new RuntimeException("Invalid JSON passed to ScannedItemAction: " + e.getMessage());
+            throw new IllegalArgumentException("Invalid JSON passed to ScannedItemAction: " + e.getMessage());
+        }
+        String isQuiet = getOptionString(OPTION_QUIET);
+        if(isQuiet == null) {
+            quiet = getIsQuietDefault();
+        } else {
+            quiet = Boolean.valueOf(isQuiet);
         }
     }
 
@@ -56,20 +64,36 @@ public abstract class ScannedItemAction {
         }
     }
 
+    public boolean getIsQuietDefault() {
+        return true;
+    }
+
+    public boolean isQuiet() {
+        return quiet;
+    }
+
     public String getActionName() {
         return actionName;
     }
 
-    public abstract boolean doAction(Context context, ScannedItem item);
+    public abstract boolean doAction(Context context, ScannedItem item) throws ActionException;
 
     public void doActionAsync(final Context context, ScannedItem item, final ScannerItemActionCallback callback) {
         new AsyncTask<ScannedItem, Void, ScannedItem>() {
+
+            private String error = null;
+
             @Override
             protected ScannedItem doInBackground(ScannedItem... params) {
                 ScannedItem item = params[0];
-                if(doAction(context, item)) {
-                    return item;
-                } else {
+                try {
+                    if (doAction(context, item)) {
+                        return item;
+                    } else {
+                        return null;
+                    }
+                } catch(ActionException e) {
+                    error = e.getMessage();
                     return null;
                 }
             }
@@ -78,6 +102,8 @@ public abstract class ScannedItemAction {
             protected void onPostExecute(ScannedItem item) {
                 if(item != null) {
                     callback.onScannerItemAction(getActionName(), item);
+                } else if(error != null) {
+                    callback.onActionException(getActionName(), item, error);
                 }
             }
         }.execute(item);
@@ -85,6 +111,14 @@ public abstract class ScannedItemAction {
 
     public interface ScannerItemActionCallback {
         void onScannerItemAction(String actionName, ScannedItem item);
+        void onActionException(String actionName, ScannedItem item, String message);
+    }
+
+    public class ActionException extends Exception {
+
+        public ActionException(String message) {
+            super(message);
+        }
     }
 
     protected static Map<String, String> extractKeyMap(JSONObject keysJson) {

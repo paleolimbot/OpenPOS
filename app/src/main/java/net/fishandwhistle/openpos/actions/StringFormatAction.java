@@ -1,5 +1,6 @@
 package net.fishandwhistle.openpos.actions;
 
+import android.app.Notification;
 import android.content.Context;
 import android.util.Log;
 
@@ -19,19 +20,14 @@ import java.util.regex.Pattern;
 public class StringFormatAction extends ScannedItemAction {
 
     public static final String OPTION_KEYMAP = "key_map";
-    public static final String OPTION_QUIET = "quiet";
-
-    private boolean quiet;
 
     public StringFormatAction(String actionName, String jsonOptions) {
         super(actionName, jsonOptions);
-        String isQuiet = getOptionString(OPTION_QUIET);
-        this.quiet = isQuiet == null || Boolean.valueOf(isQuiet); // quiet by default
         if(getOptionObject(OPTION_KEYMAP) == null) throw new IllegalArgumentException("key_map is required");
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item) {
+    public boolean doAction(Context context, ScannedItem item) throws ActionException {
         Pattern TAG = Pattern.compile("\\{\\{(.*?)\\}\\}");
         JSONObject map = getOptionObject(OPTION_KEYMAP);
         Iterator<String> keys = map.keys();
@@ -46,10 +42,10 @@ public class StringFormatAction extends ScannedItemAction {
                     String attr = m.group(1);
                     String attrVal = item.getValue(attr);
                     if(attrVal == null) {
-                        if(quiet) {
-                            return false;
+                        if(isQuiet()) { // unmapped key
+                            return true;
                         } else {
-                            attrVal = "{{" + attr + "}}";
+                            throw new ActionException("Unmapped key in StringFormat: " + attr);
                         }
                     }
                     m.appendReplacement(sb, attrVal);
@@ -60,7 +56,7 @@ public class StringFormatAction extends ScannedItemAction {
             return true;
         } catch(JSONException e) {
             Log.e("RegexLookup", "doAction: json exception", e);
-            return false;
+            throw new ActionException("JSON Error: " + e.getMessage());
         }
     }
 }

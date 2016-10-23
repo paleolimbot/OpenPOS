@@ -14,44 +14,53 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * Created by dewey on 2016-10-22.
- * example: new FilterAction("{\"keys\"=[\"^.*?_isbndb\"], \"action\":\"keep\", \"is_regex\": \"true\"}")
+ * example: new FilterAction("{\"keys\"=[\".*?_isbndb\"], \"action\":\"keep\", \"is_regex\": \"true\", \"match_option\": \"matches\"}")
  */
 
-public class FilterAction extends ScannedItemAction {
+public class KeyFilterAction extends ScannedItemAction {
 
     public static final String OPTION_KEYS = "keys";
-    public static final String OPTION_REGEX = "is_regex";
+    public static final String OPTION_ISREGEX = "is_regex";
+    public static final String OPTION_MATCH_OPTION = "match_option"; //one of 'matches' or 'contains'
     public static final String OPTION_ACTION = "action"; //one of 'keep' or 'remove'
 
+    private String matchOption;
     private boolean isRegex;
     private String action;
     private String[] keys;
 
-    public FilterAction(String jsonOptions) {
-        super("filterKeys", jsonOptions);
+    public KeyFilterAction(String actionName, String jsonOptions) {
+        super(actionName, jsonOptions);
         action = getOptionString(OPTION_ACTION);
         if(action == null) throw new IllegalArgumentException("Option 'action' is required");
         if(!action.equals("keep") && !action.equals("remove"))
             throw new IllegalArgumentException("Option 'action' must be one of 'keep' or 'remove'");
-        String isRegexS = getOptionString(OPTION_REGEX);
-        if(isRegexS == null) {
-            isRegexS = "false";
+        String sRegex = getOptionString(OPTION_ISREGEX);
+        isRegex = sRegex != null && Boolean.valueOf(sRegex);
+
+        String sMatchOption = getOptionString(OPTION_MATCH_OPTION);
+        if(sMatchOption == null) {
+            matchOption = "matches";
+        } else if(sMatchOption.equals("matches") || sMatchOption.equals("contains")) {
+            matchOption = sMatchOption;
+        } else {
+            throw new IllegalArgumentException("Option 'match_option' must be one of 'matches' or 'contains'");
         }
-        isRegex = Boolean.valueOf(isRegexS);
+
         JSONArray a = getOptionArray(OPTION_KEYS);
         if(a == null) throw new IllegalArgumentException("Option 'keys' must be an array");
         try {
             keys = new String[a.length()];
-            for(int i=0; i<a.length(); i++) {
+            for (int i = 0; i < a.length(); i++) {
                 keys[i] = a.getString(i);
-                if(isRegex) {
+                if (isRegex) {
                     //test regex
                     Pattern.compile(keys[i]);
                 }
             }
-        } catch(JSONException e) {
+        } catch (JSONException e) {
             throw new IllegalArgumentException("Invalid JSON in keys: " + e.getMessage());
-        } catch(PatternSyntaxException e) {
+        } catch (PatternSyntaxException e) {
             throw new IllegalArgumentException("Invalid regex in keys: " + a.toString());
         }
 
@@ -64,8 +73,19 @@ public class FilterAction extends ScannedItemAction {
             for(String itemKey: itemKeys) {
                 boolean match = false;
                 for(String needle: keys) {
-                    if((isRegex && containsRegex(itemKey, needle)) || (!isRegex && itemKey.equals(needle))) {
-                        match = true;
+                    if(!isRegex) {
+                        if(matchOption.equals("matches")) {
+                            match = itemKey.equals(needle);
+                        } else {
+                            match = itemKey.contains(needle);
+                        }
+                    } else if(matchOption.equals("matches")) {
+                        match = itemKey.matches(needle);
+                    } else {
+                        Matcher m = Pattern.compile(needle).matcher(itemKey);
+                        match = m.find();
+                    }
+                    if(match) {
                         break;
                     }
                 }
@@ -77,8 +97,4 @@ public class FilterAction extends ScannedItemAction {
         return result;
     }
 
-    private static boolean containsRegex(String haystack, String regex) {
-        Matcher m = Pattern.compile(regex).matcher(haystack);
-        return m.find();
-    }
 }
