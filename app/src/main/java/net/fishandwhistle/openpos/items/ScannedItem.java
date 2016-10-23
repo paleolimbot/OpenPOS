@@ -19,11 +19,17 @@ import java.util.List;
 public class ScannedItem implements Serializable {
     private static final String TAG = "ScannedItem";
 
+    public static final String KEY_BARCODE_TEXT = "_barcode_text";
+    public static final String KEY_DESCRIPTION = "_description";
+    public static final String KEY_SUBTEXT = "_subtext";
+    public static final String KEY_BARCODE_TYPE = "_barcode_type";
+
     public long scanTime = 0;
     public long updateTime = 0;
     public String barcodeText = null;
     public String barcodeType = null;
     public String description = null;
+    public String subtext = null;
     public int nScans = 1;
     public boolean isLoading = false;
 
@@ -52,27 +58,51 @@ public class ScannedItem implements Serializable {
     }
 
     public String getValue(String key) {
-        try {
-            return jsonObject.getString(key);
-        } catch(JSONException e) {
-            return null;
+        switch (key) {
+            case KEY_BARCODE_TEXT:
+                return this.barcodeText;
+            case KEY_DESCRIPTION:
+                return this.description;
+            case KEY_SUBTEXT:
+                return this.subtext;
+            case KEY_BARCODE_TYPE:
+                return this.barcodeType;
+            default:
+                try {
+                    return jsonObject.getString(key);
+                } catch (JSONException e) {
+                    return null;
+                }
         }
     }
 
     public void putValue(String key, String value) {
-        try {
-            if(value == null) {
-                if(keys.contains(key)) {
-                    jsonObject.remove(key);
-                    keys.remove(key);
+        switch(key) {
+            case KEY_BARCODE_TEXT:
+                throw new IllegalArgumentException("Setting of " + key  + " not allowed");
+            case KEY_DESCRIPTION:
+                this.description = value;
+                return;
+            case KEY_SUBTEXT:
+                this.subtext = value;
+                return;
+            case KEY_BARCODE_TYPE:
+                throw new IllegalArgumentException("Setting of " + key  + " not allowed");
+            default:
+                try {
+                    if(value == null) {
+                        if(keys.contains(key)) {
+                            jsonObject.remove(key);
+                            keys.remove(key);
+                        }
+                    } else {
+                        boolean addkey = !keys.contains(key);
+                        jsonObject.put(key, value);
+                        if (addkey) keys.add(key);
+                    }
+                } catch(JSONException e) {
+                    throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
                 }
-            } else {
-                boolean addkey = !keys.contains(key);
-                jsonObject.put(key, value);
-                if (addkey) keys.add(key);
-            }
-        } catch(JSONException e) {
-            throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
         }
     }
 
