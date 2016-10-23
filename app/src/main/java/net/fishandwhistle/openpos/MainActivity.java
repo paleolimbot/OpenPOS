@@ -30,6 +30,7 @@ import net.fishandwhistle.openpos.actions.ActionFork;
 import net.fishandwhistle.openpos.actions.KeyFilterAction;
 import net.fishandwhistle.openpos.actions.LogicAction;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
+import net.fishandwhistle.openpos.actions.StringFormatAction;
 import net.fishandwhistle.openpos.api.AmazonURLLookup;
 import net.fishandwhistle.openpos.api.ISBNQuery;
 import net.fishandwhistle.openpos.api.UPCQuery;
@@ -154,7 +155,9 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
         actions = new ActionFork(new LogicAction("isbn13 is null", "{\"key_map\": {\"isbn13\":\"\"}}"),
                 new ActionFork(new LogicAction("gtin13 is null", "{\"key_map\": {\"gtin13\":\"\"}}"), null, new UPCQuery()),
-                new ActionChain("isbnChain", "{}", new ISBNQuery(), new AmazonURLLookup()));
+                new ActionChain("isbnChain", "{}", new ISBNQuery(),
+                        new StringFormatAction("title to description", "{\"key_map\": {\"_description\":\"{{title}} by {{authors}}\"}}"),
+                        new AmazonURLLookup()));
     }
 
     @Override

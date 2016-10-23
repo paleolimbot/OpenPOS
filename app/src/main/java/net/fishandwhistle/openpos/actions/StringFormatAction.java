@@ -38,12 +38,15 @@ public class StringFormatAction extends ScannedItemAction {
                 String key = keys.next();
                 String value = map.getString(key);
                 Matcher m = TAG.matcher(value);
+                boolean hasResult = false;
                 while(m.find()) {
+                    hasResult = true;
                     String attr = m.group(1);
                     String attrVal = item.getValue(attr);
                     if(attrVal == null) {
                         if(isQuiet()) { // unmapped key
-                            return true;
+                            hasResult = false;
+                            break;
                         } else {
                             throw new ActionException("Unmapped key in StringFormat: " + attr);
                         }
@@ -51,7 +54,7 @@ public class StringFormatAction extends ScannedItemAction {
                     m.appendReplacement(sb, attrVal);
                 }
                 m.appendTail(sb);
-                item.putValue(key, sb.toString());
+                if(hasResult) item.putValue(key, sb.toString());
             }
             return true;
         } catch(JSONException e) {
