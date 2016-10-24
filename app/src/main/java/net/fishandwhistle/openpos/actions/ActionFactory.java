@@ -26,6 +26,8 @@ public class ActionFactory {
                 return new LookupAction(o);
             case "stringformat":
                 return new StringFormatAction(o);
+            case "dialog":
+                return new DialogAction(o);
             default: throw new IllegalArgumentException("Invalid class supplied: " + o.getString(ScannedItemAction.OPTION_TYPE));
         }
     }

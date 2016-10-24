@@ -35,7 +35,7 @@ public class StringFormatAction extends ScannedItemAction {
             while(keys.hasNext()) {
                 String key = keys.next();
                 String value = map.getString(key);
-                String formatted = formatWithObject(value, item);
+                String formatted = formatWithObject(value, item, false);
                 if(formatted != null) {
                     item.putValue(key, formatted);
                 } else if(!isQuiet()) {
@@ -49,8 +49,11 @@ public class StringFormatAction extends ScannedItemAction {
         }
     }
 
-
     public static String formatWithObject(String format, ScannedItem item) {
+        return formatWithObject(format, item, true);
+    }
+
+    public static String formatWithObject(String format, ScannedItem item, boolean quiet) {
         Pattern TAG = Pattern.compile("\\{\\{(.*?)\\}\\}");
         StringBuffer sb = new StringBuffer();
         Matcher m = TAG.matcher(format);
@@ -58,7 +61,11 @@ public class StringFormatAction extends ScannedItemAction {
             String attr = m.group(1);
             String attrVal = item.getValue(attr);
             if(attrVal == null) {
-                return null;
+                if(quiet) {
+                    attrVal = "{{" + attr + "}}";
+                } else {
+                    return null;
+                }
             }
             m.appendReplacement(sb, attrVal);
         }

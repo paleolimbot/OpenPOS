@@ -1,8 +1,8 @@
 package net.fishandwhistle.openpos.actions;
 
-import android.app.Notification;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import net.fishandwhistle.openpos.items.ScannedItem;
 
@@ -20,6 +20,8 @@ import java.util.Map;
 
 public abstract class ScannedItemAction {
 
+    private static final String TAG = "ScannedItemAction";
+
     public static final String OPTION_QUIET = "quiet";
     public static final String OPTION_TYPE = "type";
     public static final String OPTION_ACTION_NAME = "name";
@@ -27,7 +29,6 @@ public abstract class ScannedItemAction {
     private String actionName;
     private JSONObject options;
     private boolean quiet;
-    private boolean uiThread;
 
     public ScannedItemAction(JSONObject jsonOptions) {
         options = jsonOptions;
@@ -79,29 +80,12 @@ public abstract class ScannedItemAction {
         return actionName;
     }
 
-    private boolean isUiThread() {
-        return uiThread;
-    }
-
-    private void setUiThread(boolean uiThread) {
-        this.uiThread = uiThread;
-    }
-
     public abstract boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException;
 
-    public ActionExecutor doActionAsync(final Context context, ScannedItem item, ScannerItemActionCallback callback) {
-        if(isUiThread()) {
-            try {
-                doAction(context, item, null);
-            } catch(ActionException e) {
-                callback.onActionException(getActionName(), item, e.getMessage());
-            }
-            return null;
-        } else {
-            ActionExecutor e = new ActionExecutor(context, item, callback);
-            e.execute();
-            return e;
-        }
+    public final ActionExecutor doActionAsync(final Context context, ScannedItem item, ScannerItemActionCallback callback) {
+        ActionExecutor e = new ActionExecutor(context, item, callback);
+        e.execute();
+        return e;
     }
 
     public interface ScannerItemActionCallback {
@@ -109,14 +93,14 @@ public abstract class ScannedItemAction {
         void onActionException(String actionName, ScannedItem item, String message);
     }
 
-    public class ActionException extends Exception {
+    public static class ActionException extends Exception {
 
         public ActionException(String message) {
             super(message);
         }
     }
 
-    public class ActionExecutor extends AsyncTask<Void, ScannedItemAction, Boolean> {
+    public class ActionExecutor extends AsyncTask<Void, Runnable, Boolean> {
 
         private Context context;
         private String response;
@@ -134,33 +118,27 @@ public abstract class ScannedItemAction {
         }
 
         @Override
-        protected void onProgressUpdate(ScannedItemAction... values) {
-            try {
-                values[0].doAction(context, item, this);
-            } catch(ActionException e) {
-                this.cancel(true);
-                error = e.getMessage();
-            }
+        protected void onProgressUpdate(Runnable... values) {
+            values[0].run();
         }
 
-        public String runOnUiThread(ScannedItemAction action) {
+        public String runOnUiThread(Runnable action) {
             this.publishProgress(action);
             String result = error;
             error = null;
             return result;
         }
 
-        public synchronized void setResponse(String response) {
+        public void setResponse(String response) {
             this.response = response;
         }
 
-        private synchronized String getResponse() {
+        private String getResponseValue() {
             return this.response;
         }
 
-        public synchronized String getResponse(long timeout) {
-            long start = System.currentTimeMillis();
-            while(this.getResponse() == null && (System.currentTimeMillis()-start) < timeout) {
+        public synchronized String getResponse() {
+            while(this.getResponseValue() == null) {
                 try {
                     Thread.sleep(250);
                 } catch(InterruptedException e) {
@@ -169,8 +147,10 @@ public abstract class ScannedItemAction {
                 if(this.isCancelled()) {
                     break;
                 }
+                Log.i(TAG, "getResponse: checking for response value...");
             }
-            String result = this.getResponse();
+            String result = this.getResponseValue();
+            Log.i(TAG, "getResponse: found response " + result);
             response = null;
             return result;
         }
@@ -178,8 +158,12 @@ public abstract class ScannedItemAction {
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
-                return doAction(context, item, this);
+                item.isLoading = true;
+                boolean result = doAction(context, item, this);
+                item.isLoading = false;
+                return result;
             } catch(ActionException e) {
+                item.isLoading = false;
                 error = e.getMessage();
                 return null;
             }

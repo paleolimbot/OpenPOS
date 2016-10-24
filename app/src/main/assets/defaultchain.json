@@ -41,6 +41,15 @@
           "amazon_search": "https://www.amazon.com/s/field-keywords={{isbn13}}",
           "_description": "{{title}} ({{authors}}"
         }
+      },
+      {
+        "type": "dialog",
+        "title": "Book {{isbn13}}",
+        "message": "Authors: {{authors}}",
+        "positive_text": "Enter",
+        "negative_text": "Cancel",
+        "input_type": "text",
+        "out_key": "dialog_response"
       }
     ]
   }

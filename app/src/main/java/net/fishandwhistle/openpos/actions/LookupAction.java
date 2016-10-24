@@ -103,7 +103,6 @@ public class LookupAction extends ScannedItemAction {
                 if(this.parser.parse(cached.data, item)) {
                     item.putValue(getTimeKey(), String.valueOf(cached.queryTime));
                     item.putValue(getSourceKey(), url);
-                    item.isLoading = false;
                     return true;
                 } else {
                     if(isQuiet()) {
@@ -116,9 +115,7 @@ public class LookupAction extends ScannedItemAction {
             } else {
                 if(isNetworkAvailable(context)) {
                     currentRequests.add(url);
-                    item.isLoading = true;
                     doDownload(context, url, item, executor);
-                    item.isLoading = false;
                     return true;
                 } else {
                     if(isQuiet()) {
@@ -155,7 +152,6 @@ public class LookupAction extends ScannedItemAction {
                     item.putValue(getErrorKey(), error);
                     return;
                 } else {
-                    item.isLoading = false;
                     throw new ActionException(error);
                 }
             }
@@ -198,7 +194,6 @@ public class LookupAction extends ScannedItemAction {
                 item.putValue(getErrorKey(), error);
                 return;
             } else {
-                item.isLoading = false;
                 throw new ActionException(error);
             }
         } finally {
@@ -219,7 +214,6 @@ public class LookupAction extends ScannedItemAction {
         if(out == null) {
             //should not happen?
             currentRequests.remove(urlString);
-            item.isLoading = false;
             throw new ActionException("Null output from download");
         }
 
@@ -269,7 +263,6 @@ public class LookupAction extends ScannedItemAction {
                     item.putValue("lookup_error", error);
                     return true;
                 } else {
-                    item.isLoading = false;
                     throw new ActionException(error);
                 }
             }
