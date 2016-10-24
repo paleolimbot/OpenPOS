@@ -25,15 +25,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import net.fishandwhistle.openpos.actions.ActionChain;
-import net.fishandwhistle.openpos.actions.ActionFork;
-import net.fishandwhistle.openpos.actions.KeyFilterAction;
-import net.fishandwhistle.openpos.actions.LogicAction;
+import net.fishandwhistle.openpos.actions.ActionFactory;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
-import net.fishandwhistle.openpos.actions.StringFormatAction;
-import net.fishandwhistle.openpos.api.AmazonURLLookup;
-import net.fishandwhistle.openpos.api.ISBNQuery;
-import net.fishandwhistle.openpos.api.UPCQuery;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.Code128Spec;
@@ -54,6 +47,13 @@ import net.fishandwhistle.openpos.items.ItemFormatter;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -153,11 +153,26 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             }
         }.execute();
 
-        actions = new ActionFork(new LogicAction("isbn13 is null", "{\"key_map\": {\"isbn13\":\"\"}}"),
-                new ActionFork(new LogicAction("gtin13 is null", "{\"key_map\": {\"gtin13\":\"\"}}"), null, new UPCQuery()),
-                new ActionChain("isbnChain", "{}", new ISBNQuery(),
-                        new StringFormatAction("title to description", "{\"key_map\": {\"_description\":\"{{title}} by {{authors}}\"}}"),
-                        new AmazonURLLookup()));
+        try {
+            StringBuilder buf=new StringBuilder();
+            InputStream json=getAssets().open("defaultchain.json");
+            BufferedReader in=
+                    new BufferedReader(new InputStreamReader(json, "UTF-8"));
+            String str;
+
+            while ((str=in.readLine()) != null) {
+                buf.append(str);
+            }
+            in.close();
+            JSONObject o = new JSONObject(buf.toString());
+            actions = ActionFactory.inflate(o);
+        } catch (IOException e) {
+
+        } catch(JSONException e) {
+
+        }
+
+
     }
 
     @Override

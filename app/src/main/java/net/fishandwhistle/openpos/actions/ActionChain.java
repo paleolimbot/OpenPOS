@@ -7,6 +7,10 @@ import android.util.Log;
 
 import net.fishandwhistle.openpos.items.ScannedItem;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,11 +20,25 @@ import java.util.List;
 
 public class ActionChain extends ScannedItemAction {
 
-    private ScannedItemAction[] actions ;
+    private static final String OPTION_ACTIONS = "actions";
 
-    public ActionChain(String actionName, String jsonOptions, ScannedItemAction... actions) {
-        super(actionName, jsonOptions);
-        this.actions = actions;
+    private List<ScannedItemAction> actions ;
+
+    public ActionChain(JSONObject jsonObject) {
+        super(jsonObject);
+        this.actions = new ArrayList<>();
+        JSONArray jsonActions = getOptionArray(OPTION_ACTIONS);
+        if(jsonActions == null) throw new IllegalArgumentException("Option 'actions' required");
+        try {
+            for(int i=0; i<jsonActions.length(); i++) {
+                JSONObject actionJson = jsonActions.getJSONObject(i);
+                this.actions.add(ActionFactory.inflate(actionJson));
+            }
+        } catch(JSONException e) {
+            throw new IllegalArgumentException("Invalid JSON in constructor");
+        }
+
+
     }
 
     @Override

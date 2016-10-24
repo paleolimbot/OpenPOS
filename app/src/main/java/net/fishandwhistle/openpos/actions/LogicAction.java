@@ -4,6 +4,8 @@ import android.content.Context;
 
 import net.fishandwhistle.openpos.items.ScannedItem;
 
+import org.json.JSONObject;
+
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,8 +31,8 @@ public class LogicAction extends ScannedItemAction {
     private Map<String, String> keyMap;
     private String outKey;
 
-    public LogicAction(String actionName, String jsonOptions) {
-        super(actionName, jsonOptions);
+    public LogicAction(JSONObject jsonObject) {
+        super(jsonObject);
 
         String sMatchOption = getOptionString(OPTION_MATCH_OPTION);
         if(sMatchOption == null) {

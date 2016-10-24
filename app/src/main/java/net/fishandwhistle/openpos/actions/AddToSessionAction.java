@@ -5,6 +5,8 @@ import android.content.Context;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemManager;
 
+import org.json.JSONObject;
+
 /**
  * Created by dewey on 2016-10-22.
  */
@@ -15,8 +17,8 @@ public class AddToSessionAction extends ScannedItemAction {
 
     private String sessionName;
 
-    public AddToSessionAction(String jsonOptions) {
-        super("addToSession", jsonOptions);
+    public AddToSessionAction(JSONObject jsonObject) {
+        super(jsonObject);
         sessionName = getOptionString(OPTION_SESSION_NAME); //null session means current active session
     }
 

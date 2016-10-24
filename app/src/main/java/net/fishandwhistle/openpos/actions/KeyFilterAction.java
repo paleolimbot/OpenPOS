@@ -6,6 +6,7 @@ import net.fishandwhistle.openpos.items.ScannedItem;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -29,8 +30,8 @@ public class KeyFilterAction extends ScannedItemAction {
     private String action;
     private String[] keys;
 
-    public KeyFilterAction(String actionName, String jsonOptions) {
-        super(actionName, jsonOptions);
+    public KeyFilterAction(JSONObject jsonObject) {
+        super(jsonObject);
         action = getOptionString(OPTION_ACTION);
         if(action == null) throw new IllegalArgumentException("Option 'action' is required");
         if(!action.equals("keep") && !action.equals("remove"))

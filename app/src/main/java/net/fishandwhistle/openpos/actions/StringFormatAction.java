@@ -21,8 +21,8 @@ public class StringFormatAction extends ScannedItemAction {
 
     public static final String OPTION_KEYMAP = "key_map";
 
-    public StringFormatAction(String actionName, String jsonOptions) {
-        super(actionName, jsonOptions);
+    public StringFormatAction(JSONObject jsonObject) {
+        super(jsonObject);
         if(getOptionObject(OPTION_KEYMAP) == null) throw new IllegalArgumentException("key_map is required");
     }
 
@@ -32,7 +32,7 @@ public class StringFormatAction extends ScannedItemAction {
         JSONObject map = getOptionObject(OPTION_KEYMAP);
         Iterator<String> keys = map.keys();
         StringBuffer sb = new StringBuffer();
-
+        //TODO matching of multiple keys fails
         try {
             while(keys.hasNext()) {
                 String key = keys.next();

@@ -49,8 +49,8 @@ public class LookupAction extends ScannedItemAction {
     private LookupParser parser;
     private String encoding;
 
-    public LookupAction(String actionName, String jsonOptions) {
-        super(actionName, jsonOptions);
+    public LookupAction(JSONObject jsonObject) {
+        super(jsonObject);
         this.uriFormat = getOptionString(OPTION_URI_FORMAT);
         this.keyMap = extractKeyMap(getOptionObject(OPTION_KEYMAP));
         switch (getOptionString(OPTION_MIMETYPE)) {

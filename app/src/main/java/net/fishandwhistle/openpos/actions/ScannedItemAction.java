@@ -20,17 +20,18 @@ import java.util.Map;
 public abstract class ScannedItemAction {
 
     public static final String OPTION_QUIET = "quiet";
+    public static final String OPTION_TYPE = "type";
+    public static final String OPTION_ACTION_NAME = "name";
 
     private String actionName;
     private JSONObject options;
     private boolean quiet;
 
-    public ScannedItemAction(String actionName, String jsonOptions) {
-        this.actionName = actionName;
-        try {
-            options = new JSONObject(jsonOptions);
-        } catch (JSONException e) {
-            throw new IllegalArgumentException("Invalid JSON passed to ScannedItemAction: " + e.getMessage());
+    public ScannedItemAction(JSONObject jsonOptions) {
+        options = jsonOptions;
+        this.actionName = getOptionString(OPTION_ACTION_NAME);
+        if(this.actionName == null) {
+            this.actionName = this.getClass().getName();
         }
         String isQuiet = getOptionString(OPTION_QUIET);
         if(isQuiet == null) {
