@@ -31,12 +31,11 @@ public class StringFormatAction extends ScannedItemAction {
         Pattern TAG = Pattern.compile("\\{\\{(.*?)\\}\\}");
         JSONObject map = getOptionObject(OPTION_KEYMAP);
         Iterator<String> keys = map.keys();
-        StringBuffer sb = new StringBuffer();
-        //TODO matching of multiple keys fails
         try {
             while(keys.hasNext()) {
                 String key = keys.next();
                 String value = map.getString(key);
+                StringBuffer sb = new StringBuffer();
                 Matcher m = TAG.matcher(value);
                 boolean hasResult = false;
                 while(m.find()) {
