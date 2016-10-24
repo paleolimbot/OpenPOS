@@ -27,7 +27,7 @@ public class StringFormatAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item) throws ActionException {
+    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         Pattern TAG = Pattern.compile("\\{\\{(.*?)\\}\\}");
         JSONObject map = getOptionObject(OPTION_KEYMAP);
         Iterator<String> keys = map.keys();

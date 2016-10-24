@@ -73,7 +73,7 @@ public class LogicAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item) {
+    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) {
 
         boolean result = logic.equals("all");
 

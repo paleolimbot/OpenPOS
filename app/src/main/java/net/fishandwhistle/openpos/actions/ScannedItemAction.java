@@ -1,5 +1,6 @@
 package net.fishandwhistle.openpos.actions;
 
+import android.app.Notification;
 import android.content.Context;
 import android.os.AsyncTask;
 
@@ -26,6 +27,7 @@ public abstract class ScannedItemAction {
     private String actionName;
     private JSONObject options;
     private boolean quiet;
+    private boolean uiThread;
 
     public ScannedItemAction(JSONObject jsonOptions) {
         options = jsonOptions;
@@ -77,37 +79,29 @@ public abstract class ScannedItemAction {
         return actionName;
     }
 
-    public abstract boolean doAction(Context context, ScannedItem item) throws ActionException;
+    private boolean isUiThread() {
+        return uiThread;
+    }
 
-    public void doActionAsync(final Context context, ScannedItem item, final ScannerItemActionCallback callback) {
-        new AsyncTask<ScannedItem, Void, ScannedItem>() {
+    private void setUiThread(boolean uiThread) {
+        this.uiThread = uiThread;
+    }
 
-            private String error = null;
+    public abstract boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException;
 
-            @Override
-            protected ScannedItem doInBackground(ScannedItem... params) {
-                ScannedItem item = params[0];
-                try {
-                    if (doAction(context, item)) {
-                        return item;
-                    } else {
-                        return null;
-                    }
-                } catch(ActionException e) {
-                    error = e.getMessage();
-                    return null;
-                }
+    public ActionExecutor doActionAsync(final Context context, ScannedItem item, ScannerItemActionCallback callback) {
+        if(isUiThread()) {
+            try {
+                doAction(context, item, null);
+            } catch(ActionException e) {
+                callback.onActionException(getActionName(), item, e.getMessage());
             }
-
-            @Override
-            protected void onPostExecute(ScannedItem item) {
-                if(item != null) {
-                    callback.onScannerItemAction(getActionName(), item);
-                } else if(error != null) {
-                    callback.onActionException(getActionName(), item, error);
-                }
-            }
-        }.execute(item);
+            return null;
+        } else {
+            ActionExecutor e = new ActionExecutor(context, item, callback);
+            e.execute();
+            return e;
+        }
     }
 
     public interface ScannerItemActionCallback {
@@ -119,6 +113,87 @@ public abstract class ScannedItemAction {
 
         public ActionException(String message) {
             super(message);
+        }
+    }
+
+    public class ActionExecutor extends AsyncTask<Void, ScannedItemAction, Boolean> {
+
+        private Context context;
+        private String response;
+        private ScannerItemActionCallback callback;
+        private ScannedItem item;
+        private String error;
+
+
+        public ActionExecutor(Context context, ScannedItem item, ScannerItemActionCallback callback) {
+            this.context = context;
+            this.callback = callback;
+            this.response = null;
+            this.item = item;
+            this.error = null;
+        }
+
+        @Override
+        protected void onProgressUpdate(ScannedItemAction... values) {
+            try {
+                values[0].doAction(context, item, this);
+            } catch(ActionException e) {
+                this.cancel(true);
+                error = e.getMessage();
+            }
+        }
+
+        public String runOnUiThread(ScannedItemAction action) {
+            this.publishProgress(action);
+            String result = error;
+            error = null;
+            return result;
+        }
+
+        public synchronized void setResponse(String response) {
+            this.response = response;
+        }
+
+        private synchronized String getResponse() {
+            return this.response;
+        }
+
+        public synchronized String getResponse(long timeout) {
+            long start = System.currentTimeMillis();
+            while(this.getResponse() == null && (System.currentTimeMillis()-start) < timeout) {
+                try {
+                    Thread.sleep(250);
+                } catch(InterruptedException e) {
+                    break;
+                }
+                if(this.isCancelled()) {
+                    break;
+                }
+            }
+            String result = this.getResponse();
+            response = null;
+            return result;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            try {
+                return doAction(context, item, this);
+            } catch(ActionException e) {
+                error = e.getMessage();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if(callback != null) {
+                if (result != null) {
+                    callback.onScannerItemAction(getActionName(), item);
+                } else if (error != null) {
+                    callback.onActionException(getActionName(), item, error);
+                }
+            }
         }
     }
 

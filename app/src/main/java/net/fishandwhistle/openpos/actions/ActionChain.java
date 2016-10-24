@@ -42,13 +42,13 @@ public class ActionChain extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item) throws ActionException {
+    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         boolean result = true;
         List<String> errors = new ArrayList<>();
         for(ScannedItemAction action: actions) {
             boolean actionResult;
             try {
-                actionResult = action.doAction(context, item);
+                actionResult = action.doAction(context, item, executor);
                 if(!isQuiet() && !actionResult) {
                     return false;
                 } else {

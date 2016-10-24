@@ -68,7 +68,7 @@ public class KeyFilterAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item) {
+    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) {
         List<String> itemKeys = item.getKeys();
         boolean result = false;
             for(String itemKey: itemKeys) {

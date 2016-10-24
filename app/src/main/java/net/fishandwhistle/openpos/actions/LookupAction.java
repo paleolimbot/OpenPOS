@@ -102,7 +102,7 @@ public class LookupAction extends ScannedItemAction {
         }
     }
 
-    public boolean doAction(Context context, ScannedItem item) throws ActionException {
+    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         String url = formatUri(uriFormat, item);
         TextApiCache cache = new TextApiCache(context);
 
@@ -131,7 +131,7 @@ public class LookupAction extends ScannedItemAction {
                 if(isNetworkAvailable(context)) {
                     currentRequests.add(url);
                     item.isLoading = true;
-                    doDownload(context, url, item);
+                    doDownload(context, url, item, executor);
                     item.isLoading = false;
                     return true;
                 } else {
@@ -146,7 +146,7 @@ public class LookupAction extends ScannedItemAction {
         }
     }
 
-    private void doDownload(Context context, String urlString, ScannedItem item) throws ActionException {
+    private void doDownload(Context context, String urlString, ScannedItem item, ActionExecutor executor) throws ActionException {
         String out = null;
         InputStream input = null;
         ByteArrayOutputStream output = null;
@@ -186,12 +186,17 @@ public class LookupAction extends ScannedItemAction {
             long total = 0;
             int count;
             while ((count = input.read(data)) != -1) {
-                // allow canceling with back button
-//                if (isCancelled()) {
-//                    input.close();
-//                    currentRequests.remove(sUrl[0]);
-//                    return false;
-//                }
+                // allow canceling
+                if (executor.isCancelled()) {
+                    input.close();
+                    currentRequests.remove(urlString);
+                    String error = "User cancelled";
+                    if(isQuiet()) {
+                        item.putValue(getErrorKey(), error);
+                    } else {
+                        throw new ActionException(error);
+                    }
+                }
                 total += count;
                 // publishing the progress....
 //                if (fileLength > 0) // only if total length is known

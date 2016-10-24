@@ -43,16 +43,16 @@ public class ActionFork extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item) throws ActionException {
-        if(forkAction.doAction(context, item)) {
+    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+        if(forkAction.doAction(context, item, executor)) {
             if(ifTrue != null) {
-                return ifTrue.doAction(context, item);
+                return ifTrue.doAction(context, item, executor);
             } else {
                 return true;
             }
         } else {
             if(ifFalse != null) {
-                return ifFalse.doAction(context, item);
+                return ifFalse.doAction(context, item, executor);
             } else {
                 return true;
             }
