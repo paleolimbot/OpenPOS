@@ -1,0 +1,285 @@
+[
+  {
+    "name": "UPC Database",
+    "homepage": "http://www.upcdatabase.org",
+    "api_signup": "http://upcdatabase.org/signup",
+    "sample_response": {
+
+    },
+    "lookup_action": {
+      "type": "lookup",
+      "name": "UPC Lookup",
+      "uri_format": "http://api.upcdatabase.org/json/{{APIKEY}}/{{gtin13}}",
+      "mime_type": "application/json",
+      "key_map": {
+        "reason": "lookup_error",
+        "itemname": "itemname",
+        "alias": "alias",
+        "description": "_description"
+      }
+    },
+    "required_parameters": ["APIKEY"]
+  },
+  {
+    "name": "ISBN Database",
+    "homepage": "http://www.isbndb.com/",
+    "api_signup": "http://isbndb.com/account/logincreate",
+    "sample_resource": {
+      "index_searched": "isbn",
+      "data": [
+        {
+          "title_latin": "Multidimensional scaling",
+          "language": "eng",
+          "publisher_name": "Chapman & Hall/CRC",
+          "publisher_id": "chapman_hall_crc",
+          "publisher_text": "Boca Raton, FL : Chapman & Hall/CRC 2000.",
+          "urls_text": "Electronic version http://www.lib.uts.edu.au/cgi/goto.cgi?url=http://www.statsnetbase.com/ejournals/books/book_km.asp?id=793",
+          "title_long": "",
+          "author_data": [
+            {
+              "name": "Cox, Trevor F.",
+              "id": "cox_trevor_f"
+            },
+            {
+              "id": "cox_michael",
+              "name": "Cox, Michael"
+            }
+          ],
+          "physical_description_text": "xi, 308 p. + 1 computer optical disc (4 3/4 in.)",
+          "summary": "",
+          "isbn13": "9781584880943",
+          "subject_ids": [
+            "multivariate_analysis",
+            "multidimensional_scaling"
+          ],
+          "book_id": "multidimensional_scaling_a04",
+          "awards_text": "",
+          "dewey_normal": "519.535",
+          "marc_enc_level": "",
+          "notes": "Includes bibliographical references and indexes.",
+          "edition_info": "(alk. paper)",
+          "dewey_decimal": "519.5/35",
+          "isbn10": "1584880945",
+          "title": "Multidimensional scaling",
+          "lcc_number": ""
+        }
+      ]
+    },
+    "lookup_action": {
+      "type": "lookup",
+      "name": "isbndb",
+      "encoding": "windows-1251",
+      "mime_type": "application/json",
+      "uri_format": "http://isbndb.com/api/v2/json/{{APIKEY}}/book/{{isbn13}}",
+      "key_map": {
+        "data[0]/title": "title",
+        "data[0]/author_data[; ]/name": "authors",
+        "data[0]/dewey_normal": "dewey_normal",
+        "data[0]/lcc_number": "lcc_number",
+        "data[0]/publisher_text": "publisher"
+      }
+    },
+    "required_parameters": ["APIKEY"]
+  },
+  {
+    "name": "Semantics3",
+    "homepage": "http://www.semantics3.com/",
+    "api_signup": "https://dashboard.semantics3.com/signup",
+    "sample_response": {
+      "total_results_count": 1,
+      "code": "OK",
+      "offset": 0,
+      "results_count": 1,
+      "results": [
+        {
+          "name": "Toshiba Portege Z830-S8301 13.3-Inch Netbook Computer",
+          "width": "315.98",
+          "price": "1134.99",
+          "cat_id": "23130",
+          "manufacturer": "Toshiba America Information Systems",
+          "category": "Netbooks",
+          "ean": "0883974958450",
+          "length": "227.08",
+          "upc": "883974958450",
+          "description": "Display: 13.3\"widescreen HD TFT LED Backlit displa... (visit site URLs for full description)",
+          "features": {
+            "System Type": "Ultrabook",
+            "Resolution": "1.3 Megapixel",
+            "Capacity": "47 Wh",
+            "Humidity Range Operating": "20 - 80% (non-condensing)",
+            "64-bit Computing": "Yes",
+            "Software Included": "Adobe Acrobat Reader, Google Toolbar, Adobe Flash Player, Skype, Toshiba Assist, Toshiba Recovery DiskCreator, Windows Live Essentials, Toshiba PC Health Monitor, Toshiba Eco Utility, Toshiba ReelTime, Toshiba Bulletin Board, Google Chrome, Toshiba Media Controller, Microsoft Silverlight, Toshiba Disc Creator, Toshiba Fingerprint Utility, Toshiba Security Assist, Toshiba Value Added Package, Windows Live Messenger, Face Recognition software, Windows Live Photo Gallery, Windows Live Mail, Windows Live Writer, Microsoft Windows Media Player 12, Toshiba Service Station, Toshiba Hardware Setup Utility, Toshiba Web Camera Application, Toshiba Online Backup (30 days trial), Windows Live Movie Maker, Microsoft Office 2010 Starter, Toshiba App Place, Toshiba Book Place, Toshiba HDD/SSD Alert, Toshiba Sleep Utility, Toshiba Password Utility, Microsoft Internet Explorer 9.0, Toshiba Device Access Control, Toshiba Resolution+, Norton Internet Security 2012 (30 days trial), Intel Wireless Display Technology 2.1",
+            "LCD Backlight Technology": "LED backlight",
+            "Ethernet Controller": "Intel 82579LM",
+            "ENERGY STAR Qualified": "Yes",
+            "Image Aspect Ratio": "16:9",
+            "Speed": "1333 MHz",
+            "Graphics Processor": "Intel HD Graphics 3000",
+            "Max Allocated RAM Size": "1696 MB",
+            "Cache": "L3 - 3 MB",
+            "Microsoft Office Preloaded": "Includes a pre-loaded image of select Microsoft Office 2010 suites. Purchase an Office 2010 Product Key Card or disc to activate preloaded software on this PC.",
+            "Audio Features": "MaxxAudio 3",
+            "Memory Card Reader": "Yes ( SD Card, miniSD, SDHC Memory Card, microSD )",
+            "Sound": "Stereo speakers , microphone",
+            "Operating System": "Microsoft Windows 7 Professional (32/64 bits)",
+            "Wireless": "802.11n, Bluetooth 3.0 HS",
+            "Technology": "8-cell lithium ion",
+            "Run Time": "Up to 8.3 hour(s)",
+            "Service & Support Details": "Limited warranty - 3 years Limited warranty - battery - 1 year",
+            "Service & Support": "3 years warranty",
+            "Max Operating Temperature": "95 ÃÂ°F",
+            "RAM": "4 GB ( 1 x 2 GB + 2 GB (soldered) )",
+            "Camera": "Integrated webcam",
+            "CPU": "Intel Core i5 (2nd Gen) 2557M / 1.7 GHz",
+            "EPEAT Compliant": "EPEAT Gold",
+            "Max RAM Supported": "6 GB",
+            "blob": "13.3\" 1366 x 768; 2.47 lb; 4 GB Memory; HD 3000; Intel Core i5 1.70 GHz; Windows 7 Professional",
+            "Number of Cores": "Dual-Core",
+            "Other Features": "Security lock slot (cable lock sold separately), Toshiba EasyGuard, Intel Active Management Technology (iAMT), USB Sleep-and-charge ports",
+            "Security": "Trusted Platform Module (TPM 1.2) Security Chip , fingerprint reader",
+            "Localization": "United States",
+            "Hard Drive": "128 GB SSD",
+            "Compliant Standards": "RoHS",
+            "Max Turbo Speed": "2.7 GHz",
+            "Interfaces": "VGA LAN Microphone input Headphone output 2 x USB 2.0 USB 3.0 HDMI",
+            "Input": "AC 120/230 V ( 50/60 Hz )",
+            "Network Interface": "Gigabit Ethernet",
+            "Interface": "Serial ATA-300",
+            "Widescreen": "Yes",
+            "Chipset": "Mobile Intel QM67 Express",
+            "Memory Allocation Technology": "Dynamic Video Memory Technology",
+            "Slots Qty": "1",
+            "Output": "45 Watt , 19 V , 2.37 A",
+            "Wireless Controller": "Intel Centrino Advanced-N 6230",
+            "Min Operating Temperature": "41 ÃÂ°F"
+          },
+          "weight": "1120373.15",
+          "color": "Silver",
+          "sitedetails": [
+            {
+              "latestoffers": [
+                {
+                  "condition": "Used - Very Good",
+                  "id": "6OSVBU9ZQ0ieACuEuyeyse",
+                  "seller": "dragdons",
+                  "lastrecorded_at": 1410797800,
+                  "shipping": "6.99",
+                  "price": "360.00",
+                  "currency": "USD",
+                  "firstrecorded_at": 1410797800,
+                  "isactive": 0
+                },
+                {
+                  "condition": "Used - Very Good",
+                  "id": "58I8fFC5dQWQ4u0SwGIyKA",
+                  "lastrecorded_at": 1409330900,
+                  "seller": "Arsenal PC",
+                  "price": "689.00",
+                  "currency": "USD",
+                  "availability": "[BBX: Buy Box]",
+                  "firstrecorded_at": 1402113600,
+                  "isactive": 0
+                },
+                {
+                  "seller": "dragdons",
+                  "lastrecorded_at": 1409330900,
+                  "condition": "Used - Very Good",
+                  "id": "6eOarV0JSS8g0sEKKsqqOY",
+                  "currency": "USD",
+                  "firstrecorded_at": 1409330900,
+                  "shipping": "6.99",
+                  "price": "450.00",
+                  "isactive": 0
+                }
+              ],
+              "sku": "B006Z90HMG",
+              "recentoffers_count": 0,
+              "name": "amazon.com",
+              "url": "http://www.amazon.com/dp/B006Z90HMG"
+            },
+            {
+              "recentoffers_count": 0,
+              "sku": "20604679",
+              "name": "walmart.com",
+              "latestoffers": [
+                {
+                  "id": "6JotT9dMmWeYoi0UqKESoO",
+                  "lastrecorded_at": 1412494500,
+                  "seller": "Walmart",
+                  "price": "1167.74",
+                  "firstrecorded_at": 1349396400,
+                  "availability": "Out of Stock",
+                  "currency": "USD",
+                  "isactive": 0
+                }
+              ],
+              "url": "http://www.walmart.com/ip/20604679"
+            },
+            {
+              "latestoffers": [
+                {
+                  "lastrecorded_at": 1476459000,
+                  "seller": "Newegg",
+                  "id": "5QTxsmf7GwYQWca60UQyAy",
+                  "currency": "USD",
+                  "firstrecorded_at": 1350835696,
+                  "availability": "Not Available",
+                  "price": "1134.99",
+                  "isactive": 0
+                },
+                {
+                  "price": "1134.99",
+                  "shipping": "14.30",
+                  "currency": "USD",
+                  "availability": "Deactivated. This item is currently out of stock and it may or may not be restocked. [BBX: Buy Box]",
+                  "firstrecorded_at": 1360613800,
+                  "id": "3l8ZNONJHyWoMsaO8AGoCQ",
+                  "lastrecorded_at": 1362344900,
+                  "seller": "newegg.com",
+                  "isactive": 0
+                }
+              ],
+              "name": "newegg.com",
+              "url": "http://www.newegg.com/Product/Product.aspx?Item=N82E16834214948",
+              "sku": "N82E16834214948",
+              "recentoffers_count": 1
+            }
+          ],
+          "updated_at": 1476681829,
+          "mpn": "PT225U-00400EN",
+          "sem3_id": "2iTwoIQGhEKMiW62moMy0u",
+          "brand": "Toshiba",
+          "model": "PT225U 004004;Z830 S8301",
+          "created_at": 1347480704,
+          "height": "15.24",
+          "gtins": [
+            "00883974958450"
+          ],
+          "geo": [
+            "usa"
+          ],
+          "price_currency": "USD",
+          "images": [
+            "http://sem3-idn.s3-website-us-east-1.amazonaws.com/44abf7582bdd564f8c4282c218aadf9f,0.jpg"
+          ],
+          "images_total": 1
+        }
+      ]
+    },
+    "lookup_action": {
+      "type": "lookup",
+      "name": "Semantics3",
+      "uri_format": "https://api.semantics3.com/v1/products?q={\"ean\":\"{{gtin13}}\", \"fields\": [\"name\", \"price\", \"description\", \"manufacturer\"]}",
+      "mime_type": "application/json",
+      "oauth_apikey": "{{APIKEY}}",
+      "oauth_secret": "{{SECRET}}",
+      "key_map": {
+        "results[0]/name": "_description",
+        "results[0]/description": "description",
+        "results[0]/price": "price",
+        "results[0]/manufacturer": "manufacturer"
+      }
+    },
+    "required_parameters": ["APIKEY", "SECRET"]
+  }
+]
