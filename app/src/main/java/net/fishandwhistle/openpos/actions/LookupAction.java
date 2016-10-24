@@ -88,22 +88,8 @@ public class LookupAction extends ScannedItemAction {
         return keyMap;
     }
 
-    private static String formatUri(String format, ScannedItem item) {
-        String out = format;
-        List<String> keys = item.getKeys();
-        for(String key: keys) {
-            String replace = "{{"+key+"}}";
-            out = out.replace(replace, item.getValue(key));
-        }
-        if(out.contains("{{") || out.contains("}}")) {
-            return null;
-        } else {
-            return out;
-        }
-    }
-
     public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
-        String url = formatUri(uriFormat, item);
+        String url = StringFormatAction.formatWithObject(uriFormat, item);
         TextApiCache cache = new TextApiCache(context);
 
         if(currentRequests.contains(url)) {

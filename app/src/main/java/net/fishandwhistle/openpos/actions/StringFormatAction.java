@@ -35,30 +35,34 @@ public class StringFormatAction extends ScannedItemAction {
             while(keys.hasNext()) {
                 String key = keys.next();
                 String value = map.getString(key);
-                StringBuffer sb = new StringBuffer();
-                Matcher m = TAG.matcher(value);
-                boolean hasResult = false;
-                while(m.find()) {
-                    hasResult = true;
-                    String attr = m.group(1);
-                    String attrVal = item.getValue(attr);
-                    if(attrVal == null) {
-                        if(isQuiet()) { // unmapped key
-                            hasResult = false;
-                            break;
-                        } else {
-                            throw new ActionException("Unmapped key in StringFormat: " + attr);
-                        }
-                    }
-                    m.appendReplacement(sb, attrVal);
+                String formatted = formatWithObject(value, item);
+                if(formatted != null) {
+                    item.putValue(key, formatted);
+                } else if(!isQuiet()) {
+                    throw new ActionException("Unmapped key in " + value);
                 }
-                m.appendTail(sb);
-                if(hasResult) item.putValue(key, sb.toString());
             }
             return true;
         } catch(JSONException e) {
             Log.e("RegexLookup", "doAction: json exception", e);
             throw new ActionException("JSON Error: " + e.getMessage());
         }
+    }
+
+
+    public static String formatWithObject(String format, ScannedItem item) {
+        Pattern TAG = Pattern.compile("\\{\\{(.*?)\\}\\}");
+        StringBuffer sb = new StringBuffer();
+        Matcher m = TAG.matcher(format);
+        while(m.find()) {
+            String attr = m.group(1);
+            String attrVal = item.getValue(attr);
+            if(attrVal == null) {
+                return null;
+            }
+            m.appendReplacement(sb, attrVal);
+        }
+        m.appendTail(sb);
+        return sb.toString();
     }
 }
