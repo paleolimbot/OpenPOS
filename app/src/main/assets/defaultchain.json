@@ -1,56 +1,60 @@
 {
-  "type": "fork",
-  "fork": {
-    "type": "logic",
-    "key_map": {
-      "isbn13": ""
-    }
-  },
-  "if_true": {
-    "type": "lookup",
-    "name": "upclookup",
-    "uri_format": "http://api.upcdatabase.org/json/2bf423e9a6b6800ff83ab88d74856501/{{gtin13}}",
-    "mime_type": "application/json",
-    "key_map": {
-      "reason": "error",
-      "itemname": "itemname",
-      "alias": "alias",
-      "description": "_description"
-    }
-  },
-  "if_false": {
-    "type": "chain",
-    "actions": [
-      {
-        "type": "lookup",
-        "name": "isbndb",
-        "encoding": "windows-1251",
-        "mime_type": "application/json",
-        "uri_format": "http://isbndb.com/api/v2/json/T89SFTZN/book/{{isbn13}}",
-        "key_map": {
-          "data[0]/title": "title",
-          "data[0]/author_data[; ]/name": "authors",
-          "data[0]/dewey_normal": "dewey_normal",
-          "data[0]/lcc_number": "lcc_number",
-          "data[0]/publisher_text": "publisher"
+  "type": "switch",
+  "is_regex": true,
+  "key": "gtin13",
+  "values": ["^97.*?$", "^.*?$"],
+  "actions": [
+    {
+      "type": "chain",
+      "name": "ISBN Chain",
+      "actions": [
+        {
+          "type": "lookup",
+          "name": "isbndb",
+          "encoding": "windows-1251",
+          "mime_type": "application/json",
+          "uri_format": "http://isbndb.com/api/v2/json/T89SFTZN/book/{{isbn13}}",
+          "key_map": {
+            "data[0]/title": "title",
+            "data[0]/author_data[; ]/name": "authors",
+            "data[0]/dewey_normal": "dewey_normal",
+            "data[0]/lcc_number": "lcc_number",
+            "data[0]/publisher_text": "publisher"
+          }
+        },
+        {
+          "type": "stringformat",
+          "key_map": {
+            "amazon_search": "https://www.amazon.com/s/field-keywords={{isbn13}}",
+            "_description": "{{title}} ({{authors}}"
+          }
+        },
+        {
+          "type": "dialog",
+          "title": "Book {{isbn13}}",
+          "message": "Authors: {{authors}}",
+          "positive_text": "Enter",
+          "negative_text": "Cancel",
+          "input_type": "text",
+          "out_key": "dialog_response"
+        },
+        {
+          "type": "intent",
+          "uri_format": "https://www.amazon.com/s/field-keywords={{isbn13}}"
         }
-      },
-      {
-        "type": "stringformat",
-        "key_map": {
-          "amazon_search": "https://www.amazon.com/s/field-keywords={{isbn13}}",
-          "_description": "{{title}} ({{authors}}"
-        }
-      },
-      {
-        "type": "dialog",
-        "title": "Book {{isbn13}}",
-        "message": "Authors: {{authors}}",
-        "positive_text": "Enter",
-        "negative_text": "Cancel",
-        "input_type": "text",
-        "out_key": "dialog_response"
+      ]
+    },
+    {
+      "type": "lookup",
+      "name": "UPC Lookup",
+      "uri_format": "http://api.upcdatabase.org/json/2bf423e9a6b6800ff83ab88d74856501/{{gtin13}}",
+      "mime_type": "application/json",
+      "key_map": {
+        "reason": "error",
+        "itemname": "itemname",
+        "alias": "alias",
+        "description": "_description"
       }
-    ]
-  }
+    }
+  ]
 }

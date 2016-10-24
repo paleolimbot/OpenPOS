@@ -22,7 +22,7 @@ public class ActionChain extends ScannedItemAction {
 
     private static final String OPTION_ACTIONS = "actions";
 
-    private List<ScannedItemAction> actions ;
+    protected List<ScannedItemAction> actions ;
 
     public ActionChain(JSONObject jsonObject) {
         super(jsonObject);
@@ -49,7 +49,7 @@ public class ActionChain extends ScannedItemAction {
             boolean actionResult;
             try {
                 actionResult = action.doAction(context, item, executor);
-                if(!isQuiet() && !actionResult) {
+                if((executor != null && executor.isCancelled()) || (!isQuiet() && !actionResult)) {
                     return false;
                 } else {
                     result = actionResult && result;

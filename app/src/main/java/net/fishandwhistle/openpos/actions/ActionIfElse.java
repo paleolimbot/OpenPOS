@@ -11,7 +11,7 @@ import org.json.JSONObject;
  * Created by dewey on 2016-10-23.
  */
 
-public class ActionFork extends ScannedItemAction {
+public class ActionIfElse extends ScannedItemAction {
 
     private static final String OPTION_FORK_ACTION = "fork";
     private static final String OPTION_TRUE_ACTION = "if_true";
@@ -21,7 +21,7 @@ public class ActionFork extends ScannedItemAction {
     private ScannedItemAction ifTrue;
     private ScannedItemAction ifFalse;
 
-    public ActionFork(JSONObject jsonObject) {
+    public ActionIfElse(JSONObject jsonObject) {
         super(jsonObject);
         try {
             JSONObject fork = getOptionObject(OPTION_FORK_ACTION);

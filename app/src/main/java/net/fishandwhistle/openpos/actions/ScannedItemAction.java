@@ -129,15 +129,15 @@ public abstract class ScannedItemAction {
             return result;
         }
 
-        public void setResponse(String response) {
+        public synchronized void setResponse(String response) {
             this.response = response;
         }
 
-        private String getResponseValue() {
+        private synchronized String getResponseValue() {
             return this.response;
         }
 
-        public synchronized String getResponse() {
+        public String getResponse() {
             while(this.getResponseValue() == null) {
                 try {
                     Thread.sleep(250);

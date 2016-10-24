@@ -14,8 +14,12 @@ public class ActionFactory {
         switch(o.getString(ScannedItemAction.OPTION_TYPE)) {
             case "chain":
                 return new ActionChain(o);
-            case "fork":
-                return new ActionFork(o);
+            case "ifelse":
+                return new ActionIfElse(o);
+            case "switch":
+                return new ActionSwitch(o);
+            case "blank":
+                return new ActionBlank(o);
             case "addtosession":
                 return new AddToSessionAction(o);
             case "keyfilter":
@@ -28,6 +32,8 @@ public class ActionFactory {
                 return new StringFormatAction(o);
             case "dialog":
                 return new DialogAction(o);
+            case "intent":
+                return new IntentAction(o);
             default: throw new IllegalArgumentException("Invalid class supplied: " + o.getString(ScannedItemAction.OPTION_TYPE));
         }
     }
