@@ -1,29 +1,38 @@
 [
   {
-    "name": "UPC Database",
+    "name": "UPCDatabase.org",
     "homepage": "http://www.upcdatabase.org",
     "api_signup": "http://upcdatabase.org/signup",
+    "required_parameters": ["APIKEY"],
     "sample_response": {
-
-    },
+      "valid":"true",
+      "number":"0111222333446",
+      "itemname":"UPC Database Testing Code",
+      "alias":"Testing Code",
+      "description":"http:\/\/upcdatabase.org\/code\/0111222333446",
+      "avg_price":"123.45",
+      "rate_up":"12",
+      "rate_down":"2"},
     "lookup_action": {
       "type": "lookup",
       "name": "UPC Lookup",
       "uri_format": "http://api.upcdatabase.org/json/{{APIKEY}}/{{gtin13}}",
       "mime_type": "application/json",
+      "api_type": "REST",
       "key_map": {
         "reason": "lookup_error",
         "itemname": "itemname",
         "alias": "alias",
         "description": "_description"
       }
-    },
-    "required_parameters": ["APIKEY"]
+    }
   },
   {
     "name": "ISBN Database",
     "homepage": "http://www.isbndb.com/",
+    "pricing": "Free, up to 1000 queries/day",
     "api_signup": "http://isbndb.com/account/logincreate",
+    "required_parameters": ["APIKEY"],
     "sample_resource": {
       "index_searched": "isbn",
       "data": [
@@ -70,6 +79,7 @@
       "name": "isbndb",
       "encoding": "windows-1251",
       "mime_type": "application/json",
+      "api_type": "REST",
       "uri_format": "http://isbndb.com/api/v2/json/{{APIKEY}}/book/{{isbn13}}",
       "key_map": {
         "data[0]/title": "title",
@@ -78,13 +88,14 @@
         "data[0]/lcc_number": "lcc_number",
         "data[0]/publisher_text": "publisher"
       }
-    },
-    "required_parameters": ["APIKEY"]
+    }
   },
   {
     "name": "Semantics3",
     "homepage": "http://www.semantics3.com/",
     "api_signup": "https://dashboard.semantics3.com/signup",
+    "pricing": "Paid (free trial)",
+    "required_parameters": ["APIKEY", "SECRET"],
     "sample_response": {
       "total_results_count": 1,
       "code": "OK",
@@ -269,17 +280,86 @@
     "lookup_action": {
       "type": "lookup",
       "name": "Semantics3",
-      "uri_format": "https://api.semantics3.com/v1/products?q={\"ean\":\"{{gtin13}}\", \"fields\": [\"name\", \"price\", \"description\", \"manufacturer\"]}",
+      "api_type": "REST",
+      "uri_format": "https://api.semantics3.com/v1/products?q={\"ean\":\"{{gtin13}}\", \"fields\": [\"name\", \"price\", \"description\", \"manufacturer\", \"brand\", \"model\"]}",
       "mime_type": "application/json",
-      "oauth_apikey": "{{APIKEY}}",
-      "oauth_secret": "{{SECRET}}",
+      "authentication": {
+        "type": "OAuth",
+        "key": "{{APIKEY}}",
+        "secret": "{{SECRET}}"
+      },
       "key_map": {
         "results[0]/name": "_description",
         "results[0]/description": "description",
         "results[0]/price": "price",
-        "results[0]/manufacturer": "manufacturer"
+        "results[0]/manufacturer": "manufacturer",
+        "results[0]/brand": "brand",
+        "results[0]/model": "model"
+      }
+    }
+  },
+  {
+    "name": "UPCDatabase.com",
+    "homepage": "http://www.upcdatabase.com",
+    "pricing": "Free, up to 20 per day",
+    "api_signup": "https://www.upcdatabase.com/join.asp",
+    "sample_response": "<?xml version=\"1.0\"?><methodResponse><params><param><value><struct><member><name>found</name><value><boolean>1</boolean></value></member><member><name>status</name><value><string>success</string></value></member><member><name>description</name><value><string>Primo Red Kidney Beans</string></value></member><member><name>upc</name><value><string>055900003965</string></value></member><member><name>pendingUpdates</name><value><int>0</int></value></member><member><name>message</name><value><string>Database entry found</string></value></member><member><name>noCacheAfterUTC</name><value><dateTime.iso8601>2016-10-26T12:52:24</dateTime.iso8601></value></member><member><name>issuerCountryCode</name><value><string>us</string></value></member><member><name>ean</name><value><string>0055900003965</string></value></member><member><name>size</name><value><string>19 fl oz/540 ml</string></value></member><member><name>issuerCountry</name><value><string>United States</string></value></member><member><name>lastModifiedUTC</name><value><dateTime.iso8601>2008-05-21T10:19:34</dateTime.iso8601></value></member></struct></value></param></params></methodResponse>",
+    "lookup_action": {
+      "type": "lookup",
+      "name": "upc",
+      "uri_format": "https://www.upcdatabase.com/xmlrpc",
+      "request": "<?xml version=\"1.0\"?><methodCall><methodName>lookup</methodName><params><param><value><struct><member><name>rpc_key</name><value>{{APIKEY}}</value></member><member><name>ean</name><value>{{gtin13}}</value></member></struct></value></param></params></methodCall>",
+      "mime_type": "text/xml-rpc",
+      "api_type": "XML-RPC",
+      "key_map": {
+        "message": "upc_status",
+        "description": "_description",
+        "size": "size"
+      }
+    }
+  },
+  {
+    "name": "SimpleUPC",
+    "homepage": "http://www.simpleupc.com",
+    "api_signup": "http://www.simpleupc.com/price.php",
+    "required_parameters": ["APIKEY"],
+    "sample_response": {
+      "success":true,
+      "usedExternal":false,
+      "result":
+      {
+        "brand":"Kleenex",
+        "manufacturer":"Kimberly-Clark",
+        "container":"Box",
+        "description":"Anti-Viral Facial Tissue",
+        "size":"75",
+        "category":"Facial Tissue",
+        "units":"Ct",
+        "upc":"036000280753",
+        "ProductHasImage":true,
+        "ProductHasNutritionFacts":false
       }
     },
-    "required_parameters": ["APIKEY", "SECRET"]
+    "lookup_action": {
+      "type": "lookup",
+      "name": "SimpleUPC",
+      "api_type": "JSON-RPC",
+      "mime_type": "application/json",
+      "uri_format": "http://api.simpleupc.com/v1.php",
+      "request": {
+        "auth": "{{APIKEY}}",
+        "method": "FetchProductByUPC",
+        "params": {
+          "upc": "{{upca}}"
+        },
+        "returnFormat": "json"
+      },
+      "key_map": {
+        "error/message": "lookup_error",
+        "result/description": "_description",
+        "result/manufacturer": "manufacturer",
+        "result/brand": "brand"
+      }
+    }
   }
 ]

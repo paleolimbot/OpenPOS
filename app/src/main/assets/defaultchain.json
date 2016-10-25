@@ -33,14 +33,15 @@
     },
     {
       "type": "lookup",
-      "name": "UPC Lookup",
-      "uri_format": "http://api.upcdatabase.org/json/2bf423e9a6b6800ff83ab88d74856501/{{gtin13}}",
-      "mime_type": "application/json",
+      "name": "upc",
+      "uri_format": "https://www.upcdatabase.com/xmlrpc",
+      "request": "<?xml version=\"1.0\"?><methodCall><methodName>lookup</methodName><params><param><value><struct><member><name>rpc_key</name><value>d59fa84ebe4aad99c691b287907d736d34fb5d5a</value></member><member><name>ean</name><value>{{gtin13}}</value></member></struct></value></param></params></methodCall>",
+      "mime_type": "text/xml-rpc",
+      "api_type": "XML-RPC",
       "key_map": {
-        "reason": "lookup_error",
-        "itemname": "itemname",
-        "alias": "alias",
-        "description": "_description"
+        "message": "upc_status",
+        "description": "_description",
+        "size": "size"
       }
     }
   ]

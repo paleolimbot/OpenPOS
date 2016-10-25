@@ -37,6 +37,7 @@ public class ItemFormatter {
                 if(bstr.startsWith("0")) {
                     //upc label
                     item.description = "UPC-A " + bstr.substring(7, 12);
+                    item.putValue("upca", bstr.substring(1, 13));
                 } else {
                     //regular ean
                     item.description = "EAN-13 " + bstr.substring(7, 13);
