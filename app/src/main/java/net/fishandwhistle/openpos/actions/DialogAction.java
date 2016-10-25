@@ -129,7 +129,7 @@ public class DialogAction extends ScannedItemAction {
             if(response.equals("_CANCELLED") && inputType != null) {
                 return false;
             } else {
-                item.putValue(outKey, response);
+                item.putValue(outKey, response.trim());
                 return true;
             }
         } else {
