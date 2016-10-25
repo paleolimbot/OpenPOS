@@ -12,8 +12,8 @@ public class ActionFactory {
 
     public static ScannedItemAction inflate(JSONObject o) throws JSONException {
         switch(o.getString(ScannedItemAction.OPTION_TYPE)) {
-            case "chain":
-                return new ActionChain(o);
+            case "list":
+                return new ActionList(o);
             case "ifelse":
                 return new ActionIfElse(o);
             case "switch":
@@ -34,6 +34,8 @@ public class ActionFactory {
                 return new DialogAction(o);
             case "intent":
                 return new IntentAction(o);
+            case "vibrate":
+                return new VibrateAction(o);
             default: throw new IllegalArgumentException("Invalid class supplied: " + o.getString(ScannedItemAction.OPTION_TYPE));
         }
     }

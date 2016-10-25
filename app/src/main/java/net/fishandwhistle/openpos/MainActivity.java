@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import net.fishandwhistle.openpos.actions.ActionFactory;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
+import net.fishandwhistle.openpos.actions.VibrateAction;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.Code128Spec;
@@ -68,6 +69,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     private TextView scannedItemsText ;
 
     private ScannedItemAction actions;
+    private ScannedItemAction actionsExisting;
 
     @Override
     protected BarcodeExtractor getExtractor() {
@@ -172,7 +174,24 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
         }
 
+        try {
+            StringBuilder buf=new StringBuilder();
+            InputStream json=getAssets().open("defaultchain_existing.json");
+            BufferedReader in=
+                    new BufferedReader(new InputStreamReader(json, "UTF-8"));
+            String str;
 
+            while ((str=in.readLine()) != null) {
+                buf.append(str);
+            }
+            in.close();
+            JSONObject o = new JSONObject(buf.toString());
+            actionsExisting = ActionFactory.inflate(o);
+        } catch (IOException e) {
+
+        } catch(JSONException e) {
+
+        }
     }
 
     @Override
@@ -264,6 +283,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             current.nScans++;
             items.remove(current);
             items.add(current);
+            actionsExisting.doActionAsync(this, current, this);
         }
         this.refreshItems(true);
         return true;

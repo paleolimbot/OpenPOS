@@ -1,56 +1,62 @@
-{
-  "type": "switch",
-  "is_regex": true,
-  "key": "gtin13",
-  "values": ["^97.*?$", "^.*?$"],
-  "actions": [
-    {
-      "type": "chain",
-      "name": "ISBN Chain",
-      "actions": [
-        {
-          "type": "lookup",
-          "name": "isbndb",
-          "encoding": "windows-1251",
-          "mime_type": "application/json",
-          "uri_format": "http://isbndb.com/api/v2/json/T89SFTZN/book/{{isbn13}}",
-          "key_map": {
-            "data[0]/title": "title",
-            "data[0]/author_data[; ]/name": "authors",
-            "data[0]/dewey_normal": "dewey_normal",
-            "data[0]/lcc_number": "lcc_number",
-            "data[0]/publisher_text": "publisher"
+{"type": "list",
+"actions": [
+  {
+    "type": "vibrate"
+  },
+  {
+    "type": "switch",
+    "is_regex": true,
+    "key": "gtin13",
+    "values": ["^97.*?$", "^.*?$"],
+    "actions": [
+      {
+        "type": "list",
+        "name": "ISBN Chain",
+        "actions": [
+          {
+            "type": "lookup",
+            "name": "isbndb",
+            "encoding": "windows-1251",
+            "mime_type": "application/json",
+            "uri_format": "http://isbndb.com/api/v2/json/T89SFTZN/book/{{isbn13}}",
+            "key_map": {
+              "data[0]/title": "title",
+              "data[0]/author_data[; ]/name": "authors",
+              "data[0]/dewey_normal": "dewey_normal",
+              "data[0]/lcc_number": "lcc_number",
+              "data[0]/publisher_text": "publisher"
+            }
+          },
+          {
+            "type": "stringformat",
+            "key_map": {
+              "amazon_search": "https://www.amazon.com/s/field-keywords={{isbn13}}",
+              "_description": "{{title}} ({{authors}}"
+            }
           }
-        },
-        {
-          "type": "stringformat",
-          "key_map": {
-            "amazon_search": "https://www.amazon.com/s/field-keywords={{isbn13}}",
-            "_description": "{{title}} ({{authors}}"
-          }
-        }
-      ]
-    },
-    {
-      "type": "lookup",
-      "name": "supc",
-      "api_type": "JSON-RPC",
-      "mime_type": "application/json",
-      "uri_format": "http://api.simpleupc.com/v1.php",
-      "request": {
-        "auth": "NIC7bH3K0RlCw1YXBebOz2VxEb6hw5tt",
-        "method": "FetchProductByUPC",
-        "params": {
-          "upc": "{{upca}}"
-        },
-        "returnFormat": "json"
+        ]
       },
-      "key_map": {
-        "error/message": "lookup_error",
-        "result/description": "_description",
-        "result/manufacturer": "manufacturer",
-        "result/brand": "brand"
+      {
+        "type": "lookup",
+        "name": "supc",
+        "api_type": "JSON-RPC",
+        "mime_type": "application/json",
+        "uri_format": "http://api.simpleupc.com/v1.php",
+        "request": {
+          "auth": "NIC7bH3K0RlCw1YXBebOz2VxEb6hw5tt",
+          "method": "FetchProductByUPC",
+          "params": {
+            "upc": "{{upca}}"
+          },
+          "returnFormat": "json"
+        },
+        "key_map": {
+          "error/message": "lookup_error",
+          "result/description": "_description",
+          "result/manufacturer": "manufacturer",
+          "result/brand": "brand"
+        }
       }
-    }
-  ]
-}
+    ]
+  }
+]}

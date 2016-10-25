@@ -377,8 +377,6 @@ public abstract class BarcodeReaderActivity extends AppCompatActivity implements
     }
 
     protected boolean onNewBarcodeWrapper(BarcodeSpec.Barcode b) {
-        Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
-        v.vibrate(150);
         return this.onNewBarcode(b);
     }
 

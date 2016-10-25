@@ -120,6 +120,7 @@ public class ItemFormatter {
             if(item.barcodeType.equals("EAN-13")) {
                 addPriceInfo(item, item.getValue("supplement"));
             }
+            item.description = "ISBN-13 " + ean13.substring(7, 13);
         } else if(ean13.startsWith("979")) {
             if(ean13.startsWith("9790")) {
                 item.putValue("imsn", ean13);

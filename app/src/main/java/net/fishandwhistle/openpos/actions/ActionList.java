@@ -18,13 +18,13 @@ import java.util.List;
  * Created by dewey on 2016-10-22.
  */
 
-public class ActionChain extends ScannedItemAction {
+public class ActionList extends ScannedItemAction {
 
     private static final String OPTION_ACTIONS = "actions";
 
     protected List<ScannedItemAction> actions ;
 
-    public ActionChain(JSONObject jsonObject) {
+    public ActionList(JSONObject jsonObject) {
         super(jsonObject);
         this.actions = new ArrayList<>();
         JSONArray jsonActions = getOptionArray(OPTION_ACTIONS);
