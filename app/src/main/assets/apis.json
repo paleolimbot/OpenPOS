@@ -342,7 +342,7 @@
     },
     "lookup_action": {
       "type": "lookup",
-      "name": "SimpleUPC",
+      "name": "supc",
       "api_type": "JSON-RPC",
       "mime_type": "application/json",
       "uri_format": "http://api.simpleupc.com/v1.php",

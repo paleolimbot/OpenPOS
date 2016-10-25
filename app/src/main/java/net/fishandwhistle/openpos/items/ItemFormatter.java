@@ -89,6 +89,9 @@ public class ItemFormatter {
                 String eanVal = GTINtoEAN(item.getValue("gtin14"));
                 item.putValue("gtin13", eanVal);
                 addISBNData(item, eanVal);
+                if(eanVal.startsWith("0")) {
+                    item.putValue("upca", eanVal.substring(1, 13));
+                }
             }
             //strip [FNC1]
             item.putValue("raw_code", b.toString().replace("[FNC1]", ""));
