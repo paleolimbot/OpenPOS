@@ -18,7 +18,7 @@ public class VibrateAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(150);
         return true;

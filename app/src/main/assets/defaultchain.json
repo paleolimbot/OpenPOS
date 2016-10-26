@@ -9,10 +9,6 @@
     "key": "gtin13",
     "values": ["^97.*?$", "^.*?$"],
     "actions": [
-      {
-        "type": "list",
-        "name": "ISBN Chain",
-        "actions": [
           {
             "type": "lookup",
             "name": "goodreads",
@@ -26,8 +22,6 @@
               "_description": "{{search/results/work/best_book/title}} ({{search/results/work/best_book/author/name}})",
               "goodreads_link": "https://www.goodreads.com/book/show/{{search/results/work/best_book/id}}"
             }
-          }
-        ]
       },
       {
         "type": "lookup",

@@ -52,7 +52,12 @@ public class IntentAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+    public boolean isApplicable(Context context, ScannedItem item, ActionExecutor executor) {
+        return formatWithObject(uriFormat, item, false) != null;
+    }
+
+    @Override
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         String uriString = formatWithObject(uriFormat, item, false);
         if(uriString != null) {
             Uri uri = Uri.parse(uriString);

@@ -1,6 +1,5 @@
 package net.fishandwhistle.openpos.actions;
 
-import android.app.Notification;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
@@ -42,7 +41,7 @@ public class ActionList extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         boolean result = true;
         List<String> errors = new ArrayList<>();
         for(ScannedItemAction action: actions) {
@@ -56,7 +55,7 @@ public class ActionList extends ScannedItemAction {
                 }
             } catch(ActionException e) {
                 if(isQuiet()) {
-                    Log.e("ActionChain", "doAction: exception in action chain (supressing)", e);
+                    Log.e("ActionChain", "doActionContent: exception in action chain (supressing)", e);
                     errors.add(e.getMessage());
                 } else {
                     throw new ActionException("Error occurred in ActionChain: " + e.getMessage());

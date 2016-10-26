@@ -71,7 +71,7 @@ public class DialogAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(final Context context, final ScannedItem item, final ActionExecutor executor) throws ActionException {
+    public boolean doActionContent(final Context context, final ScannedItem item, final ActionExecutor executor) throws ActionException {
 
         executor.runOnUiThread(new Runnable() {
             @Override

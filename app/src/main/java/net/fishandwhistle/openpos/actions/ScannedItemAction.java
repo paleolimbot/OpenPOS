@@ -24,11 +24,13 @@ public abstract class ScannedItemAction {
 
     public static final String OPTION_QUIET = "quiet";
     public static final String OPTION_TYPE = "type";
+    public static final String OPTION_ENABLED = "enabled";
     public static final String OPTION_ACTION_NAME = "name";
 
     private String actionName;
     private JSONObject options;
     private boolean quiet;
+    private boolean enabled;
 
     public ScannedItemAction(JSONObject jsonOptions) {
         options = jsonOptions;
@@ -42,6 +44,8 @@ public abstract class ScannedItemAction {
         } else {
             quiet = Boolean.valueOf(isQuiet);
         }
+        String isEnabled = getOptionString(OPTION_ENABLED);
+        enabled = isEnabled == null || Boolean.valueOf(isEnabled);
     }
 
     public String getOptionString(String key) {
@@ -80,7 +84,15 @@ public abstract class ScannedItemAction {
         return actionName;
     }
 
-    public abstract boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException;
+    public final boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+        return enabled && isApplicable(context, item, executor) && this.doActionContent(context, item, executor);
+    }
+
+    public boolean isApplicable(Context context, ScannedItem item, ActionExecutor executor) {
+        return true;
+    }
+
+    public abstract boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException;
 
     public final ActionExecutor doActionAsync(final Context context, ScannedItem item, ScannerItemActionCallback callback) {
         ActionExecutor e = new ActionExecutor(context, item, callback);

@@ -23,7 +23,7 @@ public class AddToSessionAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         ScannedItemManager manager = new ScannedItemManager(context);
         boolean result = manager.putItem(sessionName, item);
         if(result) {

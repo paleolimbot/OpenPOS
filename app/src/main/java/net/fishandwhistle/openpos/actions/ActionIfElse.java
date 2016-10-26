@@ -43,8 +43,8 @@ public class ActionIfElse extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
-        if(forkAction.doAction(context, item, executor)) {
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+        if(forkAction.doActionContent(context, item, executor)) {
             if(ifTrue != null) {
                 return ifTrue.doAction(context, item, executor);
             } else {

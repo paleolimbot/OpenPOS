@@ -29,7 +29,7 @@ public class StringFormatAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         Pattern TAG = Pattern.compile("\\{\\{(.*?)\\}\\}");
         JSONObject map = getOptionObject(OPTION_KEYMAP);
         Iterator<String> keys = map.keys();
@@ -46,7 +46,7 @@ public class StringFormatAction extends ScannedItemAction {
             }
             return true;
         } catch(JSONException e) {
-            Log.e("RegexLookup", "doAction: json exception", e);
+            Log.e("RegexLookup", "doActionContent: json exception", e);
             throw new ActionException("JSON Error: " + e.getMessage());
         }
     }

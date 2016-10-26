@@ -125,7 +125,12 @@ public class LookupAction extends ScannedItemAction {
         return "time_" + getActionName();
     }
 
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+    @Override
+    public boolean isApplicable(Context context, ScannedItem item, ActionExecutor executor) {
+        return formatWithObject(uriFormat, item, false) != null;
+    }
+
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         String url = formatWithObject(uriFormat, item, false);
         String cacheUrl = url;
         if(url == null) {

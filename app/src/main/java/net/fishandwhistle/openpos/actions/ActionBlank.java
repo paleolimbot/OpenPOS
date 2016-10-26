@@ -17,7 +17,7 @@ public class ActionBlank extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         return true;
     }
 }

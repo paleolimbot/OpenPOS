@@ -72,7 +72,7 @@ public class ActionSwitch extends ScannedItemAction {
     }
 
     @Override
-    public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         String value = item.getValue(key);
         for(int i=0; i<values.size(); i++) {
             String toMatch = values.get(i);
