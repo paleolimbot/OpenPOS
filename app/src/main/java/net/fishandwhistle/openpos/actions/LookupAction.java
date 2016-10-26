@@ -171,7 +171,7 @@ public class LookupAction extends ScannedItemAction {
                 } else {
                     if(isQuiet()) {
                         item.putValue(getErrorKey(), "Parse error");
-                        return true;
+                        return false;
                     } else {
                         throw new ActionException("Parse error");
                     }
@@ -179,12 +179,11 @@ public class LookupAction extends ScannedItemAction {
             } else {
                 if(isNetworkAvailable(context)) {
                     currentRequests.add(cacheUrl);
-                    doDownload(context, url, requestFormatted, cacheUrl, item, cache, executor);
-                    return true;
+                    return doDownload(context, url, requestFormatted, cacheUrl, item, cache, executor);
                 } else {
                     if(isQuiet()) {
                         item.putValue(getErrorKey(), context.getString(R.string.api_errornonetwork));
-                        return true;
+                        return false;
                     } else {
                         throw new ActionException(context.getString(R.string.api_errornonetwork));
                     }
@@ -193,7 +192,7 @@ public class LookupAction extends ScannedItemAction {
         }
     }
 
-    private void doDownload(Context context, String urlString, String requestFormatted, String cacheUrl, ScannedItem item, TextApiCache cache, ActionExecutor executor) throws ActionException {
+    private boolean doDownload(Context context, String urlString, String requestFormatted, String cacheUrl, ScannedItem item, TextApiCache cache, ActionExecutor executor) throws ActionException {
         String out = null;
         InputStream input = null;
         ByteArrayOutputStream output = null;
@@ -241,7 +240,7 @@ public class LookupAction extends ScannedItemAction {
                         "HTTP " + connection.getResponseCode() + " " + connection.getResponseMessage());
                 if(isQuiet()) {
                     item.putValue(getErrorKey(), error);
-                    return;
+                    return false;
                 } else {
                     throw new ActionException(error);
                 }
@@ -283,7 +282,7 @@ public class LookupAction extends ScannedItemAction {
             currentRequests.remove(cacheUrl);
             if(isQuiet()) {
                 item.putValue(getErrorKey(), error);
-                return;
+                return false;
             } else {
                 throw new ActionException(error);
             }
@@ -313,7 +312,7 @@ public class LookupAction extends ScannedItemAction {
         // do parsing
         currentRequests.remove(cacheUrl);
         item.putValue(getTimeKey(), String.valueOf(System.currentTimeMillis()));
-        parser.parse(out, item);
+        return parser.parse(out, item);
     }
 
     private interface LookupParser {
@@ -332,6 +331,7 @@ public class LookupAction extends ScannedItemAction {
                         String key = keys.next();
                         item.putValue(key, o.getString(key));
                     }
+                    return true;
                 } else {
                     Formatting.Formattable formatter = new Formatting.Formattable() {
                         @Override
@@ -355,12 +355,14 @@ public class LookupAction extends ScannedItemAction {
                         String error = "No results were obtained from query";
                         if(isQuiet()) {
                             item.putValue(getErrorKey(), error);
+                            return false;
                         } else {
                             throw new ActionException(error);
                         }
+                    } else {
+                        return true;
                     }
                 }
-                return true;
             } catch(JSONException e) {
                 String error = "JSON error in parse: " + e.getMessage();
                 if(isQuiet()) {
@@ -436,6 +438,7 @@ public class LookupAction extends ScannedItemAction {
             if(result == null) {
                 if(isQuiet()) {
                     item.putValue(getErrorKey(), "Null result from RPC Parser");
+                    return false;
                 } else {
                     throw new ActionException("Null result from RPC Parser");
                 }
@@ -445,6 +448,7 @@ public class LookupAction extends ScannedItemAction {
                     for(Map.Entry<String, Object> e: map.entrySet()) {
                         item.putValue(e.getKey(), e.getValue().toString());
                     }
+                    return true;
                 } else {
                     Formatting.Formattable formatter = new Formatting.Formattable() {
                         @Override
@@ -468,19 +472,22 @@ public class LookupAction extends ScannedItemAction {
                         String error = "No results were obtained from query";
                         if(isQuiet()) {
                             item.putValue(getErrorKey(), error);
+                            return false;
                         } else {
                             throw new ActionException(error);
                         }
+                    } else {
+                        return true;
                     }
                 }
             } else {
                 if(isQuiet()) {
                     item.putValue(getErrorKey(), "Non-map result from RPC Parser");
+                    return false;
                 } else {
                     throw new ActionException("Non-map result from RPC Parser");
                 }
             }
-            return true;
         }
 
         @Override
@@ -619,12 +626,14 @@ public class LookupAction extends ScannedItemAction {
                             Node n = l.item(i);
                             item.putValue(n.getNodeName(), n.getNodeValue());
                         }
+                        return true;
                     } else {
                         String error = "No data in XML response";
                         if(!isQuiet()) {
                             throw new ActionException(error);
                         } else {
                             item.putValue(getErrorKey(), error);
+                            return false;
                         }
                     }
                 } else {
@@ -650,15 +659,16 @@ public class LookupAction extends ScannedItemAction {
                         String error = "No results were obtained from query";
                         if(isQuiet()) {
                             item.putValue(getErrorKey(), error);
+                            return false;
                         } else {
                             throw new ActionException(error);
                         }
+                    } else {
+                        return true;
                     }
                 }
-                return true;
             } else {
                 return false;
-
             }
         }
 
