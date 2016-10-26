@@ -7,7 +7,7 @@
       "type": "chooser",
       "title": "{{_description}}",
       "negative_text": "Cancel",
-      "labels": ["Find this in a Library®", "Search Google", "Search Amazon", "Perform Lookup", "Customize Actions"],
+      "labels": ["Find this in a Library®", "Search Google", "Search Amazon", "Perform Lookup", "Testing"],
       "actions": [
         {
           "type": "intent",
@@ -58,8 +58,45 @@
           ]
         },
         {
-          "type": "intent",
-          "uri_format": "http://apps.fishandwhistle.net/better-barcode/actions"
+          "type": "list",
+          "actions": [
+            {
+              "type": "dialog",
+              "title": "test choices",
+              "out_key": "choiceA",
+              "labels": ["Choice1", "Choice2", "Choice3"],
+              "values": ["Value1", "value2", "value3"]
+            },
+            {
+              "type": "dialog",
+              "title": "test choices",
+              "out_key": "choiceB",
+              "values": ["Value1", "value2", "value3"]
+            },
+            {
+              "type": "dialog",
+              "title": "test choices",
+              "out_key": "choiceC",
+              "labels": ["Choice1", "Choice2", "Choice3"]
+            },
+            {
+              "type": "dialog",
+              "title": "test input",
+              "out_key": "choiceD",
+              "input_type": "number"
+            },
+            {
+              "type": "dialog",
+              "title": "test input",
+              "out_key": "choiceE",
+              "input_type": "text"
+            },
+            {
+              "type": "dialog",
+              "title": "test input",
+              "message": "just a message"
+            }
+          ]
         }
       ]
     }

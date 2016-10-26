@@ -56,11 +56,6 @@ public class ChooserDialogAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean isApplicable(Context context, ScannedItem item, ActionExecutor executor) {
-        return (title == null || formatWithObject(title, item, false) != null) && (negativeText == null || formatWithObject(negativeText, item, false) != null);
-    }
-
-    @Override
     public boolean doActionContent(final Context context, final ScannedItem item, final ActionExecutor executor) throws ActionException {
         //make sure all actions are enabled and applicable
         List<String> runtimeLabs = new ArrayList<>();

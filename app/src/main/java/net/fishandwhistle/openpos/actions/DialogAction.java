@@ -13,7 +13,12 @@ import android.widget.TextView;
 
 import net.fishandwhistle.openpos.items.ScannedItem;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static net.fishandwhistle.openpos.actions.Formatting.formatWithObject;
 
@@ -31,6 +36,8 @@ public class DialogAction extends ScannedItemAction {
     public static final String OPTION_INPUT_TYPE = "input_type";
     public static final String OPTION_INPUT_HINT = "input_hint";
     public static final String OPTION_OUT_KEY = "out_key";
+    public static final String OPTION_LABELS = "labels";
+    public static final String OPTION_VALUES = "values";
 
     private String title;
     private String message;
@@ -40,6 +47,8 @@ public class DialogAction extends ScannedItemAction {
     private String inputType;
     private String outKey;
     private String inputHint;
+    private String[] labels;
+    private String[] values;
 
     public DialogAction(JSONObject jsonOptions) {
         super(jsonOptions);
@@ -50,6 +59,40 @@ public class DialogAction extends ScannedItemAction {
         neutralText = getOptionString(OPTION_NEUTRAL_TEXT);
         negativeText = getOptionString(OPTION_NEGATIVE_TEXT);
         inputType = getOptionString(OPTION_INPUT_TYPE);
+        inputHint = getOptionString(OPTION_INPUT_HINT);
+        if(inputHint == null) {
+            inputHint = "";
+        }
+
+        JSONArray labs = getOptionArray(OPTION_LABELS);
+        JSONArray vals = getOptionArray(OPTION_VALUES);
+        if(labs != null || vals != null) {
+            if(labs == null) {
+                labs = vals;
+            } else if (vals == null) {
+                vals = labs;
+            }
+            if (labs.length() != vals.length())
+                throw new IllegalArgumentException("Labels and values must have identical length");
+            if (labs.length() == 0)
+                throw new IllegalArgumentException("Labels must have length > 0");
+            try {
+                labels = new String[labs.length()];
+                values = new String[labs.length()];
+                for (int i = 0; i < labs.length(); i++) {
+                    labels[i] = labs.getString(i);
+                    values[i] = vals.getString(i);
+                }
+            } catch (JSONException e) {
+                throw new IllegalArgumentException("Invalid JSON in constructor: " + e.getMessage());
+            }
+        } else {
+            labels = null;
+            values = null;
+        }
+
+        if(inputType != null && values != null) throw new IllegalArgumentException("Labels and input type cannot both be specified");
+
         if(inputType != null) {
             if(positiveText == null) {
                 positiveText = "Enter";
@@ -57,17 +100,18 @@ public class DialogAction extends ScannedItemAction {
             if(negativeText == null) {
                 negativeText = "Cancel";
             }
+            if(message != null) throw new IllegalArgumentException("Cannot specify message when using inputType");
+        } else if(values != null) {
+            if(message != null) throw new IllegalArgumentException("Cannot specify message when using values");
         } else {
             if(positiveText == null) {
                 positiveText = "Close";
             }
         }
-        inputHint = getOptionString(OPTION_INPUT_HINT);
-        if(inputHint == null) {
-            inputHint = "";
-        }
+
+
         outKey = getOptionString(OPTION_OUT_KEY);
-        if(inputType != null && outKey == null) throw new IllegalArgumentException("Cannot collect input without option 'outkey'");
+        if((inputType != null || labels != null) && outKey == null) throw new IllegalArgumentException("Cannot collect input without option 'outkey'");
     }
 
     @Override
@@ -76,7 +120,20 @@ public class DialogAction extends ScannedItemAction {
         executor.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(inputType == null) {
+                if(inputType != null) {
+                    getText(context, formatWithObject(title, item), "", inputHint, getInputType(inputType),
+                            formatWithObject(positiveText, item), new OnTextSavedListener() {
+                                @Override
+                                public void onTextSaved(String oldText, String newText) {
+                                    executor.setResponse(newText);
+                                }
+                            }, formatWithObject(negativeText, item), new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    executor.setResponse("_CANCELLED");
+                                }
+                            });
+                } else {
                     AlertDialog.Builder b = new AlertDialog.Builder(context);
                     if(title != null) b.setTitle(formatWithObject(title, item));
                     if(message != null) b.setMessage(formatWithObject(message, item));
@@ -98,6 +155,31 @@ public class DialogAction extends ScannedItemAction {
                             executor.setResponse("_NEGATIVE");
                         }
                     });
+                    if(labels != null) {
+                        final List<String> valuesRuntime = new ArrayList<>();
+                        List<String> labelsRuntime = new ArrayList<>();
+                        for(int i=0; i<values.length; i++) {
+                            String val = formatWithObject(values[i], item, false);
+                            String lab = formatWithObject(labels[i], item, false);
+                            if(val != null && lab != null) {
+                                valuesRuntime.add(val);
+                                labelsRuntime.add(lab);
+                            }
+                        }
+                        if(valuesRuntime.size() == 0) return;
+
+                        String[] items = new String[labelsRuntime.size()];
+                        for(int i=0; i<items.length; i++) {
+                            items[i] = labelsRuntime.get(i);
+                        }
+                        b.setItems(items, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                executor.setResponse(valuesRuntime.get(which));
+                                dialog.dismiss();
+                            }
+                        });
+                    }
                     b.setCancelable(true);
                     b.setOnCancelListener(new DialogInterface.OnCancelListener() {
                         @Override
@@ -106,19 +188,6 @@ public class DialogAction extends ScannedItemAction {
                         }
                     });
                     b.show();
-                } else {
-                    getText(context, formatWithObject(title, item), "", inputHint, getInputType(inputType),
-                            formatWithObject(positiveText, item), new OnTextSavedListener() {
-                        @Override
-                        public void onTextSaved(String oldText, String newText) {
-                            executor.setResponse(newText);
-                        }
-                    }, formatWithObject(negativeText, item), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            executor.setResponse("_CANCELLED");
-                        }
-                    });
                 }
             }
         });
