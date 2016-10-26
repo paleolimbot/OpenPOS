@@ -16,16 +16,16 @@
       "rate_down":"2"},
     "lookup_action": {
       "type": "lookup",
-      "name": "UPC Lookup",
-      "attribution": "http://www.upcdatabase.org/",
+      "name": "upcdb",
       "uri_format": "http://api.upcdatabase.org/json/{{APIKEY}}/{{gtin13}}",
       "mime_type": "application/json",
       "api_type": "REST",
       "key_map": {
-        "reason": "lookup_error",
-        "itemname": "itemname",
-        "alias": "alias",
-        "description": "_description"
+        "upcdb_error": "{{reason}}",
+        "itemname": "{{itemname}}",
+        "alias": "{{alias}}",
+        "upcdb_link": "http://m.upcdatabase.org/code/{{number}}",
+        "_description": "{{description}}"
       }
     }
   },
@@ -35,7 +35,7 @@
     "pricing": "Free (personal use) up to 1000 queries/day",
     "api_signup": "http://isbndb.com/account/logincreate",
     "required_parameters": ["APIKEY"],
-    "sample_resource": {
+    "sample_response": {
       "index_searched": "isbn",
       "data": [
         {
@@ -79,17 +79,19 @@
     "lookup_action": {
       "type": "lookup",
       "name": "isbndb",
-      "attribution": "http://www.isbndb.com/",
       "encoding": "windows-1251",
       "mime_type": "application/json",
       "api_type": "REST",
       "uri_format": "http://isbndb.com/api/v2/json/{{APIKEY}}/book/{{isbn13}}",
       "key_map": {
-        "data[0]/title": "title",
-        "data[0]/author_data[; ]/name": "authors",
-        "data[0]/dewey_normal": "dewey_normal",
-        "data[0]/lcc_number": "lcc_number",
-        "data[0]/publisher_text": "publisher"
+        "title": "{{data[0]/title}}",
+        "authors": "{{data[0]/author_data[; ]/name}}",
+        "_description": "{{data[0]/title}} ({{data[0]/author_data[; ]/name}})",
+        "dewey_normal": "{{data[0]/dewey_normal}}",
+        "lcc_number": "{{data[0]/lcc_number}}",
+        "publisher": "{{data[0]/publisher_text}}",
+        "isbndb_error": "{{error}}",
+        "isbndb_link": "http://isbndb.com/book/{{data[0]/book_id}}"
       }
     }
   },
@@ -282,21 +284,22 @@
     },
     "lookup_action": {
       "type": "lookup",
-      "name": "Semantics3",
+      "name": "sem3",
+      "attribution": "http://www.semantics3.com/",
       "api_type": "REST",
-      "uri_format": "https://api.semantics3.com/test/v1/products?q={\"ean\":\"{{gtin13}}\", \"fields\": [\"name\", \"price\", \"description\", \"manufacturer\", \"brand\", \"model\"]}",
+      "uri_format": "https://api.semantics3.com/test/v1/products?q=%7B%22ean%22:%22{{gtin13}}%22%7D",
       "mime_type": "application/json",
-      "authentication": {
-        "type": "OAuth",
-        "key": "{{APIKEY}}",
-        "secret": "{{SECRET}}"
+      "header": {
+        "api_key": "{{APIKEY}}"
       },
       "key_map": {
-        "results[0]/name": "_description",
-        "results[0]/description": "description",
-        "results[0]/manufacturer": "manufacturer",
-        "results[0]/brand": "brand",
-        "results[0]/model": "model"
+        "_description": "{{results[0]/name}}",
+        "description": "{{results[0]/description}}",
+        "price": "{{results[0]/price}}",
+        "manufacturer": "{{results[0]/manufacturer}}",
+        "brand": "{{results[0]/brand}}",
+        "model": "{{results[0]/model}}",
+        "sem3_error": "{{message}}"
       }
     }
   },
@@ -308,15 +311,16 @@
     "sample_response": "<?xml version=\"1.0\"?><methodResponse><params><param><value><struct><member><name>found</name><value><boolean>1</boolean></value></member><member><name>status</name><value><string>success</string></value></member><member><name>description</name><value><string>Primo Red Kidney Beans</string></value></member><member><name>upc</name><value><string>055900003965</string></value></member><member><name>pendingUpdates</name><value><int>0</int></value></member><member><name>message</name><value><string>Database entry found</string></value></member><member><name>noCacheAfterUTC</name><value><dateTime.iso8601>2016-10-26T12:52:24</dateTime.iso8601></value></member><member><name>issuerCountryCode</name><value><string>us</string></value></member><member><name>ean</name><value><string>0055900003965</string></value></member><member><name>size</name><value><string>19 fl oz/540 ml</string></value></member><member><name>issuerCountry</name><value><string>United States</string></value></member><member><name>lastModifiedUTC</name><value><dateTime.iso8601>2008-05-21T10:19:34</dateTime.iso8601></value></member></struct></value></param></params></methodResponse>",
     "lookup_action": {
       "type": "lookup",
-      "name": "upc",
+      "name": "upcdb",
       "uri_format": "https://www.upcdatabase.com/xmlrpc",
       "request": "<?xml version=\"1.0\"?><methodCall><methodName>lookup</methodName><params><param><value><struct><member><name>rpc_key</name><value>{{APIKEY}}</value></member><member><name>ean</name><value>{{gtin13}}</value></member></struct></value></param></params></methodCall>",
       "mime_type": "text/xml-rpc",
       "api_type": "XML-RPC",
       "key_map": {
-        "message": "upc_status",
-        "description": "_description",
-        "size": "size"
+        "_description": "{{description}}",
+        "size": "{{size}}",
+        "upcdb_status": "{{message}}",
+        "upcdb_link": "https://www.upcdatabase.com/item/{{ean}}"
       }
     }
   },
@@ -346,6 +350,7 @@
     "lookup_action": {
       "type": "lookup",
       "name": "supc",
+      "attribution": "http://www.simpleupc.com/",
       "api_type": "JSON-RPC",
       "mime_type": "application/json",
       "uri_format": "http://api.simpleupc.com/v1.php",
@@ -358,10 +363,10 @@
         "returnFormat": "json"
       },
       "key_map": {
-        "error/message": "lookup_error",
-        "result/description": "_description",
-        "result/manufacturer": "manufacturer",
-        "result/brand": "brand"
+        "simpleupc_error": "{{error/message}}",
+        "_description": "{{result/description}}",
+        "manufacturer": "{{result/manufacturer}}",
+        "brand": "{{result/brand}}"
       }
     }
   },
@@ -456,10 +461,11 @@
       "uri_format": "https://www.googleapis.com/books/v1/volumes?q=isbn:{{isbn13}}&key={{APIKEY}}",
       "mime_type": "application/json",
       "key_map": {
-        "items[0]/volumeInfo/title": "title",
-        "items[0]/volumeInfo/authors[; ]": "authors",
-        "items[0]/volumeInfo/publisher": "publisher",
-        "items[0]/volumeInfo/infoLink": "link"
+        "title": "{{items[0]/volumeInfo/title}}",
+        "authors": "{{items[0]/volumeInfo/authors[; ]}}",
+        "_description": "{{items[0]/volumeInfo/title}} ({{items[0]/volumeInfo/authors[; ]}})",
+        "publisher": "{{items[0]/volumeInfo/publisher}}",
+        "google_link": "{{items[0]/volumeInfo/infoLink}}"
       }
     }
   },
@@ -478,8 +484,10 @@
       "uri_format": "https://www.goodreads.com/search/index.xml?key={{APIKEY}}&q={{isbn13}}",
       "mime_type": "text/xml",
       "key_map": {
-        "search/results/work/best_book/title": "title",
-        "search/results/work/best_book/author/name": "authors"
+        "title": "{{search/results/work/best_book/title}}",
+        "authors": "{{search/results/work/best_book/author/name}}",
+        "_description": "{{search/results/work/best_book/title}} ({{search/results/work/best_book/author/name}})",
+        "goodreads_link": "https://www.goodreads.com/book/show/{{search/results/work/best_book/id}}"
       }
     }
   }

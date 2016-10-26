@@ -51,6 +51,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import static net.fishandwhistle.openpos.actions.Formatting.formatWithObject;
+
 /**
  * Created by dewey on 2016-10-02.
  */
@@ -119,16 +121,12 @@ public class LookupAction extends ScannedItemAction {
         return "error_" + getActionName();
     }
 
-    private String getSourceKey() {
-        return "source_" + getActionName();
-    }
-
     private String getTimeKey() {
         return "time_" + getActionName();
     }
 
     public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
-        String url = StringFormatAction.formatWithObject(uriFormat, item, false);
+        String url = formatWithObject(uriFormat, item, false);
         String cacheUrl = url;
         if(url == null) {
             if(isQuiet()) {
@@ -139,7 +137,7 @@ public class LookupAction extends ScannedItemAction {
         }
         String requestFormatted;
         if(request != null) {
-            requestFormatted = StringFormatAction.formatWithObject(request, item, false);
+            requestFormatted = formatWithObject(request, item, false);
             if(requestFormatted == null) {
                 if(isQuiet()) {
                     return false;
@@ -164,7 +162,6 @@ public class LookupAction extends ScannedItemAction {
                 Log.i(TAG, "Using cached data for url " + url);
                 if(this.parser.parse(cached.data, item)) {
                     item.putValue(getTimeKey(), String.valueOf(cached.queryTime));
-                    item.putValue(getSourceKey(), url);
                     return true;
                 } else {
                     if(isQuiet()) {
@@ -304,7 +301,6 @@ public class LookupAction extends ScannedItemAction {
         // do parsing
         currentRequests.remove(cacheUrl);
         item.putValue(getTimeKey(), String.valueOf(System.currentTimeMillis()));
-        item.putValue(getSourceKey(), urlString);
         parser.parse(out, item);
     }
 
@@ -317,7 +313,7 @@ public class LookupAction extends ScannedItemAction {
         @Override
         public boolean parse(String data, ScannedItem item) throws ActionException {
             try {
-                JSONObject o = new JSONObject(data);
+                final JSONObject o = new JSONObject(data);
                 if(keyMap == null) {
                     Iterator<String> keys = o.keys();
                     while (keys.hasNext()) {
@@ -325,17 +321,30 @@ public class LookupAction extends ScannedItemAction {
                         item.putValue(key, o.getString(key));
                     }
                 } else {
-                    for(Map.Entry<String, String> e: keyMap.entrySet()) {
-                        String itemKey = e.getValue();
-                        if(itemKey.equals(KEY_ERROR)) {
-                            itemKey = getErrorKey();
+                    Formatting.Formattable formatter = new Formatting.Formattable() {
+                        @Override
+                        public String getValue(String key) {
+                            return followPath(o, key.split("/"), 0);
                         }
-                        String[] path = e.getKey().split("/");
-                        String value = followPath(o, path, 0);
+                    };
+                    int values = 0;
+                    for(Map.Entry<String, String> e: keyMap.entrySet()) {
+                        String value = formatWithObject(e.getValue(), formatter, false);
                         if(!TextUtils.isEmpty(value)) {
-                            item.putValue(itemKey, value);
+                            item.putValue(e.getKey(), value.trim());
+                            values++;
                         } else {
-                            if(!isQuiet()) item.putValue(itemKey, "NA");
+                            if(!isQuiet()) {
+                                item.putValue(e.getKey(), "NA");
+                            }
+                        }
+                    }
+                    if(values == 0) {
+                        String error = "No results were obtained from query";
+                        if(isQuiet()) {
+                            item.putValue(getErrorKey(), error);
+                        } else {
+                            throw new ActionException(error);
                         }
                     }
                 }
@@ -407,7 +416,7 @@ public class LookupAction extends ScannedItemAction {
     }
 
 
-    private class XMLRPCParser implements LookupParser {
+    private class XMLRPCParser implements LookupParser, Formatting.Formattable {
 
         @Override
         public boolean parse(String data, ScannedItem item) throws ActionException {
@@ -419,23 +428,36 @@ public class LookupAction extends ScannedItemAction {
                     throw new ActionException("Null result from RPC Parser");
                 }
             } else if(result instanceof Map) {
-                Map<String, Object> map = (Map<String, Object>) result;
+                final Map<String, Object> map = (Map<String, Object>) result;
                 if(keyMap == null) {
                     for(Map.Entry<String, Object> e: map.entrySet()) {
                         item.putValue(e.getKey(), e.getValue().toString());
                     }
                 } else {
-                    for(Map.Entry<String, String> e: keyMap.entrySet()) {
-                        String itemKey = e.getValue();
-                        if(itemKey.equals(KEY_ERROR)) {
-                            itemKey = getErrorKey();
+                    Formatting.Formattable formatter = new Formatting.Formattable() {
+                        @Override
+                        public String getValue(String key) {
+                            return followPath(map, key.split("/"), 0);
                         }
-                        String[] path = e.getKey().split("/");
-                        String value = followPath(map, path, 0);
+                    };
+                    int values = 0;
+                    for(Map.Entry<String, String> e: keyMap.entrySet()) {
+                        String value = formatWithObject(e.getValue(), formatter, false);
                         if(!TextUtils.isEmpty(value)) {
-                            item.putValue(itemKey, value);
+                            item.putValue(e.getKey(), value.trim());
+                            values++;
                         } else {
-                            if(!isQuiet()) item.putValue(itemKey, "NA");
+                            if(!isQuiet()) {
+                                item.putValue(e.getKey(), "NA");
+                            }
+                        }
+                    }
+                    if(values == 0) {
+                        String error = "No results were obtained from query";
+                        if(isQuiet()) {
+                            item.putValue(getErrorKey(), error);
+                        } else {
+                            throw new ActionException(error);
                         }
                     }
                 }
@@ -447,6 +469,11 @@ public class LookupAction extends ScannedItemAction {
                 }
             }
             return true;
+        }
+
+        @Override
+        public String getValue(String key) {
+            return null;
         }
 
         private String followPath(Map<String, Object> o, String[] path, int index) {
@@ -564,7 +591,6 @@ public class LookupAction extends ScannedItemAction {
                 throw new ActionException(error);
             }
         }
-
     }
 
     private class XMLParser implements LookupParser {
@@ -573,7 +599,7 @@ public class LookupAction extends ScannedItemAction {
         public boolean parse(String data, ScannedItem item) throws ActionException {
             Document d = getDomElement(data);
             if(d != null) {
-                Node root = d.getFirstChild();
+                final Node root = d.getFirstChild();
                 if (keyMap == null) {
                     if(root.hasChildNodes()) {
                         NodeList l = root.getChildNodes();
@@ -590,17 +616,30 @@ public class LookupAction extends ScannedItemAction {
                         }
                     }
                 } else {
-                    for (Map.Entry<String, String> e : keyMap.entrySet()) {
-                        String itemKey = e.getValue();
-                        if (itemKey.equals(KEY_ERROR)) {
-                            itemKey = getErrorKey();
+                    Formatting.Formattable formatter = new Formatting.Formattable() {
+                        @Override
+                        public String getValue(String key) {
+                            return followPath(root, key.split("/"), 0);
                         }
-                        String[] path = e.getKey().split("/");
-                        String value = followPath(root, path, 0);
-                        if (!TextUtils.isEmpty(value)) {
-                            item.putValue(itemKey, value.trim());
+                    };
+                    int values = 0;
+                    for(Map.Entry<String, String> e: keyMap.entrySet()) {
+                        String value = formatWithObject(e.getValue(), formatter, false);
+                        if(!TextUtils.isEmpty(value)) {
+                            item.putValue(e.getKey(), value.trim());
+                            values++;
                         } else {
-                            if (!isQuiet()) item.putValue(itemKey, "NA");
+                            if(!isQuiet()) {
+                                item.putValue(e.getKey(), "NA");
+                            }
+                        }
+                    }
+                    if(values == 0) {
+                        String error = "No results were obtained from query";
+                        if(isQuiet()) {
+                            item.putValue(getErrorKey(), error);
+                        } else {
+                            throw new ActionException(error);
                         }
                     }
                 }

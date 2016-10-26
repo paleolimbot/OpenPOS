@@ -15,7 +15,7 @@ import net.fishandwhistle.openpos.items.ScannedItem;
 
 import org.json.JSONObject;
 
-import static net.fishandwhistle.openpos.actions.StringFormatAction.formatWithObject;
+import static net.fishandwhistle.openpos.actions.Formatting.formatWithObject;
 
 /**
  * Created by dewey on 2016-10-24.

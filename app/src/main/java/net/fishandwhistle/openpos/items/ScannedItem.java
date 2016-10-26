@@ -2,6 +2,8 @@ package net.fishandwhistle.openpos.items;
 
 import android.util.Log;
 
+import net.fishandwhistle.openpos.actions.Formatting;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -16,7 +18,7 @@ import java.util.List;
  * Created by dewey on 2016-10-04.
  */
 
-public class ScannedItem implements Serializable {
+public class ScannedItem implements Serializable, Formatting.Formattable {
     private static final String TAG = "ScannedItem";
 
     public static final String KEY_BARCODE_TEXT = "_barcode_text";
@@ -57,6 +59,7 @@ public class ScannedItem implements Serializable {
         return out;
     }
 
+    @Override
     public String getValue(String key) {
         switch (key) {
             case KEY_BARCODE_TEXT:

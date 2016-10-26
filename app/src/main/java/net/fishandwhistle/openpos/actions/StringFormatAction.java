@@ -13,6 +13,8 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static net.fishandwhistle.openpos.actions.Formatting.formatWithObject;
+
 /**
  * Created by dewey on 2016-10-22.
  */
@@ -47,29 +49,5 @@ public class StringFormatAction extends ScannedItemAction {
             Log.e("RegexLookup", "doAction: json exception", e);
             throw new ActionException("JSON Error: " + e.getMessage());
         }
-    }
-
-    public static String formatWithObject(String format, ScannedItem item) {
-        return formatWithObject(format, item, true);
-    }
-
-    public static String formatWithObject(String format, ScannedItem item, boolean quiet) {
-        Pattern TAG = Pattern.compile("\\{\\{(.*?)\\}\\}");
-        StringBuffer sb = new StringBuffer();
-        Matcher m = TAG.matcher(format);
-        while(m.find()) {
-            String attr = m.group(1);
-            String attrVal = item.getValue(attr);
-            if(attrVal == null) {
-                if(quiet) {
-                    attrVal = "{{" + attr + "}}";
-                } else {
-                    return null;
-                }
-            }
-            m.appendReplacement(sb, attrVal);
-        }
-        m.appendTail(sb);
-        return sb.toString();
     }
 }

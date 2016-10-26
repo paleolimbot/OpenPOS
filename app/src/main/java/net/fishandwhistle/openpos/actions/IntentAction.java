@@ -12,6 +12,8 @@ import org.json.JSONObject;
 import java.util.Iterator;
 import java.util.Map;
 
+import static net.fishandwhistle.openpos.actions.Formatting.formatWithObject;
+
 /**
  * Created by dewey on 2016-10-24.
  */
@@ -51,7 +53,7 @@ public class IntentAction extends ScannedItemAction {
 
     @Override
     public boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
-        String uriString = StringFormatAction.formatWithObject(uriFormat, item, false);
+        String uriString = formatWithObject(uriFormat, item, false);
         if(uriString != null) {
             Uri uri = Uri.parse(uriString);
             if(uri != null) {
@@ -61,7 +63,7 @@ public class IntentAction extends ScannedItemAction {
                     Bundle ext = new Bundle();
                     for(Map.Entry<String, String> entry: extras.entrySet()) {
                         if(formatExtras) {
-                            ext.putString(entry.getKey(), StringFormatAction.formatWithObject(entry.getValue(), item));
+                            ext.putString(entry.getKey(), formatWithObject(entry.getValue(), item));
                         } else {
                             ext.putString(entry.getKey(), entry.getValue());
                         }

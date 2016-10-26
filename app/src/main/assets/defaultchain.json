@@ -21,38 +21,26 @@
             "uri_format": "https://www.goodreads.com/search/index.xml?key=HSkIMuOGlxFIOmfBCGFVA&q={{isbn13}}",
             "mime_type": "text/xml",
             "key_map": {
-              "search/results/work/best_book/title": "title",
-              "search/results/work/best_book/author/name": "authors"
-            }
-          },
-          {
-            "type": "stringformat",
-            "key_map": {
-              "amazon_search": "https://www.amazon.com/s/field-keywords={{isbn13}}",
-              "worldcat": "http://www.worldcatlibraries.org/registry/gateway?isbn={{isbn13}}",
-              "_description": "{{title}} ({{authors}})"
+              "title": "{{search/results/work/best_book/title}}",
+              "authors": "{{search/results/work/best_book/author/name}}",
+              "_description": "{{search/results/work/best_book/title}} ({{search/results/work/best_book/author/name}})",
+              "goodreads_link": "https://www.goodreads.com/book/show/{{search/results/work/best_book/id}}"
             }
           }
         ]
       },
       {
         "type": "lookup",
-        "name": "sem3",
-        "api_type": "REST",
-        "uri_format": "https://api.semantics3.com/test/v1/products?q=%7B%22ean%22:%22{{gtin13}}%22%7D",
-        "attribution": "http://www.semantics3.com/",
-        "mime_type": "application/json",
-        "header": {
-          "api_key": "SEM3FC8D0BF4539905ECBF48230FD785747C"
-        },
+        "name": "upcdb",
+        "uri_format": "https://www.upcdatabase.com/xmlrpc",
+        "request": "<?xml version=\"1.0\"?><methodCall><methodName>lookup</methodName><params><param><value><struct><member><name>rpc_key</name><value>d59fa84ebe4aad99c691b287907d736d34fb5d5a</value></member><member><name>ean</name><value>{{gtin13}}</value></member></struct></value></param></params></methodCall>",
+        "mime_type": "text/xml-rpc",
+        "api_type": "XML-RPC",
         "key_map": {
-          "results[0]/name": "_description",
-          "results[0]/description": "description",
-          "results[0]/price": "price",
-          "results[0]/manufacturer": "manufacturer",
-          "results[0]/brand": "brand",
-          "results[0]/model": "model",
-          "message": "lookup_status"
+          "_description": "{{description}}",
+          "size": "{{size}}",
+          "upcdb_status": "{{message}}",
+          "upcdb_link": "https://www.upcdatabase.com/item/{{ean}}"
         }
       }
     ]
