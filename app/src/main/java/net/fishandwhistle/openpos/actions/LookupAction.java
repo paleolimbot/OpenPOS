@@ -66,8 +66,7 @@ public class LookupAction extends ScannedItemAction {
     public static final String OPTION_API_TYPE = "api_type";
     public static final String OPTION_REQUEST = "request";
     public static final String OPTION_HEADER = "header";
-
-    public static final String KEY_ERROR = "lookup_error";
+    public static final String OPTION_VALID_CHECK = "valid_check";
 
     private static final String TAG = "LookupAction" ;
     private static Set<String> currentRequests = new HashSet<>();
@@ -77,7 +76,8 @@ public class LookupAction extends ScannedItemAction {
     private String encoding;
     private String apiType;
     private String request;
-    Map<String, String> header;
+    private Map<String, String> header;
+    private Map<String, String> validCheck;
 
     public LookupAction(JSONObject jsonObject) {
         super(jsonObject);
@@ -115,6 +115,7 @@ public class LookupAction extends ScannedItemAction {
             if(request == null) throw new IllegalArgumentException("XML-RPC and JSON-RPC require option 'request'");
         }
         header = extractKeyMap(getOptionObject(OPTION_HEADER));
+        validCheck = extractKeyMap(getOptionObject(OPTION_VALID_CHECK));
     }
 
     private String getErrorKey() {
@@ -169,12 +170,7 @@ public class LookupAction extends ScannedItemAction {
                     item.putValue(getTimeKey(), String.valueOf(cached.queryTime));
                     return true;
                 } else {
-                    if(isQuiet()) {
-                        item.putValue(getErrorKey(), "Parse error");
-                        return false;
-                    } else {
-                        throw new ActionException("Parse error");
-                    }
+                    return false;
                 }
             } else {
                 if(isNetworkAvailable(context)) {
@@ -339,6 +335,13 @@ public class LookupAction extends ScannedItemAction {
                             return followPath(o, key.split("/"), 0);
                         }
                     };
+                    //check validity first
+                    if(validCheck != null) {
+                        for (Map.Entry<String, String> e : validCheck.entrySet()) {
+                            String value = formatWithObject(e.getKey(), formatter, false);
+                            if (value == null || !value.equals(e.getValue())) return false;
+                        }
+                    }
                     int values = 0;
                     for(Map.Entry<String, String> e: keyMap.entrySet()) {
                         String value = formatWithObject(e.getValue(), formatter, false);
@@ -456,6 +459,12 @@ public class LookupAction extends ScannedItemAction {
                             return followPath(map, key.split("/"), 0);
                         }
                     };
+                    if(validCheck != null) {
+                        for (Map.Entry<String, String> e : validCheck.entrySet()) {
+                            String value = formatWithObject(e.getKey(), formatter, false);
+                            if (value == null || !value.equals(e.getValue())) return false;
+                        }
+                    }
                     int values = 0;
                     for(Map.Entry<String, String> e: keyMap.entrySet()) {
                         String value = formatWithObject(e.getValue(), formatter, false);
@@ -643,6 +652,12 @@ public class LookupAction extends ScannedItemAction {
                             return followPath(root, key.split("/"), 0);
                         }
                     };
+                    if(validCheck != null) {
+                        for (Map.Entry<String, String> e : validCheck.entrySet()) {
+                            String value = formatWithObject(e.getKey(), formatter, false);
+                            if (value == null || !value.equals(e.getValue())) return false;
+                        }
+                    }
                     int values = 0;
                     for(Map.Entry<String, String> e: keyMap.entrySet()) {
                         String value = formatWithObject(e.getValue(), formatter, false);

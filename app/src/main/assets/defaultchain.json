@@ -7,7 +7,7 @@
       "type": "chooser",
       "title": "{{_description}}",
       "negative_text": "Cancel",
-      "labels": ["Find this in a Library®", "Search Google", "Search Amazon", "Perform Lookup", "Testing"],
+      "labels": ["Find this in a Library ®", "Search Google", "Search Amazon", "Perform Lookup", "Testing"],
       "actions": [
         {
           "type": "intent",
@@ -53,6 +53,9 @@
                 "size": "{{size}}",
                 "upcdb_status": "{{message}}",
                 "upcdb_link": "https://www.upcdatabase.com/item/{{ean}}"
+              },
+              "valid_check": {
+                "{{found}}": "true"
               }
             }
           ]
