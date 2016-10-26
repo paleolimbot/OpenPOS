@@ -20,8 +20,10 @@ import java.util.List;
 public class ActionList extends ScannedItemAction {
 
     private static final String OPTION_ACTIONS = "actions";
+    private static final String OPTION_EXECUTE_UNTIL = "execute_until";
 
     protected List<ScannedItemAction> actions ;
+    private String executeUntil;
 
     public ActionList(JSONObject jsonObject) {
         super(jsonObject);
@@ -36,8 +38,7 @@ public class ActionList extends ScannedItemAction {
         } catch(JSONException e) {
             throw new IllegalArgumentException("Invalid JSON in constructor: " + e.getMessage());
         }
-
-
+        executeUntil = getOptionString(OPTION_EXECUTE_UNTIL);
     }
 
     @Override
@@ -50,6 +51,9 @@ public class ActionList extends ScannedItemAction {
                 actionResult = action.doAction(context, item, executor);
                 if((executor != null && executor.isCancelled()) || (!isQuiet() && !actionResult)) {
                     return false;
+                } else if(executeUntil != null) {
+                    if((actionResult && executeUntil.equals("true")) || (!actionResult && executeUntil.equals("false")))
+                        return actionResult;
                 } else {
                     result = actionResult && result;
                 }

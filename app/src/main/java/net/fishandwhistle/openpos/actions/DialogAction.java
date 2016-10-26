@@ -195,15 +195,15 @@ public class DialogAction extends ScannedItemAction {
         //will be one of _POSITIVE, _NEGATIVE, _NEUTRAL, or _CANCELLED
         //if inputType is set, the response will be whatever is in the input field
         if (outKey != null && !TextUtils.isEmpty(response)) {
-            if(response.equals("_CANCELLED") && inputType != null) {
+            if(response.equals("_CANCELLED") && (inputType != null || values != null)) {
                 return false;
             } else {
                 item.putValue(outKey, response.trim());
                 return true;
             }
-        } else {
-            return !TextUtils.isEmpty(response) && (response.equals("_POSITIVE") || response.equals("_NEUTRAL"));
         }
+
+        return !TextUtils.isEmpty(response) && (response.equals("_POSITIVE") || response.equals("_NEUTRAL"));
     }
 
     private interface OnTextSavedListener {
