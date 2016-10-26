@@ -201,11 +201,7 @@ public class LookupAction extends ScannedItemAction {
         try {
             URL url = new URL(urlString);
             connection = (HttpURLConnection)url.openConnection();
-            if(header != null) {
-                for(Map.Entry<String, String> e: header.entrySet()) {
-                    connection.setRequestProperty(e.getKey(), e.getValue());
-                }
-            }
+
             if(apiType.equals("JSON-RPC") || apiType.equals("XML-RPC")) {
                 String requestMime;
                 if(apiType.equals("JSON-RPC")) {
@@ -218,8 +214,19 @@ public class LookupAction extends ScannedItemAction {
                 connection.setRequestProperty("Content-Type", requestMime);
                 connection.setRequestProperty("charset", "utf-8");
                 connection.setRequestProperty("Content-Length", Integer.toString(requestData.length));
+                if(header != null) {
+                    for(Map.Entry<String, String> e: header.entrySet()) {
+                        connection.setRequestProperty(e.getKey(), e.getValue());
+                    }
+                }
                 connection.setUseCaches(false);
                 connection.getOutputStream().write(requestData);
+            } else {
+                if(header != null) {
+                    for(Map.Entry<String, String> e: header.entrySet()) {
+                        connection.setRequestProperty(e.getKey(), e.getValue());
+                    }
+                }
             }
             Log.i(TAG, "starting download from " + urlString);
             connection.connect();
