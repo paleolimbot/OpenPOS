@@ -1,42 +1,67 @@
-{"type": "list",
-"actions": [
-  {
-    "type": "vibrate"
-  },
-  {
-    "type": "switch",
-    "is_regex": true,
-    "key": "gtin13",
-    "values": ["^97.*?$", "^.*?$"],
-    "actions": [
-          {
-            "type": "lookup",
-            "name": "goodreads",
-            "attribution": "http://www.goodreads.com/",
-            "api_type": "REST",
-            "uri_format": "https://www.goodreads.com/search/index.xml?key=HSkIMuOGlxFIOmfBCGFVA&q={{isbn13}}",
-            "mime_type": "text/xml",
-            "key_map": {
-              "title": "{{search/results/work/best_book/title}}",
-              "authors": "{{search/results/work/best_book/author/name}}",
-              "_description": "{{search/results/work/best_book/title}} ({{search/results/work/best_book/author/name}})",
-              "goodreads_link": "https://www.goodreads.com/book/show/{{search/results/work/best_book/id}}"
+{
+  "type": "list",
+  "actions": [
+    {"type": "vibrate"},
+    {
+      "name": "Default Book Chooser",
+      "type": "chooser",
+      "title": "{{_description}}",
+      "negative_text": "Cancel",
+      "labels": ["Find this in a Library®", "Search Google", "Search Amazon", "Perform Lookup", "Customize Actions"],
+      "actions": [
+        {
+          "type": "intent",
+          "uri_format": "http://www.worldcatlibraries.org/registry/gateway?isbn={{isbn13}}"
+        },
+        {
+          "type": "intent",
+          "uri_format": "https://www.google.ca/search?q={{isbn13}}"
+        },
+        {
+          "type": "intent",
+          "uri_format": "https://www.amazon.com/s/field-keywords={{isbn13}}"
+        },
+        {
+          "type": "switch",
+          "is_regex": true,
+          "key": "gtin13",
+          "values": ["^97.*?$", "^.*?$"],
+          "actions": [
+            {
+              "type": "lookup",
+              "name": "goodreads",
+              "attribution": "http://www.goodreads.com/",
+              "api_type": "REST",
+              "uri_format": "https://www.goodreads.com/search/index.xml?key=HSkIMuOGlxFIOmfBCGFVA&q={{isbn13}}",
+              "mime_type": "text/xml",
+              "key_map": {
+                "title": "{{search/results/work/best_book/title}}",
+                "authors": "{{search/results/work/best_book/author/name}}",
+                "_description": "{{search/results/work/best_book/title}} ({{search/results/work/best_book/author/name}})",
+                "goodreads_link": "https://www.goodreads.com/book/show/{{search/results/work/best_book/id}}"
+              }
+            },
+            {
+              "type": "lookup",
+              "name": "upcdb",
+              "uri_format": "https://www.upcdatabase.com/xmlrpc",
+              "request": "<?xml version=\"1.0\"?><methodCall><methodName>lookup</methodName><params><param><value><struct><member><name>rpc_key</name><value>d59fa84ebe4aad99c691b287907d736d34fb5d5a</value></member><member><name>ean</name><value>{{gtin13}}</value></member></struct></value></param></params></methodCall>",
+              "mime_type": "text/xml-rpc",
+              "api_type": "XML-RPC",
+              "key_map": {
+                "_description": "{{description}}",
+                "size": "{{size}}",
+                "upcdb_status": "{{message}}",
+                "upcdb_link": "https://www.upcdatabase.com/item/{{ean}}"
+              }
             }
-      },
-      {
-        "type": "lookup",
-        "name": "upcdb",
-        "uri_format": "https://www.upcdatabase.com/xmlrpc",
-        "request": "<?xml version=\"1.0\"?><methodCall><methodName>lookup</methodName><params><param><value><struct><member><name>rpc_key</name><value>d59fa84ebe4aad99c691b287907d736d34fb5d5a</value></member><member><name>ean</name><value>{{gtin13}}</value></member></struct></value></param></params></methodCall>",
-        "mime_type": "text/xml-rpc",
-        "api_type": "XML-RPC",
-        "key_map": {
-          "_description": "{{description}}",
-          "size": "{{size}}",
-          "upcdb_status": "{{message}}",
-          "upcdb_link": "https://www.upcdatabase.com/item/{{ean}}"
+          ]
+        },
+        {
+          "type": "intent",
+          "uri_format": "http://apps.fishandwhistle.net/better-barcode/actions"
         }
-      }
-    ]
-  }
-]}
+      ]
+    }
+  ]
+}

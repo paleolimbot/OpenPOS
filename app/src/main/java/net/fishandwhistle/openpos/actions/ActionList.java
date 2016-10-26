@@ -34,7 +34,7 @@ public class ActionList extends ScannedItemAction {
                 this.actions.add(ActionFactory.inflate(actionJson));
             }
         } catch(JSONException e) {
-            throw new IllegalArgumentException("Invalid JSON in constructor");
+            throw new IllegalArgumentException("Invalid JSON in constructor: " + e.getMessage());
         }
 
 

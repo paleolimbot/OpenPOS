@@ -36,6 +36,8 @@ public class ActionFactory {
                 return new IntentAction(o);
             case "vibrate":
                 return new VibrateAction(o);
+            case "chooser":
+                return new ChooserDialogAction(o);
             default: throw new IllegalArgumentException("Invalid class supplied: " + o.getString(ScannedItemAction.OPTION_TYPE));
         }
     }

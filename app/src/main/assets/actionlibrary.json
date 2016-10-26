@@ -1,0 +1,73 @@
+[
+  {
+    "name": "Add WorldCat Link",
+    "type": "stringformat",
+    "key_map": {
+      "worldcat": "http://www.worldcatlibraries.org/registry/gateway?isbn={{isbn13}}"
+    }
+  },
+  {
+    "name": "Add Google Search Link",
+    "type": "stringformat",
+    "key_map": {
+      "google": "https://www.google.ca/search?q={{gtin13}}"
+    }
+  },
+  {
+    "name": "Add Amazon Search Link",
+    "type": "stringformat",
+    "key_map": {
+      "amazon": "https://www.amazon.com/s/field-keywords={{gtin13}}"
+    }
+  },
+  {
+    "name": "Default Book Chooser",
+    "type": "chooser",
+    "title": "{{_description}}",
+    "choices": ["Find this in a Library®", "Search Google", "Search Amazon", "Save", "Customize Actions"],
+    "actions": [
+      {
+        "type": "intent",
+        "uri_format": "http://www.worldcatlibraries.org/registry/gateway?isbn={{isbn13}}"
+      },
+      {
+        "type": "intent",
+        "uri_format": "https://www.google.ca/search?q={{isbn13}}"
+      },
+      {
+        "type": "intent",
+        "uri_format": "https://www.amazon.com/s/field-keywords={{isbn13}}"
+      },
+      {
+        "type": "save"
+      },
+      {
+        "type": "intent",
+        "uri_format": "http://apps.fishandwhistle.net/better-barcode/actions"
+      }
+    ]
+  },
+  {
+    "name": "Default Product Chooser",
+    "type": "chooser",
+    "title": "_description",
+    "choices": ["Search Google", "Search Amazon", "Save to Session", "Customize Actions"],
+    "actions": [
+      {
+        "type": "intent",
+        "uri_format": "https://www.google.ca/search?q={{gtin13}}"
+      },
+      {
+        "type": "intent",
+        "uri_format": "https://www.amazon.com/s/field-keywords={{gtin13}}"
+      },
+      {
+        "type": "save"
+      },
+      {
+        "type": "intent",
+        "uri_format": "http://apps.fishandwhistle.net/better-barcode/actions"
+      }
+    ]
+  }
+]
