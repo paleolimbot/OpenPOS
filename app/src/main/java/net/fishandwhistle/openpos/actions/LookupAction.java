@@ -52,6 +52,7 @@ public class LookupAction extends ScannedItemAction {
     public static final String OPTION_ENCODING = "encoding";
     public static final String OPTION_API_TYPE = "api_type";
     public static final String OPTION_REQUEST = "request";
+    public static final String OPTION_HEADER = "header";
 
     public static final String KEY_ERROR = "lookup_error";
 
@@ -63,6 +64,7 @@ public class LookupAction extends ScannedItemAction {
     private String encoding;
     private String apiType;
     private String request;
+    Map<String, String> header;
 
     public LookupAction(JSONObject jsonObject) {
         super(jsonObject);
@@ -96,6 +98,7 @@ public class LookupAction extends ScannedItemAction {
         if(apiType.equals("XML-RPC") || apiType.equals("JSON-RPC")) {
             if(request == null) throw new IllegalArgumentException("XML-RPC and JSON-RPC require option 'request'");
         }
+        header = extractKeyMap(getOptionObject(OPTION_HEADER));
     }
 
     private String getErrorKey() {
@@ -182,6 +185,11 @@ public class LookupAction extends ScannedItemAction {
         try {
             URL url = new URL(urlString);
             connection = (HttpURLConnection)url.openConnection();
+            if(header != null) {
+                for(Map.Entry<String, String> e: header.entrySet()) {
+                    connection.setRequestProperty(e.getKey(), e.getValue());
+                }
+            }
             if(apiType.equals("JSON-RPC") || apiType.equals("XML-RPC")) {
                 String requestMime;
                 if(apiType.equals("JSON-RPC")) {

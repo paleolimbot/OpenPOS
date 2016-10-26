@@ -281,7 +281,7 @@
       "type": "lookup",
       "name": "Semantics3",
       "api_type": "REST",
-      "uri_format": "https://api.semantics3.com/v1/products?q={\"ean\":\"{{gtin13}}\", \"fields\": [\"name\", \"price\", \"description\", \"manufacturer\", \"brand\", \"model\"]}",
+      "uri_format": "https://api.semantics3.com/test/v1/products?q={\"ean\":\"{{gtin13}}\", \"fields\": [\"name\", \"price\", \"description\", \"manufacturer\", \"brand\", \"model\"]}",
       "mime_type": "application/json",
       "authentication": {
         "type": "OAuth",

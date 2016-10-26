@@ -38,23 +38,21 @@
       },
       {
         "type": "lookup",
-        "name": "supc",
-        "api_type": "JSON-RPC",
+        "name": "sem3",
+        "api_type": "REST",
+        "uri_format": "https://api.semantics3.com/test/v1/products?q=%7B%22ean%22:%22{{gtin13}}%22%7D",
         "mime_type": "application/json",
-        "uri_format": "http://api.simpleupc.com/v1.php",
-        "request": {
-          "auth": "NIC7bH3K0RlCw1YXBebOz2VxEb6hw5tt",
-          "method": "FetchProductByUPC",
-          "params": {
-            "upc": "{{upca}}"
-          },
-          "returnFormat": "json"
+        "header": {
+          "api_key": "SEM3FC8D0BF4539905ECBF48230FD785747C"
         },
         "key_map": {
-          "error/message": "lookup_error",
-          "result/description": "_description",
-          "result/manufacturer": "manufacturer",
-          "result/brand": "brand"
+          "results[0]/name": "_description",
+          "results[0]/description": "description",
+          "results[0]/price": "price",
+          "results[0]/manufacturer": "manufacturer",
+          "results[0]/brand": "brand",
+          "results[0]/model": "model",
+          "message": "lookup_error"
         }
       }
     ]
