@@ -15,6 +15,12 @@ import net.fishandwhistle.openpos.items.ScannedItem;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -31,6 +37,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,6 +46,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Created by dewey on 2016-10-02.
@@ -76,6 +87,9 @@ public class LookupAction extends ScannedItemAction {
                 break;
             case "text/xml-rpc":
                 parser = new XMLRPCParser();
+                break;
+            case "text/xml":
+                parser = new XMLParser();
                 break;
             default: throw new IllegalArgumentException("No parser available for mime type " + getOptionString(OPTION_MIMETYPE));
         }
@@ -393,7 +407,7 @@ public class LookupAction extends ScannedItemAction {
     }
 
 
-    private class XMLRPCParser implements LookupAction.LookupParser {
+    private class XMLRPCParser implements LookupParser {
 
         @Override
         public boolean parse(String data, ScannedItem item) throws ActionException {
@@ -548,6 +562,156 @@ public class LookupAction extends ScannedItemAction {
                 return null;
             } else {
                 throw new ActionException(error);
+            }
+        }
+
+    }
+
+    private class XMLParser implements LookupParser {
+
+        @Override
+        public boolean parse(String data, ScannedItem item) throws ActionException {
+            Document d = getDomElement(data);
+            if(d != null) {
+                Node root = d.getFirstChild();
+                if (keyMap == null) {
+                    if(root.hasChildNodes()) {
+                        NodeList l = root.getChildNodes();
+                        for(int i=0; i<l.getLength(); i++) {
+                            Node n = l.item(i);
+                            item.putValue(n.getNodeName(), n.getNodeValue());
+                        }
+                    } else {
+                        String error = "No data in XML response";
+                        if(!isQuiet()) {
+                            throw new ActionException(error);
+                        } else {
+                            item.putValue(getErrorKey(), error);
+                        }
+                    }
+                } else {
+                    for (Map.Entry<String, String> e : keyMap.entrySet()) {
+                        String itemKey = e.getValue();
+                        if (itemKey.equals(KEY_ERROR)) {
+                            itemKey = getErrorKey();
+                        }
+                        String[] path = e.getKey().split("/");
+                        String value = followPath(root, path, 0);
+                        if (!TextUtils.isEmpty(value)) {
+                            item.putValue(itemKey, value.trim());
+                        } else {
+                            if (!isQuiet()) item.putValue(itemKey, "NA");
+                        }
+                    }
+                }
+                return true;
+            } else {
+                return false;
+
+            }
+        }
+
+        public Document getDomElement(String xml) {
+            Document doc;
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+            dbf.setCoalescing(true);
+            try {
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                InputSource is = new InputSource();
+                is.setCharacterStream(new StringReader(xml));
+                doc = db.parse(is);
+
+            } catch (ParserConfigurationException e) {
+                return null;
+            } catch (SAXException e) {
+                return null;
+            } catch (IOException e) {
+                return null;
+            }
+
+            return doc;
+
+        }
+
+        public String followPath(Node o, String[] path, int index) {
+            Pattern INDEX = Pattern.compile("\\[(.*?)\\]");
+            try {
+                String key = path[index];
+                Matcher m = INDEX.matcher(key);
+                String arrInd ;
+                if(m.find()) {
+                    arrInd = m.group(1);
+                    key = key.replace("["+arrInd+"]", "");
+                } else {
+                    arrInd = "0";
+                }
+                //is an index (e.g. data[0])
+                List<Node> nodes = getChildrenByTagName(o, key);
+                if(nodes == null || nodes.size() == 0) return null;
+                try {
+                    if(index == (path.length-1)) {
+                        Node text = nodes.get(Integer.valueOf(arrInd));
+                        if(text.hasChildNodes() && text.getChildNodes().item(0) != null) {
+                            return text.getChildNodes().item(0).getNodeValue();
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        return followPath(nodes.get(Integer.valueOf(arrInd)), path, index+1);
+                    }
+                } catch(NumberFormatException e) {
+                    //we are going to join the results of everything else on arrInd
+                    String[] strings = new String[nodes.size()];
+                    if(index == (path.length-1)) {
+                        for(int i=0; i<nodes.size(); i++) {
+                            Node text = nodes.get(i);
+                            if(text.hasChildNodes() && text.getChildNodes().item(0) != null) {
+                                strings[i] = text.getChildNodes().item(0).getNodeValue();
+                            } else {
+                                if(isQuiet()) {
+                                    return null;
+                                } else {
+                                    strings[i] = "NA";
+                                }
+                            }
+                        }
+                    } else {
+                        for(int i=0; i<nodes.size(); i++) {
+                            String s = followPath(nodes.get(i), path, index + 1);
+                            if(s == null) {
+                                if(isQuiet()) {
+                                    return null;
+                                } else {
+                                    s = "NA";
+                                }
+                            }
+                            strings[i] = s;
+                        }
+                    }
+                    //join the results
+                    return TextUtils.join(arrInd, strings);
+                }
+
+            } catch(DOMException e) {
+                //Log.e("JSONLookupItem", "followPath: json exception", e);
+                //'string not found' is very common, don't log
+                return null;
+            }
+        }
+
+        private List<Node> getChildrenByTagName(Node parent, String tagName) {
+            if(parent.hasChildNodes()) {
+                List<Node> out = new ArrayList<>();
+                NodeList l = parent.getChildNodes();
+                for(int i=0; i<l.getLength(); i++) {
+                    if(l.item(i).getNodeName().equals(tagName)) {
+                        out.add(l.item(i));
+                    }
+                }
+                return out;
+            } else {
+                return null;
             }
         }
 

@@ -15,23 +15,22 @@
         "actions": [
           {
             "type": "lookup",
-            "name": "isbndb",
-            "encoding": "windows-1251",
-            "mime_type": "application/json",
-            "uri_format": "http://isbndb.com/api/v2/json/T89SFTZN/book/{{isbn13}}",
+            "name": "goodreads",
+            "attribution": "http://www.goodreads.com/",
+            "api_type": "REST",
+            "uri_format": "https://www.goodreads.com/search/index.xml?key=HSkIMuOGlxFIOmfBCGFVA&q={{isbn13}}",
+            "mime_type": "text/xml",
             "key_map": {
-              "data[0]/title": "title",
-              "data[0]/author_data[; ]/name": "authors",
-              "data[0]/dewey_normal": "dewey_normal",
-              "data[0]/lcc_number": "lcc_number",
-              "data[0]/publisher_text": "publisher"
+              "search/results/work/best_book/title": "title",
+              "search/results/work/best_book/author/name": "authors"
             }
           },
           {
             "type": "stringformat",
             "key_map": {
               "amazon_search": "https://www.amazon.com/s/field-keywords={{isbn13}}",
-              "_description": "{{title}} ({{authors}}"
+              "worldcat": "http://www.worldcatlibraries.org/registry/gateway?isbn={{isbn13}}",
+              "_description": "{{title}} ({{authors}})"
             }
           }
         ]
@@ -41,6 +40,7 @@
         "name": "sem3",
         "api_type": "REST",
         "uri_format": "https://api.semantics3.com/test/v1/products?q=%7B%22ean%22:%22{{gtin13}}%22%7D",
+        "attribution": "http://www.semantics3.com/",
         "mime_type": "application/json",
         "header": {
           "api_key": "SEM3FC8D0BF4539905ECBF48230FD785747C"
@@ -52,7 +52,7 @@
           "results[0]/manufacturer": "manufacturer",
           "results[0]/brand": "brand",
           "results[0]/model": "model",
-          "message": "lookup_error"
+          "message": "lookup_status"
         }
       }
     ]

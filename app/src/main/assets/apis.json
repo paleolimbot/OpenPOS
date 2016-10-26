@@ -2,6 +2,7 @@
   {
     "name": "UPCDatabase.org",
     "homepage": "http://www.upcdatabase.org",
+    "pricing": "Free (personal use) to 1000 queries/day",
     "api_signup": "http://upcdatabase.org/signup",
     "required_parameters": ["APIKEY"],
     "sample_response": {
@@ -16,6 +17,7 @@
     "lookup_action": {
       "type": "lookup",
       "name": "UPC Lookup",
+      "attribution": "http://www.upcdatabase.org/",
       "uri_format": "http://api.upcdatabase.org/json/{{APIKEY}}/{{gtin13}}",
       "mime_type": "application/json",
       "api_type": "REST",
@@ -30,7 +32,7 @@
   {
     "name": "ISBN Database",
     "homepage": "http://www.isbndb.com/",
-    "pricing": "Free, up to 1000 queries/day",
+    "pricing": "Free (personal use) up to 1000 queries/day",
     "api_signup": "http://isbndb.com/account/logincreate",
     "required_parameters": ["APIKEY"],
     "sample_resource": {
@@ -77,6 +79,7 @@
     "lookup_action": {
       "type": "lookup",
       "name": "isbndb",
+      "attribution": "http://www.isbndb.com/",
       "encoding": "windows-1251",
       "mime_type": "application/json",
       "api_type": "REST",
@@ -291,7 +294,6 @@
       "key_map": {
         "results[0]/name": "_description",
         "results[0]/description": "description",
-        "results[0]/price": "price",
         "results[0]/manufacturer": "manufacturer",
         "results[0]/brand": "brand",
         "results[0]/model": "model"
@@ -301,7 +303,7 @@
   {
     "name": "UPCDatabase.com",
     "homepage": "http://www.upcdatabase.com",
-    "pricing": "Free, up to 20 per day",
+    "pricing": "Free (personal use) up to 20 per day",
     "api_signup": "https://www.upcdatabase.com/join.asp",
     "sample_response": "<?xml version=\"1.0\"?><methodResponse><params><param><value><struct><member><name>found</name><value><boolean>1</boolean></value></member><member><name>status</name><value><string>success</string></value></member><member><name>description</name><value><string>Primo Red Kidney Beans</string></value></member><member><name>upc</name><value><string>055900003965</string></value></member><member><name>pendingUpdates</name><value><int>0</int></value></member><member><name>message</name><value><string>Database entry found</string></value></member><member><name>noCacheAfterUTC</name><value><dateTime.iso8601>2016-10-26T12:52:24</dateTime.iso8601></value></member><member><name>issuerCountryCode</name><value><string>us</string></value></member><member><name>ean</name><value><string>0055900003965</string></value></member><member><name>size</name><value><string>19 fl oz/540 ml</string></value></member><member><name>issuerCountry</name><value><string>United States</string></value></member><member><name>lastModifiedUTC</name><value><dateTime.iso8601>2008-05-21T10:19:34</dateTime.iso8601></value></member></struct></value></param></params></methodResponse>",
     "lookup_action": {
@@ -321,6 +323,7 @@
   {
     "name": "SimpleUPC",
     "homepage": "http://www.simpleupc.com",
+    "pricing": "Paid (free trial)",
     "api_signup": "http://www.simpleupc.com/price.php",
     "required_parameters": ["APIKEY"],
     "sample_response": {
@@ -359,6 +362,124 @@
         "result/description": "_description",
         "result/manufacturer": "manufacturer",
         "result/brand": "brand"
+      }
+    }
+  },
+  {
+    "name": "Google Books",
+    "homepage": "http://books.google.com/",
+    "api_signup": "https://developers.google.com/books/docs/v1/using#APIKey",
+    "pricing": "Free, up to 1000 requests/day",
+    "required_parameters": ["APIKEY"],
+    "sample_response": {
+      "kind": "books#volumes",
+      "totalItems": 1,
+      "items": [
+        {
+          "kind": "books#volume",
+          "id": "_0YB05NPhJUC",
+          "etag": "ZT6RWTSUt2c",
+          "selfLink": "https://www.googleapis.com/books/v1/volumes/_0YB05NPhJUC",
+          "volumeInfo": {
+            "title": "Catch-22",
+            "authors": [
+              "Joseph Heller"
+            ],
+            "publisher": "Simon & Schuster",
+            "publishedDate": "1996-09-04",
+            "description": "Catch-22 is like no other novel. It is one of the funniest books ever written, a keystone work in American literature, and even added a new term to the dictionary. At the heart of Catch-22 resides the incomparable, malingering bombardier, Yossarian, a hero endlessly inventive in his schemes to save his skin from the horrible chances of war. His efforts are perfectly understandable because as he furiously scrambles, thousands of people he hasn't even met are trying to kill him. His problem is Colonel Cathcart, who keeps raising the number of missions the men must fly to complete their service. Yet if Yossarian makes any attempts to excuse himself from the perilous missions that he is committed to flying, he is trapped by the Great Loyalty Oath Crusade, the hilariously sinister bureaucratic rule from which the book takes its title: a man is considered insane if he willingly continues to fly dangerous combat missions, but if he makes the necessary formal request to be relieved of such missions, the very act of making the request proves that he is sane and therefore ineligible to be relieved. Catch-22 is a microcosm of the twentieth-century world as it might look to some one dangerously sane -- a masterpiece of our time.",
+            "industryIdentifiers": [
+              {
+                "type": "ISBN_10",
+                "identifier": "0684833395"
+              },
+              {
+                "type": "ISBN_13",
+                "identifier": "9780684833392"
+              }
+            ],
+            "readingModes": {
+              "text": false,
+              "image": false
+            },
+            "pageCount": 464,
+            "printType": "BOOK",
+            "categories": [
+              "Fiction"
+            ],
+            "averageRating": 4.0,
+            "ratingsCount": 57,
+            "maturityRating": "NOT_MATURE",
+            "allowAnonLogging": false,
+            "contentVersion": "preview-1.0.0",
+            "imageLinks": {
+              "smallThumbnail": "http://books.google.com/books/content?id=_0YB05NPhJUC&printsec=frontcover&img=1&zoom=5&source=gbs_api",
+              "thumbnail": "http://books.google.com/books/content?id=_0YB05NPhJUC&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+            },
+            "language": "en",
+            "previewLink": "http://books.google.ca/books?id=_0YB05NPhJUC&dq=isbn:9780684833392&hl=&cd=1&source=gbs_api",
+            "infoLink": "http://books.google.ca/books?id=_0YB05NPhJUC&dq=isbn:9780684833392&hl=&source=gbs_api",
+            "canonicalVolumeLink": "http://books.google.ca/books/about/Catch_22.html?hl=&id=_0YB05NPhJUC"
+          },
+          "saleInfo": {
+            "country": "CA",
+            "saleability": "NOT_FOR_SALE",
+            "isEbook": false
+          },
+          "accessInfo": {
+            "country": "CA",
+            "viewability": "NO_PAGES",
+            "embeddable": false,
+            "publicDomain": false,
+            "textToSpeechPermission": "ALLOWED",
+            "epub": {
+              "isAvailable": false
+            },
+            "pdf": {
+              "isAvailable": true
+            },
+            "webReaderLink": "http://books.google.ca/books/reader?id=_0YB05NPhJUC&hl=&printsec=frontcover&output=reader&source=gbs_api",
+            "accessViewStatus": "NONE",
+            "quoteSharingAllowed": false
+          },
+          "searchInfo": {
+            "textSnippet": "Catch-22 is like no other novel. It is one of the funniest books ever written, a keystone work in American literature, and even added a new term to the dictionary."
+          }
+        }
+      ]
+    },
+    "lookup_action": {
+      "type": "lookup",
+      "name": "GoogleBooks",
+      "attribution": "http://books.google.com/",
+      "api_type": "REST",
+      "uri_format": "https://www.googleapis.com/books/v1/volumes?q=isbn:{{isbn13}}&key={{APIKEY}}",
+      "mime_type": "application/json",
+      "key_map": {
+        "items[0]/volumeInfo/title": "title",
+        "items[0]/volumeInfo/authors[; ]": "authors",
+        "items[0]/volumeInfo/publisher": "publisher",
+        "items[0]/volumeInfo/infoLink": "link"
+      }
+    }
+  },
+  {
+    "name": "Goodreads",
+    "homepage": "http://www.goodreads.com/",
+    "api_signup": "https://www.goodreads.com/api/keys",
+    "pricing": "Free (personal use)",
+    "required_parameters": ["APIKEY"],
+    "sample_response": "<Request><authentication>true</authentication><key>HSkIMuOGlxFIOmfBCGFVA</key><method>search_index</method></Request><search><query>9781584880943</query><results-start>1</results-start><results-end>1</results-end><total-results>1</total-results><source>Goodreads</source><query-time-seconds>0.01</query-time-seconds><results><work><id type=\"integer\">2392997</id><books_count type=\"integer\">2</books_count><ratings_count type=\"integer\">0</ratings_count><text_reviews_count type=\"integer\">0</text_reviews_count><original_publication_year type=\"integer\">1994</original_publication_year><original_publication_month type=\"integer\">9</original_publication_month><original_publication_day type=\"integer\">1</original_publication_day><average_rating type=\"float\">0.0</average_rating><best_book type=\"Book\"><id type=\"integer\">2385985</id><title>Multidimensional Scaling</title><author><id type=\"integer\">1067035</id><name>Trevor F. Cox</name></author><image_url>https://images.gr-assets.com/books/1340797138m/2385985.jpg</image_url><small_image_url>https://images.gr-assets.com/books/1340797138s/2385985.jpg</small_image_url></best_book></work></results></search></GoodreadsResponse>",
+    "lookup_action": {
+      "type": "lookup",
+      "name": "goodreads",
+      "attribution": "http://www.goodreads.com/",
+      "api_type": "REST",
+      "uri_format": "https://www.goodreads.com/search/index.xml?key={{APIKEY}}&q={{isbn13}}",
+      "mime_type": "text/xml",
+      "key_map": {
+        "search/results/work/best_book/title": "title",
+        "search/results/work/best_book/author/name": "authors"
       }
     }
   }

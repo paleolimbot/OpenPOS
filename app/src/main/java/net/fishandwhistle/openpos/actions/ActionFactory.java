@@ -20,11 +20,11 @@ public class ActionFactory {
                 return new ActionSwitch(o);
             case "blank":
                 return new ActionBlank(o);
-            case "addtosession":
+            case "save":
                 return new AddToSessionAction(o);
             case "keyfilter":
                 return new KeyFilterAction(o);
-            case "logic":
+            case "match":
                 return new LogicAction(o);
             case "lookup":
                 return new LookupAction(o);
