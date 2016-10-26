@@ -67,7 +67,8 @@ public class ChooserDialogAction extends ScannedItemAction {
         List<ScannedItemAction> runtimeActions = new ArrayList<>();
         for(int i=0; i<actions.size(); i++) {
             ScannedItemAction a = actions.get(i);
-            if(a.isApplicable(context, item, executor)) {
+            String lab = formatWithObject(labels[i], item, false);
+            if(lab != null && a.isApplicable(context, item, executor)) {
                 runtimeActions.add(a);
                 runtimeLabs.add(labels[i]);
             }
