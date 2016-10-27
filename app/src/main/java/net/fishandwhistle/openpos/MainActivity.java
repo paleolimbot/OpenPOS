@@ -2,8 +2,6 @@ package net.fishandwhistle.openpos;
 
 import android.app.Dialog;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
@@ -27,7 +25,6 @@ import android.widget.Toast;
 
 import net.fishandwhistle.openpos.actions.ActionFactory;
 import net.fishandwhistle.openpos.actions.ScannedItemAction;
-import net.fishandwhistle.openpos.actions.VibrateAction;
 import net.fishandwhistle.openpos.barcode.BarcodeSpec;
 import net.fishandwhistle.openpos.barcode.CodabarSpec;
 import net.fishandwhistle.openpos.barcode.Code128Spec;
@@ -43,10 +40,12 @@ import net.fishandwhistle.openpos.barcode.MSISpec;
 import net.fishandwhistle.openpos.barcode.PharmacodeSpec;
 import net.fishandwhistle.openpos.barcode.UPCESpec;
 import net.fishandwhistle.openpos.extractors.BarcodeExtractor;
+import net.fishandwhistle.openpos.extractors.JavaExtractor;
 import net.fishandwhistle.openpos.extractors.ZBarExtractor;
 import net.fishandwhistle.openpos.items.ItemFormatter;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
+import net.fishandwhistle.openpos.settings.SettingsProfile;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,15 +67,12 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
     private ListView list;
     private TextView scannedItemsText ;
 
-    private ScannedItemAction actions;
-    private ScannedItemAction actionsExisting;
+    private SettingsProfile settings;
+    private BarcodeExtractor extractor;
 
     @Override
     protected BarcodeExtractor getExtractor() {
-        return new ZBarExtractor(new BarcodeSpec[] {new EAN13Spec(), new Code128Spec(),
-                new ITFSpec(), new CodabarSpec(), new Code39Spec(), new EAN8Spec(), new DataBarSpec(),
-                new DataBarExpandedSpec()});
-//        return new BarcodeSpec[] {new EAN13Spec(), new EAN8Spec(), new ITFSpec(14, true)};
+        return extractor;
     }
 
     @Override
@@ -155,28 +151,15 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             }
         }.execute();
 
-        try {
-            StringBuilder buf=new StringBuilder();
-            InputStream json=getAssets().open("defaultchain.json");
-            BufferedReader in=
-                    new BufferedReader(new InputStreamReader(json, "UTF-8"));
-            String str;
-
-            while ((str=in.readLine()) != null) {
-                buf.append(str);
-            }
-            in.close();
-            JSONObject o = new JSONObject(buf.toString());
-            actions = ActionFactory.inflate(o);
-        } catch (IOException e) {
-
-        } catch(JSONException e) {
-
+        settings = new SettingsProfile();
+        if(settings.scanBackend.equals("ZBar")) {
+            extractor = new ZBarExtractor(settings.barcodeSpecs);
+        } else {
+            extractor = new JavaExtractor(settings.barcodeSpecs);
         }
-
         try {
             StringBuilder buf=new StringBuilder();
-            InputStream json=getAssets().open("defaultchain_existing.json");
+            InputStream json=getAssets().open("default_new.json");
             BufferedReader in=
                     new BufferedReader(new InputStreamReader(json, "UTF-8"));
             String str;
@@ -186,7 +169,28 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             }
             in.close();
             JSONObject o = new JSONObject(buf.toString());
-            actionsExisting = ActionFactory.inflate(o);
+            settings.onNewBarcode = ActionFactory.inflate(o);
+
+            buf=new StringBuilder();
+            json=getAssets().open("default_existing.json");
+            in=new BufferedReader(new InputStreamReader(json, "UTF-8"));
+            while ((str=in.readLine()) != null) {
+                buf.append(str);
+            }
+            in.close();
+            o = new JSONObject(buf.toString());
+            settings.onRepeatBarcode = ActionFactory.inflate(o);
+
+            buf=new StringBuilder();
+            json=getAssets().open("default_click.json");
+            in=new BufferedReader(new InputStreamReader(json, "UTF-8"));
+            while ((str=in.readLine()) != null) {
+                buf.append(str);
+            }
+            in.close();
+            o = new JSONObject(buf.toString());
+            settings.onClick = ActionFactory.inflate(o);
+
         } catch (IOException e) {
 
         } catch(JSONException e) {
@@ -270,7 +274,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
         int index = items.indexOf(item);
         if(index == -1) {
             //item is not currently in the index
-            actions.doActionAsync(this, item, this);
+            settings.onNewBarcode.doActionAsync(this, item, this);
             items.add(item);
         } else {
             ScannedItem current = items.getItem(index);
@@ -283,7 +287,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
             current.nScans++;
             items.remove(current);
             items.add(current);
-            actionsExisting.doActionAsync(this, current, this);
+            settings.onRepeatBarcode.doActionAsync(this, current, this);
         }
         this.refreshItems(true);
         return true;
@@ -344,19 +348,7 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
     @Override
     public void onScannerItemClick(ScannedItem item) {
-        // DialogFragment.show() will take care of adding the fragment
-        // in a transaction.  We also want to remove any currently showing
-        // dialog, so make our own transaction and take care of that here.
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
-        if (prev != null) {
-            ft.remove(prev);
-        }
-        ft.addToBackStack(null);
-
-        // Create and show the dialog.
-        ScannedItemDetailFragment newFragment = ScannedItemDetailFragment.newInstance(item);
-        newFragment.show(ft, "dialog");
+        settings.onClick.doActionAsync(this, item, this);
     }
 
     @Override
