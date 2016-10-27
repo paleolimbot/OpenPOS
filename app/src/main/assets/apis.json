@@ -26,6 +26,9 @@
         "alias": "{{alias}}",
         "upcdb_link": "http://m.upcdatabase.org/code/{{number}}",
         "_description": "{{description}}"
+      },
+      "valid_check": {
+        "{{valid}}": "true"
       }
     }
   },
@@ -92,6 +95,9 @@
         "publisher": "{{data[0]/publisher_text}}",
         "isbndb_error": "{{error}}",
         "isbndb_link": "http://isbndb.com/book/{{data[0]/book_id}}"
+      },
+      "valid_check": {
+        "{{error}}": "{{error}}"
       }
     }
   },
@@ -287,10 +293,11 @@
       "name": "sem3",
       "attribution": "http://www.semantics3.com/",
       "api_type": "REST",
-      "uri_format": "https://api.semantics3.com/test/v1/products?q=%7B%22ean%22:%22{{gtin13}}%22%7D",
+      "uri_format": "https://api.semantics3.com/v1/products?q=%7B%22ean%22:%22{{gtin13}}%22%7D",
       "mime_type": "application/json",
-      "header": {
-        "api_key": "{{APIKEY}}"
+      "oauth1": {
+        "api_key": "{{APIKEY}}",
+        "secret": "{{SECRET}}"
       },
       "key_map": {
         "_description": "{{results[0]/name}}",
@@ -300,6 +307,9 @@
         "brand": "{{results[0]/brand}}",
         "model": "{{results[0]/model}}",
         "sem3_error": "{{message}}"
+      },
+      "invalid_check": {
+        "{{results_count}}": "0"
       }
     }
   },
@@ -321,6 +331,9 @@
         "size": "{{size}}",
         "upcdb_status": "{{message}}",
         "upcdb_link": "https://www.upcdatabase.com/item/{{ean}}"
+      },
+      "valid_check": {
+        "{{found}}": "true"
       }
     }
   },
@@ -367,6 +380,9 @@
         "_description": "{{result/description}}",
         "manufacturer": "{{result/manufacturer}}",
         "brand": "{{result/brand}}"
+      },
+      "valid_check": {
+        "{{error/message}}": "{{error/message}}"
       }
     }
   },
@@ -466,6 +482,9 @@
         "_description": "{{items[0]/volumeInfo/title}} ({{items[0]/volumeInfo/authors[; ]}})",
         "publisher": "{{items[0]/volumeInfo/publisher}}",
         "google_link": "{{items[0]/volumeInfo/infoLink}}"
+      },
+      "invalid_check": {
+        "{{totalItems}}": "0"
       }
     }
   },
@@ -488,6 +507,9 @@
         "authors": "{{search/results/work/best_book/author/name}}",
         "_description": "{{search/results/work/best_book/title}} ({{search/results/work/best_book/author/name}})",
         "goodreads_link": "https://www.goodreads.com/book/show/{{search/results/work/best_book/id}}"
+      },
+      "invalid_check": {
+        "{{search/total-results}}": "0"
       }
     }
   }

@@ -1,11 +1,8 @@
 package net.fishandwhistle.openpos.actions;
 
-import android.app.Notification;
 import android.content.Context;
-import android.drm.DrmStore;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -15,6 +12,16 @@ import net.fishandwhistle.openpos.items.ScannedItem;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.scribe.builder.ServiceBuilder;
+import org.scribe.builder.api.Api;
+import org.scribe.builder.api.DefaultApi10a;
+import org.scribe.model.OAuthConfig;
+import org.scribe.model.OAuthRequest;
+import org.scribe.model.Response;
+import org.scribe.model.Token;
+import org.scribe.model.Verb;
+import org.scribe.oauth.OAuth10aServiceImpl;
+import org.scribe.oauth.OAuthService;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -30,7 +37,6 @@ import org.xmlrpc.android.XMLRPCFault;
 import org.xmlrpc.android.XMLRPCSerializer;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -38,7 +44,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -67,6 +72,8 @@ public class LookupAction extends ScannedItemAction {
     public static final String OPTION_REQUEST = "request";
     public static final String OPTION_HEADER = "header";
     public static final String OPTION_VALID_CHECK = "valid_check";
+    public static final String OPTION_INVALID_CHECK = "invalid_check";
+    public static final String OPTION_OAUTH1 = "oauth1";
 
     private static final String TAG = "LookupAction" ;
     private static Set<String> currentRequests = new HashSet<>();
@@ -78,6 +85,9 @@ public class LookupAction extends ScannedItemAction {
     private String request;
     private Map<String, String> header;
     private Map<String, String> validCheck;
+    private Map<String, String> invalidCheck;
+
+    private OAuthService oAuthService;
 
     public LookupAction(JSONObject jsonObject) {
         super(jsonObject);
@@ -116,6 +126,42 @@ public class LookupAction extends ScannedItemAction {
         }
         header = extractKeyMap(getOptionObject(OPTION_HEADER));
         validCheck = extractKeyMap(getOptionObject(OPTION_VALID_CHECK));
+        invalidCheck = extractKeyMap(getOptionObject(OPTION_INVALID_CHECK));
+
+        JSONObject oauth = getOptionObject(OPTION_OAUTH1);
+        if(oauth != null) {
+            try {
+                if (!oauth.has("api_key") || !oauth.has("secret"))
+                    throw new IllegalArgumentException("Oauth1.0 requires 'api_key' and 'secret'");
+                oAuthService = new ServiceBuilder()
+                        .provider(new Api() {
+                            @Override
+                            public OAuthService createService(OAuthConfig config) {
+                                return new OAuth10aServiceImpl(new DefaultApi10a() {
+                                    @Override
+                                    public String getRequestTokenEndpoint() {
+                                        return null;
+                                    }
+
+                                    @Override
+                                    public String getAccessTokenEndpoint() {
+                                        return null;
+                                    }
+
+                                    @Override
+                                    public String getAuthorizationUrl(Token requestToken) {
+                                        return null;
+                                    }
+                                }, config);
+                            }
+                        })
+                        .apiKey(oauth.getString("api_key"))
+                        .apiSecret(oauth.getString("secret"))
+                        .build();
+            } catch(JSONException e) {
+                throw new IllegalArgumentException("Invalid JSON in constructor: " + e.getMessage());
+            }
+        }
     }
 
     private String getErrorKey() {
@@ -193,61 +239,113 @@ public class LookupAction extends ScannedItemAction {
         InputStream input = null;
         ByteArrayOutputStream output = null;
         HttpURLConnection connection = null;
+        OAuthRequest request = null;
+        int fileLength = -1;
         try {
-            URL url = new URL(urlString);
-            connection = (HttpURLConnection)url.openConnection();
-
-            if(apiType.equals("JSON-RPC") || apiType.equals("XML-RPC")) {
-                String requestMime;
-                if(apiType.equals("JSON-RPC")) {
-                    requestMime = "text/json";
+            if(oAuthService != null) {
+                if(apiType.equals("JSON-RPC") || apiType.equals("XML-RPC")) {
+                    String requestMime;
+                    if(apiType.equals("JSON-RPC")) {
+                        requestMime = "text/json";
+                    } else {
+                        requestMime = "text/xml";
+                    }
+                    byte[] requestData = requestFormatted.getBytes("UTF-8");
+                    request = new OAuthRequest(Verb.POST, urlString);
+                    request.setCharset("UTF-8");
+                    request.addHeader("Content-Type", requestMime);
+                    request.addHeader("Content-Length", Integer.toString(requestData.length));
+                    request.addPayload(requestData);
                 } else {
-                    requestMime = "text/xml";
-                }
-                byte[] requestData = requestFormatted.getBytes("UTF-8");
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", requestMime);
-                connection.setRequestProperty("charset", "utf-8");
-                connection.setRequestProperty("Content-Length", Integer.toString(requestData.length));
-                if(header != null) {
-                    for(Map.Entry<String, String> e: header.entrySet()) {
-                        connection.setRequestProperty(e.getKey(), e.getValue());
+                    request = new OAuthRequest(Verb.GET, urlString);
+                    if(header != null) {
+                        for(Map.Entry<String, String> e: header.entrySet()) {
+                            request.addHeader(e.getKey(), e.getValue());
+                        }
                     }
                 }
-                connection.setUseCaches(false);
-                connection.getOutputStream().write(requestData);
+                Token accessToken = new Token("", "");
+                oAuthService.signRequest(accessToken, request);
+                Log.i(TAG, "starting download from " + urlString);
+                Response response = request.send();
+                if (response.getCode() != HttpURLConnection.HTTP_OK) {
+                    currentRequests.remove(cacheUrl);
+                    String error = String.format(context.getString(R.string.api_errorio),
+                            "HTTP " + response.getMessage() + " " + response.getCode());
+                    Log.e(TAG, "doDownload: " + error);
+
+                    if(isQuiet()) {
+                        item.putValue(getErrorKey(), error);
+                        return false;
+                    } else {
+                        throw new ActionException(error);
+                    }
+                }
+                try {
+                    String fLength = response.getHeader("Content-Length");
+                    if(fLength != null) {
+                        fileLength = Integer.valueOf(fLength);
+                    }
+                } catch(NumberFormatException e) {
+                    //ignore
+                }
+                input = response.getStream();
             } else {
-                if(header != null) {
-                    for(Map.Entry<String, String> e: header.entrySet()) {
-                        connection.setRequestProperty(e.getKey(), e.getValue());
+                URL url = new URL(urlString);
+                connection = (HttpURLConnection)url.openConnection();
+
+                if(apiType.equals("JSON-RPC") || apiType.equals("XML-RPC")) {
+                    String requestMime;
+                    if(apiType.equals("JSON-RPC")) {
+                        requestMime = "text/json";
+                    } else {
+                        requestMime = "text/xml";
+                    }
+                    byte[] requestData = requestFormatted.getBytes("UTF-8");
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type", requestMime);
+                    connection.setRequestProperty("charset", "utf-8");
+                    connection.setRequestProperty("Content-Length", Integer.toString(requestData.length));
+                    if(header != null) {
+                        for(Map.Entry<String, String> e: header.entrySet()) {
+                            connection.setRequestProperty(e.getKey(), e.getValue());
+                        }
+                    }
+                    connection.setUseCaches(false);
+                    connection.getOutputStream().write(requestData);
+                } else {
+                    if(header != null) {
+                        for(Map.Entry<String, String> e: header.entrySet()) {
+                            connection.setRequestProperty(e.getKey(), e.getValue());
+                        }
                     }
                 }
-            }
-            Log.i(TAG, "starting download from " + urlString);
-            connection.connect();
+                Log.i(TAG, "starting download from " + urlString);
+                connection.connect();
 
-            // expect HTTP 200 OK, so we don't mistakenly save error report
-            // instead of the file
-            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                currentRequests.remove(cacheUrl);
-                Log.e(TAG, "Server returned HTTP " + connection.getResponseCode()
-                        + " " + connection.getResponseMessage());
-                String error = String.format(context.getString(R.string.api_errorio),
-                        "HTTP " + connection.getResponseCode() + " " + connection.getResponseMessage());
-                if(isQuiet()) {
-                    item.putValue(getErrorKey(), error);
-                    return false;
-                } else {
-                    throw new ActionException(error);
+                // expect HTTP 200 OK, so we don't mistakenly save error report
+                // instead of the file
+                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                    currentRequests.remove(cacheUrl);
+                    Log.e(TAG, "Server returned HTTP " + connection.getResponseCode()
+                            + " " + connection.getResponseMessage());
+                    String error = String.format(context.getString(R.string.api_errorio),
+                            "HTTP " + connection.getResponseCode() + " " + connection.getResponseMessage());
+                    if(isQuiet()) {
+                        item.putValue(getErrorKey(), error);
+                        return false;
+                    } else {
+                        throw new ActionException(error);
+                    }
                 }
+                // this will be useful to display download percentage
+                // might be -1: server did not report the length
+                fileLength = connection.getContentLength();
+
+                // download the file
+                input = connection.getInputStream();
             }
 
-            // this will be useful to display download percentage
-            // might be -1: server did not report the length
-            int fileLength = connection.getContentLength();
-
-            // download the file
-            input = connection.getInputStream();
             output = new ByteArrayOutputStream();
 
             byte data[] = new byte[4096];
@@ -311,6 +409,22 @@ public class LookupAction extends ScannedItemAction {
         return parser.parse(out, item);
     }
 
+    private boolean checkValidity(Formatting.Formattable formatter) {
+        if(validCheck != null) {
+            for (Map.Entry<String, String> e : validCheck.entrySet()) {
+                String value = formatWithObject(e.getKey(), formatter);
+                if (value == null || !value.equals(e.getValue())) return false;
+            }
+        }
+        if(invalidCheck != null) {
+            for (Map.Entry<String, String> e : invalidCheck.entrySet()) {
+                String value = formatWithObject(e.getKey(), formatter);
+                if (value != null && value.equals(e.getValue())) return false;
+            }
+        }
+        return true;
+    }
+
     private interface LookupParser {
         boolean parse(String data, ScannedItem item) throws ActionException;
     }
@@ -335,13 +449,6 @@ public class LookupAction extends ScannedItemAction {
                             return followPath(o, key.split("/"), 0);
                         }
                     };
-                    //check validity first
-                    if(validCheck != null) {
-                        for (Map.Entry<String, String> e : validCheck.entrySet()) {
-                            String value = formatWithObject(e.getKey(), formatter, false);
-                            if (value == null || !value.equals(e.getValue())) return false;
-                        }
-                    }
                     int values = 0;
                     for(Map.Entry<String, String> e: keyMap.entrySet()) {
                         String value = formatWithObject(e.getValue(), formatter, false);
@@ -354,6 +461,7 @@ public class LookupAction extends ScannedItemAction {
                             }
                         }
                     }
+                    if(!checkValidity(formatter)) return false;
                     if(values == 0) {
                         String error = "No results were obtained from query";
                         if(isQuiet()) {
@@ -432,7 +540,6 @@ public class LookupAction extends ScannedItemAction {
         }
     }
 
-
     private class XMLRPCParser implements LookupParser, Formatting.Formattable {
 
         @Override
@@ -459,12 +566,6 @@ public class LookupAction extends ScannedItemAction {
                             return followPath(map, key.split("/"), 0);
                         }
                     };
-                    if(validCheck != null) {
-                        for (Map.Entry<String, String> e : validCheck.entrySet()) {
-                            String value = formatWithObject(e.getKey(), formatter, false);
-                            if (value == null || !value.equals(e.getValue())) return false;
-                        }
-                    }
                     int values = 0;
                     for(Map.Entry<String, String> e: keyMap.entrySet()) {
                         String value = formatWithObject(e.getValue(), formatter, false);
@@ -477,6 +578,7 @@ public class LookupAction extends ScannedItemAction {
                             }
                         }
                     }
+                    if(!checkValidity(formatter)) return false;
                     if(values == 0) {
                         String error = "No results were obtained from query";
                         if(isQuiet()) {
@@ -652,12 +754,6 @@ public class LookupAction extends ScannedItemAction {
                             return followPath(root, key.split("/"), 0);
                         }
                     };
-                    if(validCheck != null) {
-                        for (Map.Entry<String, String> e : validCheck.entrySet()) {
-                            String value = formatWithObject(e.getKey(), formatter, false);
-                            if (value == null || !value.equals(e.getValue())) return false;
-                        }
-                    }
                     int values = 0;
                     for(Map.Entry<String, String> e: keyMap.entrySet()) {
                         String value = formatWithObject(e.getValue(), formatter, false);
@@ -670,8 +766,9 @@ public class LookupAction extends ScannedItemAction {
                             }
                         }
                     }
+                    if(!checkValidity(formatter)) return false;
                     if(values == 0) {
-                        String error = "No results were obtained from query";
+                        String error = "No values were obtained from query";
                         if(isQuiet()) {
                             item.putValue(getErrorKey(), error);
                             return false;
