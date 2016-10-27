@@ -22,6 +22,8 @@ public class ActionFactory {
                 return new ActionBlank(o);
             case "save":
                 return new AddToSessionAction(o);
+            case "remove":
+                return new RemoveFromSessionAction(o);
             case "keyfilter":
                 return new KeyFilterAction(o);
             case "match":
@@ -38,6 +40,8 @@ public class ActionFactory {
                 return new VibrateAction(o);
             case "chooser":
                 return new ChooserDialogAction(o);
+            case "toast":
+                return new ToastAction(o);
             default: throw new IllegalArgumentException("Invalid class supplied: " + o.getString(ScannedItemAction.OPTION_TYPE));
         }
     }

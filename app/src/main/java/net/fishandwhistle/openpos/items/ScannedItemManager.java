@@ -36,6 +36,11 @@ public class ScannedItemManager {
         return false;
     }
 
+    public boolean removeItem(String sessionName, ScannedItem item) {
+        //TODO stub method
+        return false;
+    }
+
 
     private static class ScannedItemDB extends SQLiteOpenHelper {
 
