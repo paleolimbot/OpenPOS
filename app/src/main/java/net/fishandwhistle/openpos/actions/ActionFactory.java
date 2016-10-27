@@ -34,6 +34,8 @@ public class ActionFactory {
                 return new StringFormatAction(o);
             case "dialog":
                 return new DialogAction(o);
+            case "details":
+                return new DetailsDialogAction(o);
             case "intent":
                 return new IntentAction(o);
             case "vibrate":
