@@ -39,7 +39,8 @@
         "uri_format": "https://www.amazon.com/s/field-keywords={{isbn13}}"
       },
       {
-        "type": "save"
+        "type": "session",
+        "action": "add"
       },
       {
         "type": "intent",
@@ -62,7 +63,8 @@
         "uri_format": "https://www.amazon.com/s/field-keywords={{gtin13}}"
       },
       {
-        "type": "save"
+        "type": "session",
+        "action": "add"
       },
       {
         "type": "intent",

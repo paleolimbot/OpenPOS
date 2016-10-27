@@ -33,6 +33,8 @@ public class DetailsDialogAction extends ScannedItemAction {
 
     @Override
     public boolean doActionContent(final Context context, final ScannedItem item, final ActionExecutor executor) throws ActionException {
+        if(!(context instanceof Activity)) throw new ActionException("Cannot show details dialog in non-activity context");
+
         executor.runOnUiThread(new Runnable() {
             @Override
             public void run() {

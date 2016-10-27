@@ -20,10 +20,8 @@ public class ActionFactory {
                 return new ActionSwitch(o);
             case "blank":
                 return new ActionBlank(o);
-            case "save":
-                return new AddToSessionAction(o);
-            case "remove":
-                return new RemoveFromSessionAction(o);
+            case "session":
+                return new SessionAction(o);
             case "keyfilter":
                 return new KeyFilterAction(o);
             case "match":
