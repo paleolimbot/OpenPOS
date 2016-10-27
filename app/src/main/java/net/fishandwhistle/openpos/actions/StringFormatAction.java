@@ -25,12 +25,11 @@ public class StringFormatAction extends ScannedItemAction {
 
     public StringFormatAction(JSONObject jsonObject) {
         super(jsonObject);
-        if(getOptionObject(OPTION_KEYMAP) == null) throw new IllegalArgumentException("key_map is required");
+        getOptionObject(OPTION_KEYMAP);
     }
 
     @Override
     public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
-        Pattern TAG = Pattern.compile("\\{\\{(.*?)\\}\\}");
         JSONObject map = getOptionObject(OPTION_KEYMAP);
         Iterator<String> keys = map.keys();
         try {

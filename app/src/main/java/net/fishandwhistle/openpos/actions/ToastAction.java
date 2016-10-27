@@ -24,17 +24,7 @@ public class ToastAction extends ScannedItemAction {
     public ToastAction(JSONObject jsonOptions) {
         super(jsonOptions);
         message = getOptionString(OPTION_MESSAGE);
-        if(message == null) throw new IllegalArgumentException("Option 'message' is required");
-        String sDuration = getOptionString(OPTION_DURATION);
-        if(sDuration != null) {
-            try {
-                duration = Integer.valueOf(sDuration);
-            } catch(NumberFormatException e) {
-                throw new IllegalArgumentException("Option 'duration' must be a valid integer");
-            }
-        } else {
-            duration = Toast.LENGTH_SHORT;
-        }
+        duration = getOptionInt(OPTION_DURATION, Toast.LENGTH_SHORT);
     }
 
     @Override

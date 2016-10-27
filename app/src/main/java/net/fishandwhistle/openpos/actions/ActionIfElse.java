@@ -13,7 +13,7 @@ import org.json.JSONObject;
 
 public class ActionIfElse extends ScannedItemAction {
 
-    private static final String OPTION_FORK_ACTION = "fork";
+    private static final String OPTION_TEST = "test";
     private static final String OPTION_TRUE_ACTION = "if_true";
     private static final String OPTION_FALSE_ACTION = "if_false";
 
@@ -24,16 +24,15 @@ public class ActionIfElse extends ScannedItemAction {
     public ActionIfElse(JSONObject jsonObject) {
         super(jsonObject);
         try {
-            JSONObject fork = getOptionObject(OPTION_FORK_ACTION);
-            if (fork == null) throw new IllegalArgumentException("Option 'fork' is required");
+            JSONObject fork = getOptionObject(OPTION_TEST);
             forkAction = ActionFactory.inflate(fork);
-            JSONObject trueObj = getOptionObject(OPTION_TRUE_ACTION);
+            JSONObject trueObj = getOptionObject(OPTION_TRUE_ACTION, null);
             if (trueObj != null) {
                 ifTrue = ActionFactory.inflate(trueObj);
             } else {
                 ifTrue = null;
             }
-            JSONObject falseObj = getOptionObject(OPTION_FALSE_ACTION);
+            JSONObject falseObj = getOptionObject(OPTION_FALSE_ACTION, null);
             if (falseObj != null) {
                 ifFalse = ActionFactory.inflate(falseObj);
             }

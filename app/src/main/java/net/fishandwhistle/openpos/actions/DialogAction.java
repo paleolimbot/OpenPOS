@@ -53,19 +53,15 @@ public class DialogAction extends ScannedItemAction {
     public DialogAction(JSONObject jsonOptions) {
         super(jsonOptions);
         title = getOptionString(OPTION_TITLE);
-        if(title == null) throw new IllegalArgumentException("Option 'title' is required");
-        message = getOptionString(OPTION_MESSAGE);
-        positiveText = getOptionString(OPTION_POSITIVE_TEXT);
-        neutralText = getOptionString(OPTION_NEUTRAL_TEXT);
-        negativeText = getOptionString(OPTION_NEGATIVE_TEXT);
-        inputType = getOptionString(OPTION_INPUT_TYPE);
-        inputHint = getOptionString(OPTION_INPUT_HINT);
-        if(inputHint == null) {
-            inputHint = "";
-        }
+        message = getOptionString(OPTION_MESSAGE, null);
+        positiveText = getOptionString(OPTION_POSITIVE_TEXT, null);
+        neutralText = getOptionString(OPTION_NEUTRAL_TEXT, null);
+        negativeText = getOptionString(OPTION_NEGATIVE_TEXT, null);
+        inputType = getOptionString(OPTION_INPUT_TYPE, null);
+        inputHint = getOptionString(OPTION_INPUT_HINT, "");
 
-        JSONArray labs = getOptionArray(OPTION_LABELS);
-        JSONArray vals = getOptionArray(OPTION_VALUES);
+        JSONArray labs = getOptionArray(OPTION_LABELS, null);
+        JSONArray vals = getOptionArray(OPTION_VALUES, null);
         if(labs != null || vals != null) {
             if(labs == null) {
                 labs = vals;
@@ -109,8 +105,7 @@ public class DialogAction extends ScannedItemAction {
             }
         }
 
-
-        outKey = getOptionString(OPTION_OUT_KEY);
+        outKey = getOptionString(OPTION_OUT_KEY, null);
         if((inputType != null || labels != null) && outKey == null) throw new IllegalArgumentException("Cannot collect input without option 'outkey'");
     }
 

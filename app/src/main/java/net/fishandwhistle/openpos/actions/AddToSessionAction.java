@@ -19,7 +19,7 @@ public class AddToSessionAction extends ScannedItemAction {
 
     public AddToSessionAction(JSONObject jsonObject) {
         super(jsonObject);
-        sessionName = getOptionString(OPTION_SESSION_NAME); //null session means current active session
+        sessionName = getOptionString(OPTION_SESSION_NAME, null); //null session means current active session
     }
 
     @Override

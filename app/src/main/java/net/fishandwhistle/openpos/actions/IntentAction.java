@@ -35,20 +35,10 @@ public class IntentAction extends ScannedItemAction {
     public IntentAction(JSONObject jsonOptions) {
         super(jsonOptions);
         uriFormat = getOptionString(OPTION_URI_FORMAT);
-        if(uriFormat == null) throw new IllegalArgumentException("Option 'uri_format' is required");
-        action = getOptionString(OPTION_ACTION);
-        if(action == null) {
-            action = Intent.ACTION_VIEW;
-        }
-        intentType = getOptionString(OPTION_INTENT_TYPE);
-        if(intentType == null) {
-            intentType = "activity";
-        } else if(!intentType.equals("activity") && !intentType.equals("broadcast")) {
-            throw new IllegalArgumentException("Option 'intent_type' must be one of 'activity' or 'broadcast'");
-        }
-        extras = extractKeyMap(getOptionObject(OPTION_EXTRAS));
-        String fExtras = getOptionString(OPTION_FORMAT_EXTRAS);
-        formatExtras = fExtras != null && Boolean.valueOf(fExtras);
+        action = getOptionString(OPTION_ACTION, Intent.ACTION_VIEW);
+        intentType = getOptionEnum(OPTION_INTENT_TYPE, "activity", new String[] {"activity", "broadcast"});
+        extras = extractKeyMap(getOptionObject(OPTION_EXTRAS, null));
+        formatExtras = getOptionBoolean(OPTION_FORMAT_EXTRAS, true);
     }
 
     @Override

@@ -32,24 +32,11 @@ public class KeyFilterAction extends ScannedItemAction {
 
     public KeyFilterAction(JSONObject jsonObject) {
         super(jsonObject);
-        action = getOptionString(OPTION_ACTION);
-        if(action == null) throw new IllegalArgumentException("Option 'action' is required");
-        if(!action.equals("keep") && !action.equals("remove"))
-            throw new IllegalArgumentException("Option 'action' must be one of 'keep' or 'remove'");
-        String sRegex = getOptionString(OPTION_ISREGEX);
-        isRegex = sRegex != null && Boolean.valueOf(sRegex);
-
-        String sMatchOption = getOptionString(OPTION_MATCH_OPTION);
-        if(sMatchOption == null) {
-            matchOption = "matches";
-        } else if(sMatchOption.equals("matches") || sMatchOption.equals("contains")) {
-            matchOption = sMatchOption;
-        } else {
-            throw new IllegalArgumentException("Option 'match_option' must be one of 'matches' or 'contains'");
-        }
+        action = getOptionEnum(OPTION_ACTION, new String[] {"keep", "remove"});
+        isRegex = getOptionBoolean(OPTION_ISREGEX, false);
+        matchOption = getOptionEnum(OPTION_MATCH_OPTION, "matches", new String[] {"matches", "contains"});
 
         JSONArray a = getOptionArray(OPTION_KEYS);
-        if(a == null) throw new IllegalArgumentException("Option 'keys' must be an array");
         try {
             keys = new String[a.length()];
             for (int i = 0; i < a.length(); i++) {

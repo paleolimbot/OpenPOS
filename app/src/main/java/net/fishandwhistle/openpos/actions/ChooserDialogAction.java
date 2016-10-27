@@ -32,13 +32,11 @@ public class ChooserDialogAction extends ScannedItemAction {
 
     public ChooserDialogAction(JSONObject jsonOptions) {
         super(jsonOptions);
-        title = getOptionString(OPTION_TITLE);
-        negativeText = getOptionString(OPTION_NEGATIVE_TEXT);
+        title = getOptionString(OPTION_TITLE, null);
+        negativeText = getOptionString(OPTION_NEGATIVE_TEXT, null);
         this.actions = new ArrayList<>();
         JSONArray jsonActions = getOptionArray(OPTION_ACTIONS);
         JSONArray labs = getOptionArray(OPTION_LABELS);
-        if(jsonActions == null) throw new IllegalArgumentException("Option 'actions' required");
-        if(labs == null) throw new IllegalArgumentException("Option 'labels' is required");
         if(labs.length() != jsonActions.length()) throw new IllegalArgumentException("Length of labels and actions must be identical");
         if(labs.length() == 0) throw new IllegalArgumentException("Length of labels/actions must be greater than 0");
         try {

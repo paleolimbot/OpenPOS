@@ -34,13 +34,9 @@ public class ActionSwitch extends ScannedItemAction {
     public ActionSwitch(JSONObject jsonOptions) {
         super(jsonOptions);
         key = getOptionString(OPTION_KEY);
-        if(key == null) throw new IllegalArgumentException("Option 'key' is required");
-        String sRegex = getOptionString(OPTION_ISREGEX);
-        isRegex = sRegex != null && Boolean.valueOf(sRegex);
+        isRegex = getOptionBoolean(OPTION_ISREGEX, false);
         JSONArray vals = getOptionArray(OPTION_VALUES);
-        if(vals == null) throw new IllegalArgumentException("Option 'values' is required");
         JSONArray acts = getOptionArray(OPTION_ACTIONS);
-        if(acts == null) throw new IllegalArgumentException("Option 'actions' is required");
         if(vals.length() != acts.length()) throw new IllegalArgumentException("values and actions must be of identical length");
         if(vals.length() == 0) throw new IllegalArgumentException("values must be of non-zero length");
 
@@ -57,7 +53,7 @@ public class ActionSwitch extends ScannedItemAction {
             }
 
 
-            JSONObject defObj = getOptionObject(OPTION_DEFAULT);
+            JSONObject defObj = getOptionObject(OPTION_DEFAULT, null);
             if(defObj != null) {
                 defaultAction = ActionFactory.inflate(defObj);
             } else {

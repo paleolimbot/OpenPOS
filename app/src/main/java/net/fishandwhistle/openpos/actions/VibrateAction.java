@@ -13,14 +13,19 @@ import org.json.JSONObject;
 
 public class VibrateAction extends ScannedItemAction {
 
+    public static final String OPTION_DURATION = "duration";
+
+    private int duration;
+
     public VibrateAction(JSONObject jsonOptions) {
         super(jsonOptions);
+        duration = getOptionInt(OPTION_DURATION, 150);
     }
 
     @Override
     public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
         Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        v.vibrate(150);
+        v.vibrate(duration);
         return true;
     }
 }

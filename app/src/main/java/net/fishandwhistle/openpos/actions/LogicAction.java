@@ -34,24 +34,13 @@ public class LogicAction extends ScannedItemAction {
     public LogicAction(JSONObject jsonObject) {
         super(jsonObject);
 
-        String sMatchOption = getOptionString(OPTION_MATCH_OPTION);
-        if(sMatchOption == null) {
-            matchOption = "matches";
-        } else if(sMatchOption.equals("matches") || sMatchOption.equals("contains")) {
-            matchOption = sMatchOption;
-        } else {
-            throw new IllegalArgumentException("Option 'match_option' must be one of 'matches' or 'contains'");
-        }
+        matchOption = getOptionEnum(OPTION_MATCH_OPTION, "matches", new String[] {"matches", "contains"});
+        outKey = getOptionString(OPTION_OUTKEY, null);
 
-        outKey = getOptionString(OPTION_OUTKEY);
-
-        String sInvert = getOptionString(OPTION_INVERT_RESULT);
-        invert = sInvert != null && Boolean.valueOf(sInvert);
-        String sRegex = getOptionString(OPTION_ISREGEX);
-        isRegex = sRegex != null && Boolean.valueOf(sRegex);
+        invert = getOptionBoolean(OPTION_INVERT_RESULT, false);
+        isRegex = getOptionBoolean(OPTION_ISREGEX, false);
 
         keyMap = extractKeyMap(getOptionObject(OPTION_KEYMAP));
-        if(keyMap == null) throw new IllegalArgumentException("Option 'key_map' is required");
         if(isRegex) {
             try {
                 for (Map.Entry<String, String> entry : keyMap.entrySet()) {
@@ -62,14 +51,7 @@ public class LogicAction extends ScannedItemAction {
             }
         }
 
-        String sLogic = getOptionString(OPTION_LOGIC);
-        if(sLogic == null) {
-            logic = "all";
-        } else if(sLogic.equals("any") || sLogic.equals("all")) {
-            logic = sLogic;
-        } else {
-            throw new IllegalArgumentException("Option 'logic' must be one of 'any' or 'all'");
-        }
+        logic = getOptionEnum(OPTION_LOGIC, "all", new String[] {"any", "all"});
     }
 
     @Override

@@ -29,7 +29,6 @@ public class ActionList extends ScannedItemAction {
         super(jsonObject);
         this.actions = new ArrayList<>();
         JSONArray jsonActions = getOptionArray(OPTION_ACTIONS);
-        if(jsonActions == null) throw new IllegalArgumentException("Option 'actions' required");
         try {
             for(int i=0; i<jsonActions.length(); i++) {
                 JSONObject actionJson = jsonActions.getJSONObject(i);
@@ -38,7 +37,7 @@ public class ActionList extends ScannedItemAction {
         } catch(JSONException e) {
             throw new IllegalArgumentException("Invalid JSON in constructor: " + e.getMessage());
         }
-        executeUntil = getOptionString(OPTION_EXECUTE_UNTIL);
+        executeUntil = getOptionString(OPTION_EXECUTE_UNTIL, null);
     }
 
     @Override

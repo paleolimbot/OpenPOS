@@ -92,7 +92,7 @@ public class LookupAction extends ScannedItemAction {
     public LookupAction(JSONObject jsonObject) {
         super(jsonObject);
         this.uriFormat = getOptionString(OPTION_URI_FORMAT);
-        this.keyMap = extractKeyMap(getOptionObject(OPTION_KEYMAP));
+        this.keyMap = extractKeyMap(getOptionObject(OPTION_KEYMAP, null));
         switch (getOptionString(OPTION_MIMETYPE)) {
             case "application/json":
                 parser = new JSONParser();
@@ -106,29 +106,23 @@ public class LookupAction extends ScannedItemAction {
             default: throw new IllegalArgumentException("No parser available for mime type " + getOptionString(OPTION_MIMETYPE));
         }
         //get/test encoding
-        encoding = getOptionString(OPTION_ENCODING);
-        if(encoding == null) {
-            encoding = "UTF-8";
-        } else {
-            try {
-                byte[] out = "derp".getBytes(encoding);
-            } catch (UnsupportedEncodingException e) {
-                throw new IllegalArgumentException("Invalid encoding: " + encoding);
-            }
+        encoding = getOptionString(OPTION_ENCODING, "UTF-8");
+        try {
+            byte[] out = "derp".getBytes(encoding);
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Invalid encoding: " + encoding);
         }
-        apiType = getOptionString(OPTION_API_TYPE);
-        if(apiType == null) {
-            apiType = "REST";
-        }
-        request = getOptionString(OPTION_REQUEST);
+
+        apiType = getOptionString(OPTION_API_TYPE, "REST");
+        request = getOptionString(OPTION_REQUEST, null);
         if(apiType.equals("XML-RPC") || apiType.equals("JSON-RPC")) {
             if(request == null) throw new IllegalArgumentException("XML-RPC and JSON-RPC require option 'request'");
         }
-        header = extractKeyMap(getOptionObject(OPTION_HEADER));
-        validCheck = extractKeyMap(getOptionObject(OPTION_VALID_CHECK));
-        invalidCheck = extractKeyMap(getOptionObject(OPTION_INVALID_CHECK));
+        header = extractKeyMap(getOptionObject(OPTION_HEADER, null));
+        validCheck = extractKeyMap(getOptionObject(OPTION_VALID_CHECK, null));
+        invalidCheck = extractKeyMap(getOptionObject(OPTION_INVALID_CHECK, null));
 
-        JSONObject oauth = getOptionObject(OPTION_OAUTH1);
+        JSONObject oauth = getOptionObject(OPTION_OAUTH1, null);
         if(oauth != null) {
             try {
                 if (!oauth.has("api_key") || !oauth.has("secret"))

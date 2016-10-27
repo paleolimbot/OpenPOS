@@ -2,6 +2,7 @@ package net.fishandwhistle.openpos.actions;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.text.TextUtils;
 import android.util.Log;
 
 import net.fishandwhistle.openpos.items.ScannedItem;
@@ -34,23 +35,86 @@ public abstract class ScannedItemAction {
 
     public ScannedItemAction(JSONObject jsonOptions) {
         options = jsonOptions;
-        this.actionName = getOptionString(OPTION_ACTION_NAME);
-        if(this.actionName == null) {
-            this.actionName = this.getClass().getName();
+        actionName = getOptionString(OPTION_ACTION_NAME, this.getClass().getName());
+        quiet = getOptionBoolean(OPTION_QUIET, getIsQuietDefault());
+        enabled = getOptionBoolean(OPTION_ENABLED, true);
+    }
+
+    public String getOptionString(String key, String defValue) {
+        try {
+            return options.getString(key);
+        } catch(JSONException e) {
+            return defValue;
         }
-        String isQuiet = getOptionString(OPTION_QUIET);
-        if(isQuiet == null) {
-            quiet = getIsQuietDefault();
-        } else {
-            quiet = Boolean.valueOf(isQuiet);
-        }
-        String isEnabled = getOptionString(OPTION_ENABLED);
-        enabled = isEnabled == null || Boolean.valueOf(isEnabled);
     }
 
     public String getOptionString(String key) {
         try {
             return options.getString(key);
+        } catch(JSONException e) {
+            throw new IllegalArgumentException(String.format("Option '%s' is required", key));
+        }
+    }
+
+    public int getOptionInt(String key, int defValue) {
+        try {
+            return Integer.valueOf(options.getString(key));
+        } catch(JSONException e) {
+            return defValue;
+        } catch(NumberFormatException e) {
+            throw new IllegalArgumentException(String.format("Option '%s' must be a valid integer", key));
+        }
+    }
+
+    public int getOptionInt(String key) {
+        try {
+            return Integer.valueOf(options.getString(key));
+        } catch(JSONException e) {
+            throw new IllegalArgumentException(String.format("Option '%s' is required", key));
+        } catch(NumberFormatException e) {
+            throw new IllegalArgumentException(String.format("Option '%s' must be a valid integer", key));
+        }
+    }
+
+    public boolean getOptionBoolean(String key, boolean defValue) {
+        try {
+            return Boolean.valueOf(options.getString(key));
+        } catch(JSONException e) {
+            return defValue;
+        }
+    }
+
+    public boolean getOptionBoolean(String key) {
+        try {
+            return Boolean.valueOf(options.getString(key));
+        } catch(JSONException e) {
+            throw new IllegalArgumentException(String.format("Option '%s' is required", key));
+        }
+    }
+
+    public String getOptionEnum(String key, String defValue, String[] choices) {
+        String val = getOptionString(key, defValue);
+        for(String s: choices) {
+            if(val.equals(s)) {
+                return val;
+            }
+        }
+        throw new IllegalArgumentException(String.format("Option '%s' must be in [%s]", key, TextUtils.join(", ", choices)));
+    }
+
+    public String getOptionEnum(String key, String[] choices) {
+        String val = getOptionString(key);
+        for(String s: choices) {
+            if(val.equals(s)) {
+                return val;
+            }
+        }
+        throw new IllegalArgumentException(String.format("Option '%s' must be in [%s]", key, TextUtils.join(", ", choices)));
+    }
+
+    public JSONArray getOptionArray(String key, JSONArray defValue) {
+        try {
+            return options.getJSONArray(key);
         } catch(JSONException e) {
             return null;
         }
@@ -60,6 +124,14 @@ public abstract class ScannedItemAction {
         try {
             return options.getJSONArray(key);
         } catch(JSONException e) {
+            throw new IllegalArgumentException(String.format("Option '%s' is required", key));
+        }
+    }
+
+    public JSONObject getOptionObject(String key, JSONObject defObj) {
+        try {
+            return options.getJSONObject(key);
+        } catch(JSONException e) {
             return null;
         }
     }
@@ -68,7 +140,7 @@ public abstract class ScannedItemAction {
         try {
             return options.getJSONObject(key);
         } catch(JSONException e) {
-            return null;
+            throw new IllegalArgumentException(String.format("Option '%s' is required", key));
         }
     }
 
