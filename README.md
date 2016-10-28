@@ -6,7 +6,7 @@ Regular documentation is in preparation...
 
 So you've found yourself to the BetterBark app, among what seems like thousands of other barcode-enabled apps. You've probably come to the same conclusion that I have, which is that most of them were written by nerds and are super hard to use. Hopefully you'll find that the default behaviour of BetterBark is significantly better, but the real power of BetterBark is that **a significant portion of the interface is programmed in JSON**. That means that you can modify what happens when there is a **new barcode** (or key-in), when there is a **repeat barcode**, or when the user **clicks on a scanned item**. To give you an example, let's examine the JSON for the default **new barcode** action. As a reminder, you'll remember that by default, the phone vibrates, then opens a dialog that lets you choose to find the book in a library (if the result was a book), search Google, or search Amazon.
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -59,7 +59,7 @@ To do this, we're going to need a few types of actions: the **list**, the **vibr
 
 We will start with the **list** action, which simply executes a list of other **actions**. Since the first the we really want to do is vibrate to indicate we've hit a barcode and *then* do everything else, the root **action** is commonly a **list**.
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -74,7 +74,7 @@ All **actions** get declared like this: a JSON object (curly braces) with a **ty
 
 The first action in the **list** is a simple **vibrate** action, which takes no parameters and simply does one thing: a short buzz of the vibrator.
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -91,7 +91,7 @@ The **vibrate** action is quite simple, and in fact takes no options.
 
 Now things get more complicated with the **switch** action, to switch based on whether or not the number read is an ISBN number. We do this by testing whether or not the `{{isbn13}}` field matches the regular expression `^.*?$`, which is to say, anything.
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -118,7 +118,7 @@ Here, we declare an **action** of **type switch**, with options **key** (the key
 
 Next, we'll cover what happens in the **default** case (there is no field called **isbn13** in the item). This might happen if, say, while scanning books, I fall into a delerious haze and scan a can of tomato soup thinking it's a book. BetterBark is smart enough to automatically add the **isbn13** whenever the input is a valid ISBN-10 or a valid ISBN-13 (it is also smart enough to recognize ISSN number, parse GS1 fields, and convert GTIN-14 numbers to GTIN-13 numbers, among other things), so if I scan tomato soup the **switch** action will execute the **default** action, which I would like to display a message telling me that I'm delerious, and that the number is not a valid ISBN number. I will do this using a **toast** action (after the android syntax), although it could just as easily be a **dialog** action.
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -141,7 +141,7 @@ Here you may notice we use a "special" field, `{{_barcode_text}}`. Some other ex
 
 The next thing we want to do is look up details of the book from the interwebs to avoid having to type in all the information ourselves. But there is a catch, which is that if the lookup fails, we want to enter the title ourselves. This brings us to a special modification of the **list** action, which is to add the **execute_until** option, which makes the **list** execute all of its sub-actions *until one of them succeeds*. The defenition of "succeed" is a little bit vague, but in the case of a lookup action is well-defined: if the lookup returns information, it should return true. This allows us to look things up from multiple sources and display a dialog at the end if all of the actions fail.
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -168,7 +168,7 @@ Probably the most useful action, the **lookup** connects to whatever address you
 
 The structure of the **lookup** action is the same as the others, but it needs a bunch of options to figure out where to look and how to parse the result.
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -207,7 +207,7 @@ There's a lot of pieces in here (the lookup action took what felt like two weeks
 
 The **list** action with **execute_until**=true ensures that if the lookup succeeds, execution will continue to the next dialog. This particular **dialog** action will collect data (and place it in the parameter specified by **out_key**), but a suitably created one could also just display a message.
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -241,7 +241,7 @@ The **list** action with **execute_until**=true ensures that if the lookup succe
 
 After all that, we want to add the result to our **session**, which is the current list of things being scanned. Session management is done by the user elsewhere but the **session** action makes sure whatever is being scanned ends up on that list. We're going to wrap this in another **switch** to make sure only items that had a **title** parameter got added. With that, the final JSON describing our workflow is as follows:
 
-```json
+```
 {
   "type": "list",
   "actions": [
@@ -302,7 +302,7 @@ After all that, we want to add the result to our **session**, which is the curre
 
 In case you're ever wondering, here's all the types and all the options you can use to create actions. All actions are declared as follows:
 
-```json
+```
 {
   "type": ..., //required
   "name": ..., //optional
@@ -331,7 +331,7 @@ The term **formatted string** will be used often, which refers to a string that 
 
 **List** actions execute a **list** of actions in order, possibly stopping execution should an action return the value specified in **execute_until**.
 
-```json
+```
 {
   "type": "list",
   "execute_until": ..., //optional, can be "true" or "false"
@@ -343,7 +343,7 @@ The term **formatted string** will be used often, which refers to a string that 
 
 **Ifelse** actions use the return value of one action (**test**) to choose between two other actions. Options **if_true** and **if_false** can be missing.
 
-```json
+```
 {
   "type": "ifelse",
   "test": ..., //required, must be an action
@@ -356,7 +356,7 @@ The term **formatted string** will be used often, which refers to a string that 
 
 **Switch** actions take item parameters from a single **key** and chooses an **action** based on the value. The **values** can be regular expressions if **is_regex** is set to true.
 
-```json
+```
 {
   "type": "switch",
   "key": ..., //the key that contains the value to be compared
@@ -371,7 +371,7 @@ The term **formatted string** will be used often, which refers to a string that 
 
 The **blank** action takes no options, and does nothing. It is possibly useful
 
-```json
+```
 {
   "type": "blank"
 }
@@ -381,7 +381,7 @@ The **blank** action takes no options, and does nothing. It is possibly useful
 
 The **session** action either adds or removes an item from a session.
 
-```json
+```
 {
   "type": "session",
   "action": ..., //one of "add" or "remove"
@@ -392,7 +392,7 @@ The **session** action either adds or removes an item from a session.
 
 The **keyfilter** action removes (or keeps) keys whose names the patterns specified.
 
-```json
+```
 {
   "type": "keyfilter",
   "action": ..., //One of "keep" or "remove"
@@ -406,7 +406,7 @@ The **keyfilter** action removes (or keeps) keys whose names the patterns specif
 
 The **matches** action matches values of parameters as opposed to keys.
 
-```json
+```
 {
   "type": "matches",
   "key_map": {
@@ -423,7 +423,7 @@ The **matches** action matches values of parameters as opposed to keys.
 
 The **lookup** action downloads data from the uri specified in **uri_format**, parses it, and assigns the key/value pairs specified in **key_map**. This could just as easily be used to put information into a server-hosted database and getting a response code back.
 
-```json
+```
 {
   "type": "lookup",
   "api_type": ..., //default: "REST", can also be "XML-RPC" or "JSON-RPC"
@@ -459,7 +459,7 @@ The **lookup** action downloads data from the uri specified in **uri_format**, p
 * **mime_type**: This indicates the return type of the data, one of "application/json", "text/xml", or "text/xml-rpc". This allows the app to choose the appropriate parser for the data.
 * **key_map**: The key map is where you map data from the request to item parameters. The **key_map** JSON object has the format `"item_key": "{{path/to/data}}"`, where `{{path/to/data}}` represents where the data is in the JSON/XML/XML-RPC that is returned. A simple example is a [UPCDatabase.org](http://www.upcdatabase.org/) response (below), where we might want to assign the item parameter "name" using "{{itemname}}" with the **key_map** parameter `"name": "{{itemname}}"`. Many responses contain nested objects and arrays accessed using the `/` and `[]` syntax like this: `{{results[0]/author_info/name}}`. XML, JSON, and XML-RPC implementations are all pretty much identical, and if the path can't be found then the value is ignored. Note that the XML implementation does not include the root tag in the path.
 
-```json
+```
 {
   "valid":"true",
   "number":"0111222333446",
@@ -480,7 +480,7 @@ The **lookup** action downloads data from the uri specified in **uri_format**, p
 
 The **stringformat** action simply generates a formatted string and assigns it to keys (ignoring the action if the string doesn't contain the any of the keys specified).
 
-```json
+```
 {
   "type": "stringformat",
   "key_map": {
@@ -495,7 +495,7 @@ A **dialog** action displays a dialog, possibly saving the result if the **out_k
 
 **Display a message**
 
-```json
+```
 {
   "type": "dialog",
   "title": ..., // a formatted string
@@ -511,7 +511,7 @@ The value obtained from this dialog will be `_POSITIVE`, `_NEGATIVE`, `_NEUTRAL`
 
 **Select from items**
 
-```json
+```
 {
   "type": "dialog",
   "title": ..., // a formatted string
@@ -528,7 +528,7 @@ The value obtained from this dialog will be the item in **values** that correspo
 
 **Collect text data**
 
-```json
+```
 {
   "type": "dialog",
   "title": ..., // a formatted string
@@ -546,7 +546,7 @@ The value obtained from this dialog will be whatever the user types, or if the u
 
 This action is kind of like a **dialog** and a **switch** combined, and lets the user pick between actions. Labels that contain mapped keys that do not exist are not shown, and actions that are not applicable are not shown.
 
-```json
+```
 {
   "type": "chooser",
   "title": ..., // a formatted string
@@ -560,7 +560,7 @@ This action is kind of like a **dialog** and a **switch** combined, and lets the
 
 This action displays the details dialog, assigning the output value the same as for the **dialog** action (if **out_key** is specified).
 
-```json
+```
 {
   "type": "details",
   "title": ..., // optional, a formatted string
@@ -573,7 +573,7 @@ This action displays the details dialog, assigning the output value the same as 
 
 This action launches or broadcasts information using an [Android Intent](https://developer.android.com/guide/components/intents-filters.html). Most commonly, use this to launch a URL in a browser.
 
-```json
+```
 {
   "type": "intent",
   "uri_format": ..., //a formatted string of the uri to launch
@@ -590,7 +590,7 @@ This action launches or broadcasts information using an [Android Intent](https:/
 
 This action launches the vibrator for the specified duration (default 150 ms).
 
-```json
+```
 {
   "type": "vibrate",
   "duration": ... //the number of milliseconds to vibrate (default 150)
@@ -601,7 +601,7 @@ This action launches the vibrator for the specified duration (default 150 ms).
 
 This action launches an Android Toast message to the user.
 
-```json
+```
 {
   "type": "toast",
   "message": ..., //a formatted string
@@ -615,7 +615,7 @@ This action launches an Android Toast message to the user.
 
 Get a [UPCDatabase.org](http://www.upcdatabase.org) API Key [here](http://upcdatabase.org/signup).
 
-```json
+```
 {
   "type": "lookup",
   "name": "upcdb",
@@ -639,7 +639,7 @@ Get a [UPCDatabase.org](http://www.upcdatabase.org) API Key [here](http://upcdat
 
 Get a [ISBNDB](http://www.isbndb.com) API Key [here](http://isbndb.com/account/logincreate).
 
-```json
+```
 {
   "type": "lookup",
   "name": "isbndb",
@@ -667,7 +667,7 @@ Get a [ISBNDB](http://www.isbndb.com) API Key [here](http://isbndb.com/account/l
 
 Get a [Semantics3](http://www.semantics3.com) API Key [here](https://dashboard.semantics3.com/signup).
 
-```json
+```
 {
   "type": "lookup",
   "name": "sem3",
@@ -698,7 +698,7 @@ Get a [Semantics3](http://www.semantics3.com) API Key [here](https://dashboard.s
 
 Get a [UPCDatabase.com](http://www.upcdatabase.com) API Key [here](https://www.upcdatabase.com/join.asp).
 
-```json
+```
 {
   "type": "lookup",
   "name": "upcdb",
@@ -722,7 +722,7 @@ Get a [UPCDatabase.com](http://www.upcdatabase.com) API Key [here](https://www.u
 
 Get a [SimpleUPC](http://www.simpleupc.com) API Key [here](http://www.simpleupc.com/price.php).
 
-```json
+```
 {
   "type": "lookup",
   "name": "supc",
@@ -754,7 +754,7 @@ Get a [SimpleUPC](http://www.simpleupc.com) API Key [here](http://www.simpleupc.
 
 Get a [Google Books](http://books.google.com/) API Key [here](https://developers.google.com/books/docs/v1/using#APIKey).
 
-```json
+```
 {
   "type": "lookup",
   "name": "GoogleBooks",
@@ -779,7 +779,7 @@ Get a [Google Books](http://books.google.com/) API Key [here](https://developers
 
 Get a [Goodreads](https://www.goodreads.com/) API Key [here](https://www.goodreads.com/api/keys).
 
-```json
+```
 {
   "type": "lookup",
   "name": "goodreads",
