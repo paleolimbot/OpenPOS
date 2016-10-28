@@ -33,8 +33,13 @@ public class ToastAction extends ScannedItemAction {
     }
 
     @Override
-    public boolean doActionContent(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
-        Toast.makeText(context, formatWithObject(message, item), duration).show();
+    public boolean doActionContent(final Context context, final ScannedItem item, ActionExecutor executor) throws ActionException {
+        executor.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(context, formatWithObject(message, item), duration).show();
+            }
+        });
         return true;
     }
 }
