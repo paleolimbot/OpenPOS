@@ -22,13 +22,34 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static net.fishandwhistle.openpos.actions.Formatting.formatWithObject;
+
 /**
  * Created by dewey on 2016-10-27.
  */
 
 public class DetailsDialogAction extends ScannedItemAction {
+
+    public static final String OPTION_TITLE = "title";
+    public static final String OPTION_POSITIVE_TEXT = "positive_text";
+    public static final String OPTION_NEUTRAL_TEXT = "neutral_text";
+    public static final String OPTION_NEGATIVE_TEXT = "negative_text";
+    public static final String OPTION_OUT_KEY = "out_key";
+
+    private String title;
+    private String positiveText;
+    private String neutralText;
+    private String negativeText;
+    private String outKey;
+
     public DetailsDialogAction(JSONObject jsonOptions) {
         super(jsonOptions);
+
+        title = getOptionString(OPTION_TITLE, "Scan Details");
+        positiveText = getOptionString(OPTION_POSITIVE_TEXT, "Close");
+        neutralText = getOptionString(OPTION_NEUTRAL_TEXT, null);
+        negativeText = getOptionString(OPTION_NEGATIVE_TEXT, null);
+        outKey = getOptionString(OPTION_OUT_KEY, null);
     }
 
     @Override
@@ -39,14 +60,26 @@ public class DetailsDialogAction extends ScannedItemAction {
             @Override
             public void run() {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setTitle(R.string.title_activity_scanned_item_detail);
-                builder.setIcon(R.mipmap.ic_launcher);
-                builder.setPositiveButton(R.string.detail_close, new DialogInterface.OnClickListener() {
+                if(title != null) builder.setTitle(formatWithObject(title, item));
+                if(positiveText != null) builder.setPositiveButton(formatWithObject(positiveText, item), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         executor.setResponse("_POSITIVE");
                     }
                 });
+                if(neutralText != null) builder.setNeutralButton(formatWithObject(neutralText, item), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        executor.setResponse("_NEUTRAL");
+                    }
+                });
+                if(negativeText != null) builder.setNegativeButton(formatWithObject(negativeText, item), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        executor.setResponse("_NEGATIVE");
+                    }
+                });
+                builder.setIcon(R.mipmap.ic_launcher);
                 builder.setCancelable(true);
                 builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
@@ -61,6 +94,9 @@ public class DetailsDialogAction extends ScannedItemAction {
             }
         });
         String response = executor.getResponse();
+        if(outKey != null && response != null) {
+            item.putValue(outKey, response);
+        }
         return response == null || !response.equals("_CANCELLED");
     }
 

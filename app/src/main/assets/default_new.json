@@ -1,7 +1,9 @@
 {
   "type": "list",
   "actions": [
-    {"type": "vibrate"},
+    {
+      "type": "vibrate"
+    },
     {
       "name": "Default Book Chooser",
       "type": "chooser",

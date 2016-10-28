@@ -24,7 +24,7 @@ public class ActionFactory {
                 return new SessionAction(o);
             case "keyfilter":
                 return new KeyFilterAction(o);
-            case "match":
+            case "matches":
                 return new LogicAction(o);
             case "lookup":
                 return new LookupAction(o);

@@ -74,6 +74,7 @@ public class LookupAction extends ScannedItemAction {
     public static final String OPTION_VALID_CHECK = "valid_check";
     public static final String OPTION_INVALID_CHECK = "invalid_check";
     public static final String OPTION_OAUTH1 = "oauth1";
+    public static final String OPTION_USECACHE = "use_cache";
 
     private static final String TAG = "LookupAction" ;
     private static Set<String> currentRequests = new HashSet<>();
@@ -86,6 +87,7 @@ public class LookupAction extends ScannedItemAction {
     private Map<String, String> header;
     private Map<String, String> validCheck;
     private Map<String, String> invalidCheck;
+    private boolean useCache;
 
     private OAuthService oAuthService;
 
@@ -121,7 +123,7 @@ public class LookupAction extends ScannedItemAction {
         header = extractKeyMap(getOptionObject(OPTION_HEADER, null));
         validCheck = extractKeyMap(getOptionObject(OPTION_VALID_CHECK, null));
         invalidCheck = extractKeyMap(getOptionObject(OPTION_INVALID_CHECK, null));
-
+        useCache = getOptionBoolean(OPTION_USECACHE, true);
         JSONObject oauth = getOptionObject(OPTION_OAUTH1, null);
         if(oauth != null) {
             try {
@@ -204,7 +206,7 @@ public class LookupAction extends ScannedItemAction {
             return false;
         } else {
             TextApiCache.CachedItem cached = cache.get(cacheUrl);
-            if(cached != null) {
+            if(useCache && cached != null) {
                 Log.i(TAG, "Using cached data for url " + url);
                 if(this.parser.parse(cached.data, item)) {
                     item.putValue(getTimeKey(), String.valueOf(cached.queryTime));

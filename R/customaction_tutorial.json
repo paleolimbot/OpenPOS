@@ -1,0 +1,98 @@
+[
+{
+  "type": "list",
+  "actions": [
+    {
+      "type": "vibrate"
+    },
+    {
+      "type": "chooser",
+      "title": "{{_description}}",
+      "negative_text": "Cancel",
+      "labels": ["Find this in a Library ®", "Search Google", "Search Amazon"],
+      "actions": [
+        {
+          "type": "intent",
+          "uri_format": "http://www.worldcatlibraries.org/registry/gateway?isbn={{isbn13}}"
+        },
+        {
+          "type": "intent",
+          "uri_format": "https://www.google.ca/search?q={{gtin13}}"
+        },
+        {
+          "type": "intent",
+          "uri_format": "https://www.amazon.com/s/field-keywords={{gtin13}}"
+        }
+      ]
+    }
+  ]
+},
+
+{
+  "type": "switch",
+  "key": "isbn13",
+  "is_regex": true,
+  "values": ["^.*?$"],
+  "actions": [{
+      ...
+    }],
+  "default": {
+    "type": "dialog",
+    "message": "Number '{{_barcode_text}}' is not a valid ISBN number"
+  }
+},
+{
+  "type": "list",
+  "actions": [
+    {
+      "type": "vibrate"
+    },
+    {
+      "type": "switch",
+      "key": "isbn13",
+      "is_regex": true,
+      "values": ["^.*?$"],
+      "actions": [{
+        "type": "list",
+        "execute_until": "true",
+        "actions" : [
+          {
+            "type": "lookup",
+            "name": "goodreads",
+            "uri_format": "https://www.goodreads.com/search/index.xml?key={{APIKEY}}&q={{isbn13}}",
+            "mime_type": "text/xml",
+            "key_map": {
+              "title": "{{search/results/work/best_book/title}}",
+              "authors": "{{search/results/work/best_book/author/name}}",
+              "_description": "{{search/results/work/best_book/title}} ({{search/results/work/best_book/author/name}})",
+              "goodreads_link": "https://www.goodreads.com/book/show/{{search/results/work/best_book/id}}"
+            },
+            "invalid_check": {
+              "{{search/total-results}}": "0"
+            }
+          },
+          {
+            "type": "dialog",
+            "title": "Enter Title",
+            "input_type": "text",
+            "out_key": "title"
+          }
+        ]
+      }],
+      "default": {
+        "type": "toast",
+        "message": "Number '{{_barcode_text}}' is not a valid ISBN number"
+      }
+    },
+    {
+      "type": "switch",
+      "key": "title",
+      "values": ["^.*?$"],
+      "actions": [{
+        "type": "session",
+        "action": "add"
+      }]
+    }
+  ]
+}
+]
