@@ -18,6 +18,19 @@ public class ItemFormatter {
 
     public ScannedItem format(BarcodeSpec.Barcode b) {
         String bstr = b.toString();
+        if(b.type.equals("KeyIn")) {
+            try {
+                // check for valid EAN13/UPCA value
+                if (Checksums.checksum(b, 3, 1)) {
+                    b.type = "EAN-13";
+                } else if (Checksums.checksum(b, 1, 3)) {
+                    b.type = "EAN-13";
+                    b.digits.add(0, new BarcodeSpec.BarcodeDigit("0"));
+                }
+            } catch(NumberFormatException e) {
+                //ignore
+            }
+        }
         ScannedItem item = new ScannedItem(b.type, bstr);
         if(b.extra != null) {
             item.putValue("supplement", b.extra);

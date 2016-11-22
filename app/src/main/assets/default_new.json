@@ -37,8 +37,22 @@
         ]
       }],
       "default": {
-        "type": "toast",
-        "message": "Number '{{_barcode_text}}' is not a valid ISBN number"
+        "type": "switch",
+        "key": "_barcode_text",
+        "is_regex": "true",
+        "values": ["^[0-9]*?$"],
+        "actions": [
+          {
+            "type": "toast",
+            "message": "Number '{{_barcode_text}}' is not a valid ISBN number"
+          }
+        ],
+        "default": {
+          "type": "stringformat",
+          "key_map": {
+            "title": "{{_barcode_text}}"
+          }
+        }
       }
     },
     {

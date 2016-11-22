@@ -397,9 +397,13 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                     @Override
                     public void onTextSaved(String oldText, String newText) {
                         if(newText.trim().length() > 0) {
-                            ScannedItem i = new ScannedItem("KeyIn", newText.trim());
-                            items.add(i);
-                            refreshItems(true);
+                            newText = newText.trim();
+                            BarcodeSpec.Barcode b = new BarcodeSpec.Barcode("KeyIn");
+                            for(int i=0; i<newText.length(); i++) {
+                                b.digits.add(new BarcodeSpec.BarcodeDigit(newText.substring(i, i+1)));
+                            }
+                            b.isValid = true;
+                            onNewBarcode(b);
                         } else {
                             Toast.makeText(MainActivity.this, R.string.main_keyin_invalid, Toast.LENGTH_SHORT).show();
                         }
@@ -414,9 +418,13 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
                     @Override
                     public void onTextSaved(String oldText, String newText) {
                         if(newText.trim().length() > 0) {
-                            ScannedItem i = new ScannedItem("KeyIn", newText.trim());
-                            items.add(i);
-                            refreshItems(true);
+                            newText = newText.trim();
+                            BarcodeSpec.Barcode b = new BarcodeSpec.Barcode("KeyIn");
+                            for(int i=0; i<newText.length(); i++) {
+                                b.digits.add(new BarcodeSpec.BarcodeDigit(newText.substring(i, i+1)));
+                            }
+                            b.isValid = true;
+                            onNewBarcode(b);
                         } else {
                             Toast.makeText(MainActivity.this, R.string.main_keyin_invalid, Toast.LENGTH_SHORT).show();
                         }
