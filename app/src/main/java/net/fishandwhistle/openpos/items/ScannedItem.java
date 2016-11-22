@@ -26,6 +26,8 @@ public class ScannedItem implements Serializable, Formatting.Formattable {
     public static final String KEY_SUBTEXT = "_subtext";
     public static final String KEY_BARCODE_TYPE = "_barcode_type";
 
+    public String session = "default";
+    public long dbId = 0;
     public long scanTime = 0;
     public long updateTime = 0;
     public String barcodeText = null;
@@ -107,6 +109,10 @@ public class ScannedItem implements Serializable, Formatting.Formattable {
                     throw new IllegalArgumentException("JSON Error thrown on setting value " + value + "(" + e.getMessage() + ")");
                 }
         }
+    }
+
+    public String getJSON() {
+        return jsonObject.toString();
     }
 
     public void setJSON(String json) {

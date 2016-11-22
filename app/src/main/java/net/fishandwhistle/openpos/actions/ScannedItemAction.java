@@ -157,6 +157,7 @@ public abstract class ScannedItemAction {
     }
 
     public final boolean doAction(Context context, ScannedItem item, ActionExecutor executor) throws ActionException {
+        Log.i(TAG, "doAction: " + this.getActionName());
         return enabled && isApplicable(context, item, executor) && this.doActionContent(context, item, executor);
     }
 

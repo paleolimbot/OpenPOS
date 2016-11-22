@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.os.AsyncTask;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -45,12 +46,16 @@ import net.fishandwhistle.openpos.extractors.ZBarExtractor;
 import net.fishandwhistle.openpos.items.ItemFormatter;
 import net.fishandwhistle.openpos.items.ScannedItem;
 import net.fishandwhistle.openpos.items.ScannedItemAdapter;
+import net.fishandwhistle.openpos.items.ScannedItemManager;
 import net.fishandwhistle.openpos.settings.SettingsProfile;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -69,6 +74,9 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
     private SettingsProfile settings;
     private BarcodeExtractor extractor;
+    private ScannedItemManager itemManager;
+
+    private String sessionName;
 
     @Override
     protected BarcodeExtractor getExtractor() {
@@ -97,6 +105,8 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
         scannedItemsText = (TextView)findViewById(R.id.bcreader_scannedtitle);
         items = new ScannedItemAdapter(this, true, this);
+        itemManager = new ScannedItemManager(this);
+        sessionName = "default";
 
         list = ((ListView)findViewById(R.id.bcreader_itemlist));
 
@@ -195,6 +205,20 @@ public class MainActivity extends BarcodeReaderActivity implements NavigationVie
 
         } catch(JSONException e) {
 
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // write dump to json
+        try {
+            File out = new File(Environment.getExternalStorageDirectory(), "books.json");
+            FileWriter fw = new FileWriter(out);
+            fw.write(itemManager.dump());
+            fw.close();
+        } catch(IOException e) {
+            Log.e(TAG, "onPause: io", e);
         }
     }
 

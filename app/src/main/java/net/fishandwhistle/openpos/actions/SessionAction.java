@@ -34,10 +34,10 @@ public class SessionAction extends ScannedItemAction {
                 result = manager.putItem(sessionName, item);
                 break;
             case "remove":
-                result = manager.removeItem(sessionName, item);
+                result = manager.removeItem(item);
                 break;
             case "sync":
-                result = manager.syncItem(sessionName, item);
+                result = manager.syncItem(item);
                 break;
             default: throw new ActionException("Unrecognized action: " + action);
 
