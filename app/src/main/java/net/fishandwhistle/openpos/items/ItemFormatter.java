@@ -21,11 +21,28 @@ public class ItemFormatter {
         if(b.type.equals("KeyIn")) {
             try {
                 // check for valid EAN13/UPCA value
-                if (Checksums.checksum(b, 3, 1)) {
+                if (bstr.length() == 13 && Checksums.checksum(b, 3, 1)) {
                     b.type = "EAN-13";
-                } else if (Checksums.checksum(b, 1, 3)) {
+                } else if (bstr.length() == 12 && Checksums.checksum(b, 1, 3)) {
                     b.type = "EAN-13";
                     b.digits.add(0, new BarcodeSpec.BarcodeDigit("0"));
+                } else if(bstr.length() == 10) {
+                    int[] numbers = new int[10];
+                    for(int i=0; i<10; i++) {
+                        numbers[i] = Integer.valueOf(bstr.substring(i, i+1));
+                    }
+                    int checksum = Checksums.ISBNISSNDigit(numbers);
+                    if(bstr.substring(9, 10).toUpperCase().equals("0123456789X".substring(checksum, checksum+1))) {
+                        String ean = "978" + bstr.substring(0, 9);
+                        numbers = new int[13];
+                        for(int i=0; i<12; i++) {
+                            numbers[i] = Integer.valueOf(ean.substring(i, i+1));
+                        }
+                        numbers[12] = 0;
+                        checksum = Checksums.checksumDigit(numbers, 3, 1);
+                        bstr = ean + String.valueOf(checksum);
+                        b.type = "EAN-13";
+                    }
                 }
             } catch(NumberFormatException e) {
                 //ignore
@@ -56,6 +73,10 @@ public class ItemFormatter {
                     item.description = "EAN-13 " + bstr.substring(7, 13);
                 }
                 addISBNData(item, bstr);
+                break;
+            case "ISBN-10":
+                item.putValue("isbn10", bstr);
+
                 break;
             case "EAN-8":
                 item.putValue("gtin8", bstr);
