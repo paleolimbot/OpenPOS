@@ -28,7 +28,7 @@ public class ItemFormatter {
                     b.digits.add(0, new BarcodeSpec.BarcodeDigit("0"));
                 } else if(bstr.length() == 10) {
                     int[] numbers = new int[10];
-                    for(int i=0; i<10; i++) {
+                    for(int i=0; i<9; i++) {
                         numbers[i] = Integer.valueOf(bstr.substring(i, i+1));
                     }
                     int checksum = Checksums.ISBNISSNDigit(numbers);
